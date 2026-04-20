@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Story Point Estimator — S4 Labour</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy-900: #080E1A;
+  --navy-800: #0D1829;
+  --navy-700: #132038;
+  --navy-600: #1A2A48;
+  --navy-500: #243659;
+  --orange: #FF6A1A;
+  --orange-dim: rgba(255,106,26,0.15);
+  --text-primary: #F0F4FF;
+  --text-secondary: #8BA0C4;
+  --text-tertiary: #4F6080;
+  --border: rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.13);
+  --green: #22C97A;
+  --amber: #F5A623;
+  --red: #FF5252;
+  --r: 8px;
+  --r-lg: 14px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'IBM Plex Sans',sans-serif; background:var(--navy-800); color:var(--text-primary); min-height:100vh; }
+
+.header {
+  background:var(--navy-900); border-bottom:1px solid var(--border);
+  height:52px; padding:0 28px;
+  display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:100;
+}
+.logo { font-family:'Outfit',sans-serif; font-size:0.95rem; font-weight:700; display:flex; align-items:center; gap:8px; }
+.logo-pip { width:7px; height:7px; background:var(--orange); border-radius:50%; }
+.logo em { color:var(--orange); font-style:normal; }
+.hdr-right { display:flex; gap:8px; align-items:center; }
+.save-lz { font-size:0.7rem; color:var(--text-tertiary); padding:3px 10px; border-radius:20px; border:1px solid var(--border); transition:all 0.3s; }
+.save-lz.saved { color:var(--green); border-color:rgba(34,201,122,0.3); }
+.btn { font-family:'IBM Plex Sans',sans-serif; font-size:0.78rem; font-weight:600; padding:6px 14px; border-radius:6px; border:none; cursor:pointer; transition:all 0.15s; display:inline-flex; align-items:center; gap:5px; }
+.btn-primary { background:var(--orange); color:white; }
+.btn-primary:hover { background:#FF7E3D; }
+.btn-primary:disabled { opacity:0.3; cursor:not-allowed; }
+.btn-ghost { background:rgba(255,255,255,0.06); color:var(--text-secondary); border:1px solid var(--border); }
+.btn-ghost:hover { background:rgba(255,255,255,0.1); color:var(--text-primary); }
+.btn-danger { background:rgba(255,82,82,0.08); color:var(--red); border:1px solid rgba(255,82,82,0.18); }
+.btn-danger:hover { background:rgba(255,82,82,0.16); }
+
+.page { max-width:960px; margin:0 auto; padding:28px 24px 80px; }
+
+/* Story bar */
+.story-bar { background:var(--navy-700); border:1px solid var(--border); border-radius:var(--r-lg); padding:20px 24px; margin-bottom:20px; display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+.field { display:flex; flex-direction:column; gap:5px; }
+.field label { font-size:0.68rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.09em; }
+.field input { background:var(--navy-600); border:1px solid var(--border-strong); border-radius:6px; padding:8px 12px; color:var(--text-primary); font-family:'IBM Plex Sans',sans-serif; font-size:0.88rem; outline:none; transition:border-color 0.2s; }
+.field input:focus { border-color:var(--orange); }
+.field input::placeholder { color:var(--text-tertiary); }
+.field-ref { width:120px; }
+.field-title { flex:1; min-width:220px; }
+.bar-actions { display:flex; gap:8px; align-items:flex-end; margin-left:auto; }
+
+/* Matrix */
+.matrix-card { background:var(--navy-700); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; margin-bottom:20px; }
+.matrix-table { width:100%; border-collapse:collapse; }
+.matrix-table thead th { padding:12px 20px; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.09em; color:var(--text-tertiary); border-bottom:1px solid var(--border); text-align:left; }
+.matrix-table thead th:not(:first-child) { text-align:center; width:115px; }
+.factor-cell { padding:0 20px; border-bottom:1px solid var(--border); width:32%; }
+.factor-inner { padding:16px 0; }
+.factor-name { font-size:0.9rem; font-weight:600; color:var(--text-primary); }
+.factor-hint { font-size:0.71rem; color:var(--text-tertiary); line-height:1.4; margin-top:2px; }
+.option-cell { text-align:center; vertical-align:middle; border-bottom:1px solid var(--border); padding:10px 6px; }
+.matrix-table tbody tr:last-child td { border-bottom:none; }
+
+.opt-btn { display:inline-flex; flex-direction:column; align-items:center; gap:4px; width:88px; padding:11px 6px; border-radius:var(--r); border:1.5px solid var(--border-strong); background:var(--navy-600); cursor:pointer; transition:all 0.15s; font-family:'IBM Plex Sans',sans-serif; }
+.opt-btn:hover { border-color:rgba(255,255,255,0.22); background:var(--navy-500); }
+.opt-btn.sel-low  { background:rgba(34,201,122,0.1);  border-color:rgba(34,201,122,0.45); }
+.opt-btn.sel-med  { background:rgba(245,166,35,0.1);  border-color:rgba(245,166,35,0.45); }
+.opt-btn.sel-high { background:rgba(255,82,82,0.1);   border-color:rgba(255,82,82,0.45);  }
+.opt-label { font-size:0.82rem; font-weight:600; color:var(--text-secondary); transition:color 0.15s; }
+.opt-btn.sel-low  .opt-label { color:var(--green); }
+.opt-btn.sel-med  .opt-label { color:var(--amber); }
+.opt-btn.sel-high .opt-label { color:var(--red);   }
+.opt-sub { font-size:0.66rem; color:var(--text-tertiary); line-height:1.35; text-align:center; }
+
+/* Score panel */
+.score-panel { background:var(--navy-700); border:1px solid var(--border); border-radius:var(--r-lg); padding:22px 24px; margin-bottom:20px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+.breakdown { display:flex; align-items:center; gap:8px; flex:1; flex-wrap:wrap; }
+.sc-pill { display:flex; flex-direction:column; align-items:center; gap:2px; padding:9px 14px; border-radius:var(--r); border:1px solid var(--border-strong); background:var(--navy-600); min-width:68px; }
+.sc-pill.p-low  { background:rgba(34,201,122,0.09);  border-color:rgba(34,201,122,0.3); }
+.sc-pill.p-med  { background:rgba(245,166,35,0.09);  border-color:rgba(245,166,35,0.3); }
+.sc-pill.p-high { background:rgba(255,82,82,0.09);   border-color:rgba(255,82,82,0.3);  }
+.sc-pill-lbl { font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-tertiary); }
+.sc-pill.p-low  .sc-pill-lbl { color:var(--green); }
+.sc-pill.p-med  .sc-pill-lbl { color:var(--amber); }
+.sc-pill.p-high .sc-pill-lbl { color:var(--red);   }
+.sc-pill-val { font-family:'Outfit',sans-serif; font-size:1.15rem; font-weight:800; color:var(--text-tertiary); }
+.sc-pill.p-low  .sc-pill-val { color:var(--green); }
+.sc-pill.p-med  .sc-pill-val { color:var(--amber); }
+.sc-pill.p-high .sc-pill-val { color:var(--red);   }
+.sc-pill-tier { font-size:0.6rem; color:inherit; opacity:0.7; }
+.sep { font-size:1rem; color:var(--text-tertiary); font-weight:300; margin-top:12px; }
+.total-pill { display:flex; flex-direction:column; align-items:center; gap:2px; padding:9px 18px; border-radius:var(--r); background:var(--navy-600); border:1px solid var(--border-strong); min-width:70px; }
+.total-pill-lbl { font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-tertiary); }
+.total-pill-val { font-family:'Outfit',sans-serif; font-size:1.15rem; font-weight:800; color:var(--text-secondary); }
+
+.result-block { display:flex; flex-direction:column; align-items:center; gap:3px; padding:14px 24px; border-radius:var(--r-lg); border:2px solid var(--border-strong); background:var(--navy-800); transition:all 0.25s; min-width:110px; text-align:center; }
+.result-block.lit { border-color:var(--orange); background:rgba(255,106,26,0.12); }
+.res-lbl { font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-tertiary); }
+.result-block.lit .res-lbl { color:var(--orange); }
+.res-pts { font-family:'Outfit',sans-serif; font-size:2.6rem; font-weight:800; color:var(--text-tertiary); line-height:1; transition:all 0.25s; }
+.result-block.lit .res-pts { color:var(--orange); }
+.res-name { font-size:0.7rem; color:var(--text-tertiary); transition:color 0.25s; }
+.result-block.lit .res-name { color:rgba(255,106,26,0.65); }
+
+/* Override */
+.override-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:12px 20px; background:var(--navy-900); border-top:1px solid var(--border); border-radius:0 0 var(--r-lg) var(--r-lg); }
+.ov-label { font-size:0.7rem; color:var(--text-tertiary); font-weight:500; white-space:nowrap; }
+.ov-btn { width:34px; height:34px; border-radius:var(--r); border:1px solid var(--border-strong); background:var(--navy-700); color:var(--text-secondary); font-family:'Outfit',sans-serif; font-size:0.85rem; font-weight:700; cursor:pointer; transition:all 0.15s; display:inline-flex; align-items:center; justify-content:center; }
+.ov-btn:hover { border-color:var(--orange); color:var(--orange); }
+.ov-btn.chosen { background:var(--orange); color:white; border-color:var(--orange); }
+.ov-note { font-size:0.68rem; color:var(--text-tertiary); font-style:italic; }
+
+/* History */
+.history-card { background:var(--navy-700); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; }
+.history-head { padding:14px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.history-head h2 { font-family:'Outfit',sans-serif; font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.09em; color:var(--text-tertiary); display:flex; align-items:center; gap:8px; }
+.cnt-badge { background:var(--orange); color:white; font-size:0.62rem; font-weight:700; padding:2px 8px; border-radius:12px; }
+.h-table { width:100%; border-collapse:collapse; }
+.h-table th { padding:9px 18px; font-size:0.63rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-tertiary); text-align:left; border-bottom:1px solid var(--border); }
+.h-table td { padding:11px 18px; font-size:0.84rem; border-bottom:1px solid var(--border); color:var(--text-secondary); vertical-align:middle; }
+.h-table tbody tr:last-child td { border-bottom:none; }
+.h-table tbody tr:hover td { background:rgba(255,255,255,0.015); }
+.td-ref { color:var(--orange); font-size:0.7rem; font-weight:600; letter-spacing:0.04em; white-space:nowrap; }
+.td-title { color:var(--text-primary); font-weight:500; }
+.td-tag { display:inline-flex; padding:2px 8px; border-radius:10px; font-size:0.67rem; font-weight:600; white-space:nowrap; }
+.tg-low  { background:rgba(34,201,122,0.1);  color:var(--green); }
+.tg-med  { background:rgba(245,166,35,0.1);  color:var(--amber); }
+.tg-high { background:rgba(255,82,82,0.1);   color:var(--red);   }
+.td-pts { font-family:'Outfit',sans-serif; font-size:1.1rem; font-weight:800; color:var(--orange); text-align:right; white-space:nowrap; }
+.h-foot { padding:12px 22px; background:var(--navy-900); border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.h-foot-lbl { font-size:0.76rem; color:var(--text-tertiary); }
+.h-foot-total { font-family:'Outfit',sans-serif; font-size:1.05rem; font-weight:800; color:var(--orange); }
+.h-empty { padding:28px; font-size:0.84rem; color:var(--text-tertiary); text-align:center; }
+
+@media (max-width:680px) {
+  .page { padding:16px 12px 60px; }
+  .matrix-table thead th:not(:first-child) { width:80px; }
+  .opt-btn { width:70px; padding:9px 3px; }
+  .story-bar { flex-direction:column; }
+  .field-ref,.field-title { width:100%; min-width:0; }
+  .score-panel { flex-direction:column; align-items:flex-start; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-pip"></div>
+    S4 Labour <em>/ Estimator</em>
+  </div>
+  <div class="hdr-right">
+    <span class="save-lz" id="saveLz">Ready</span>
+    <button class="btn btn-ghost" onclick="exportData()">Export</button>
+    <button class="btn btn-ghost" onclick="triggerImport()">Import</button>
+    <input type="file" id="importFile" accept=".json" style="display:none">
+    <button class="btn btn-danger" onclick="if(confirm('Reset all session data?'))resetAll()">Reset</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- Story bar -->
+  <div class="story-bar">
+    <div class="field field-ref">
+      <label>Jira Ref</label>
+      <input type="text" id="storyRef" placeholder="e.g. ROT-142" oninput="triggerSave()" />
+    </div>
+    <div class="field field-title">
+      <label>Story Title</label>
+      <input type="text" id="storyTitle" placeholder="What needs to be built?" oninput="updateAddBtn();triggerSave()" />
+    </div>
+    <div class="bar-actions">
+      <button class="btn btn-ghost" onclick="clearForm()">Clear</button>
+      <button class="btn btn-primary" id="addBtn" onclick="addToHistory()" disabled>Add to Session ↓</button>
+    </div>
+  </div>
+
+  <!-- Matrix + override -->
+  <div class="matrix-card">
+    <table class="matrix-table">
+      <thead>
+        <tr>
+          <th>Factor</th>
+          <th>Low</th>
+          <th>Medium</th>
+          <th>High</th>
+        </tr>
+      </thead>
+      <tbody id="matrixBody"></tbody>
+    </table>
+    <div class="override-row">
+      <span class="ov-label">Manual override:</span>
+      <div id="overrideBtns" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
+      <span class="ov-note" id="ovNote"></span>
+    </div>
+  </div>
+
+  <!-- Score panel -->
+  <div class="score-panel">
+    <div class="breakdown" id="breakdown"></div>
+    <div class="result-block" id="resultBlock">
+      <div class="res-lbl">Suggested</div>
+      <div class="res-pts" id="resPts">—</div>
+      <div class="res-name" id="resName">Select all three factors</div>
+    </div>
+    <button class="btn btn-primary" id="addBtn2" onclick="addToHistory()" disabled>Add to Session ↓</button>
+  </div>
+
+  <!-- History -->
+  <div class="history-card">
+    <div class="history-head">
+      <h2>Session Estimates <span class="cnt-badge" id="cntBadge">0</span></h2>
+    </div>
+    <div id="historyBody">
+      <div class="h-empty">No estimates yet — use the matrix above, then add stories to this session.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const FACTORS = [
+  { id:'complexity', name:'Complexity', hint:'How technically difficult or novel is this work?',
+    options: {
+      low:  { label:'Low',    sub:'Known pattern,\nstraightforward', score:1 },
+      med:  { label:'Medium', sub:'Some new logic\nor decisions',     score:2 },
+      high: { label:'High',   sub:'Novel approach,\nmany unknowns',   score:3 },
+    }
+  },
+  { id:'effort', name:'Effort', hint:'How much raw work volume is involved?',
+    options: {
+      low:  { label:'Low',    sub:'Small, contained\nchange',       score:1 },
+      med:  { label:'Medium', sub:'Meaningful,\nmulti-part work',   score:2 },
+      high: { label:'High',   sub:'Large scope,\nmany components',  score:3 },
+    }
+  },
+  { id:'blast', name:'Blast Radius', hint:'What is the impact if this change goes wrong?',
+    options: {
+      low:  { label:'Low',    sub:'Isolated service\nor script',        score:1 },
+      med:  { label:'Medium', sub:'Shared service\nor one environment', score:2 },
+      high: { label:'High',   sub:'Cross-env or\nshared infrastructure',score:3 },
+    }
+  },
+  { id:'reversibility', name:'Reversibility', hint:'How easily can this change be rolled back?',
+    options: {
+      low:  { label:'Easy',        sub:'Clean rollback,\nredeploy to revert',  score:1 },
+      med:  { label:'Partial',     sub:'Rollback possible\nbut with effort',   score:2 },
+      high: { label:'Irreversible',sub:'Migration, deletion\nor live data change', score:3 },
+    }
+  },
+];
+
+const SCORE_MAP = { 4:'1', 5:'2', 6:'3', 7:'5', 8:'8', 9:'13', 10:'13', 11:'21', 12:'21' };
+const PT_NAMES  = { '1':'Very Small','2':'Small','3':'Medium','5':'Medium-Large','8':'Large','13':'Very Large','21':'Epic — consider splitting' };
+const FIB = ['1','2','3','5','8','13','21'];
+
+let sel = { complexity:null, effort:null, blast:null, reversibility:null };
+let overridePt = null;
+let history = [];
+let saveTimer = null;
+
+function init() {
+  const d = (() => { try { return JSON.parse(localStorage.getItem('s4est2')); } catch { return null; } })();
+  if (d) {
+    sel      = d.sel      || { complexity:null, effort:null, blast:null, reversibility:null };
+    overridePt = d.overridePt || null;
+    history  = d.history  || [];
+    document.getElementById('storyRef').value   = d.ref   || '';
+    document.getElementById('storyTitle').value = d.title || '';
+  }
+  renderMatrix(); renderOverride(); renderScore(); renderHistory(); updateAddBtn();
+}
+
+function triggerSave() {
+  showLz('saving'); clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem('s4est2', JSON.stringify({
+        sel, overridePt, history,
+        ref:   document.getElementById('storyRef').value,
+        title: document.getElementById('storyTitle').value,
+      }));
+      showLz('saved');
+    } catch { showLz('err'); }
+  }, 600);
+}
+function showLz(s) {
+  const el = document.getElementById('saveLz');
+  if (s==='saving') { el.textContent='Saving…'; el.className='save-lz'; }
+  else if (s==='saved') { el.textContent='✓ Saved'; el.className='save-lz saved'; setTimeout(()=>{ el.textContent='Auto-saved'; el.className='save-lz'; },1800); }
+  else { el.textContent='Error'; el.className='save-lz'; }
+}
+
+function renderMatrix() {
+  document.getElementById('matrixBody').innerHTML = FACTORS.map(f => {
+    const cur = sel[f.id];
+    return `<tr>
+      <td class="factor-cell"><div class="factor-inner">
+        <div class="factor-name">${f.name}</div>
+        <div class="factor-hint">${f.hint}</div>
+      </div></td>
+      ${['low','med','high'].map(tier => {
+        const opt = f.options[tier];
+        const cls = cur===tier ? `sel-${tier}` : '';
+        return `<td class="option-cell">
+          <button class="opt-btn ${cls}" onclick="pick('${f.id}','${tier}')">
+            <span class="opt-label">${opt.label}</span>
+            <span class="opt-sub">${opt.sub.replace(/\n/g,'<br>')}</span>
+          </button>
+        </td>`;
+      }).join('')}
+    </tr>`;
+  }).join('');
+}
+
+function pick(fid, tier) {
+  sel[fid] = sel[fid]===tier ? null : tier;
+  overridePt = null;
+  triggerSave(); renderMatrix(); renderOverride(); renderScore(); updateAddBtn();
+}
+
+function getSuggested() {
+  if (!sel.complexity||!sel.effort||!sel.blast||!sel.reversibility) return null;
+  const sum = FACTORS.reduce((a,f) => a + f.options[sel[f.id]].score, 0);
+  return SCORE_MAP[sum] || null;
+}
+function getFinal() { return overridePt || getSuggested(); }
+
+function renderScore() {
+  let html = FACTORS.map((f,i) => {
+    const tier = sel[f.id];
+    const cls  = tier ? `p-${tier}` : '';
+    const lbl  = tier ? f.options[tier].label : '—';
+    const sc   = tier ? f.options[tier].score : '?';
+    return `<div class="sc-pill ${cls}">
+      <div class="sc-pill-lbl">${f.name}</div>
+      <div class="sc-pill-val">${sc}</div>
+      <div class="sc-pill-tier">${lbl}</div>
+    </div>${i<FACTORS.length-1?'<div class="sep">+</div>':''}`;
+  }).join('');
+  const sum = (sel.complexity&&sel.effort&&sel.blast&&sel.reversibility) ? FACTORS.reduce((a,f)=>a+f.options[sel[f.id]].score,0) : '?';
+  html += `<div class="sep">=</div><div class="total-pill"><div class="total-pill-lbl">Score</div><div class="total-pill-val">${sum}</div></div>`;
+  document.getElementById('breakdown').innerHTML = html;
+
+  const final = getFinal();
+  const rb = document.getElementById('resultBlock');
+  rb.className = final ? 'result-block lit' : 'result-block';
+  document.getElementById('resPts').textContent  = final || '—';
+  document.getElementById('resName').textContent = final
+    ? (PT_NAMES[final]||'') + (overridePt&&overridePt!==getSuggested()?' (overridden)':'')
+    : 'Select all three factors';
+}
+
+function renderOverride() {
+  const sug = getSuggested();
+  document.getElementById('overrideBtns').innerHTML = FIB.map(f =>
+    `<button class="ov-btn ${overridePt===f?'chosen':''}" onclick="setOverride('${f}')">${f}</button>`
+  ).join('');
+  document.getElementById('ovNote').textContent =
+    (overridePt && overridePt!==sug) ? `Matrix suggests ${sug||'—'} — set to ${overridePt}` : '';
+}
+
+function setOverride(v) {
+  overridePt = overridePt===v ? null : v;
+  triggerSave(); renderOverride(); renderScore(); updateAddBtn();
+}
+
+function updateAddBtn() {
+  const ok = document.getElementById('storyTitle').value.trim() && getFinal();
+  document.getElementById('addBtn').disabled  = !ok;
+  document.getElementById('addBtn2').disabled = !ok;
+}
+
+function addToHistory() {
+  const ref   = document.getElementById('storyRef').value.trim();
+  const title = document.getElementById('storyTitle').value.trim();
+  const final = getFinal();
+  if (!title||!final) return;
+  history.unshift({ id:Date.now(), ref, title, complexity:sel.complexity, effort:sel.effort, blast:sel.blast, reversibility:sel.reversibility, suggested:getSuggested(), final, overridden: overridePt&&overridePt!==getSuggested() });
+  clearForm(); triggerSave(); renderHistory();
+}
+
+function removeHistory(id) {
+  history = history.filter(h=>h.id!==id); triggerSave(); renderHistory();
+}
+
+function clearForm() {
+  document.getElementById('storyRef').value   = '';
+  document.getElementById('storyTitle').value = '';
+  sel = { complexity:null, effort:null, blast:null, reversibility:null }; overridePt = null;
+  renderMatrix(); renderOverride(); renderScore(); updateAddBtn();
+}
+
+function renderHistory() {
+  document.getElementById('cntBadge').textContent = history.length;
+  const body = document.getElementById('historyBody');
+  if (!history.length) { body.innerHTML='<div class="h-empty">No estimates yet — use the matrix above, then add stories to this session.</div>'; return; }
+  const tc = v => v==='low'?'tg-low':v==='med'?'tg-med':'tg-high';
+  const tl = v => v==='low'?'Low':v==='med'?'Medium':'High';
+  const rows = history.map(h=>`<tr>
+    <td class="td-ref">${h.ref||'—'}</td>
+    <td class="td-title">${esc(h.title)}</td>
+    <td><span class="td-tag ${tc(h.complexity)}">${tl(h.complexity)}</span></td>
+    <td><span class="td-tag ${tc(h.effort)}">${tl(h.effort)}</span></td>
+    <td><span class="td-tag ${tc(h.blast)}">${tl(h.blast)}</span></td>
+    <td><span class="td-tag ${tc(h.reversibility)}">${h.reversibility==='low'?'Easy':h.reversibility==='med'?'Partial':'Irreversible'}</span></td>
+    <td class="td-pts" title="${h.overridden?'Overridden from '+h.suggested:'Matrix suggested'}">${h.final}${h.overridden?' *':''}</td>
+    <td style="text-align:right;padding-right:14px;"><button class="btn btn-ghost" style="padding:3px 8px;font-size:0.68rem;" onclick="removeHistory(${h.id})">✕</button></td>
+  </tr>`).join('');
+  const total = history.reduce((a,h)=>a+(parseInt(h.final)||0),0);
+  body.innerHTML = `<table class="h-table">
+    <thead><tr><th>Ref</th><th>Story</th><th>Complexity</th><th>Effort</th><th>Blast Radius</th><th>Reversibility</th><th style="text-align:right">Points</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="h-foot">
+    <span class="h-foot-lbl">Session total &nbsp;<span style="font-size:0.62rem;opacity:0.5;">* = manually overridden</span></span>
+    <span class="h-foot-total">${total} pts</span>
+  </div>`;
+}
+
+function esc(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+
+function exportData() {
+  const b = new Blob([JSON.stringify({history,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});
+  const u = URL.createObjectURL(b);
+  const a = document.createElement('a'); a.href=u; a.download=`estimates-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(u);
+}
+function triggerImport() {
+  document.getElementById('importFile').click();
+  document.getElementById('importFile').onchange = e => {
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=ev=>{ try { const d=JSON.parse(ev.target.result); if(d.history){history=d.history;triggerSave();renderHistory();}else alert('No history found.'); } catch{alert('Invalid file.');} }; r.readAsText(f);
+  };
+}
+function resetAll() {
+  history=[]; sel={complexity:null,effort:null,blast:null,reversibility:null}; overridePt=null;
+  document.getElementById('storyRef').value=''; document.getElementById('storyTitle').value='';
+  localStorage.removeItem('s4est2');
+  renderMatrix(); renderOverride(); renderScore(); renderHistory(); updateAddBtn();
+}
+
+init();
+</script>
+</body>
+</html>
