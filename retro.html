@@ -202,6 +202,25 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var
 .p-sticky:hover .p-sticky-del{opacity:1;}
 .p-sticky-del:hover{color:var(--red);}
 
+/* Participant name card */
+.p-name-card{background:linear-gradient(135deg,rgba(255,106,26,0.1),rgba(255,106,26,0.04));border:1px solid rgba(255,106,26,0.25);border-radius:var(--r-lg);padding:16px 20px;margin-bottom:4px;}
+.p-name-card-inner{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.p-step-label{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--orange);opacity:0.7;white-space:nowrap;}
+.p-name-card-content{display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap;}
+.p-name-card-label{font-size:0.8rem;font-weight:600;color:var(--text-secondary);white-space:nowrap;}
+.p-name-big-input{background:var(--navy-600);border:2px solid rgba(255,106,26,0.4);border-radius:8px;color:var(--text-primary);font-family:'IBM Plex Sans',sans-serif;font-size:0.95rem;font-weight:600;padding:8px 14px;outline:none;width:200px;transition:border-color 0.2s,box-shadow 0.2s;}
+.p-name-big-input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,106,26,0.15);}
+.p-name-big-input::placeholder{color:var(--text-tertiary);font-weight:400;}
+.p-name-big-input.filled{border-color:var(--green);background:rgba(34,201,122,0.07);}
+.p-name-hint{font-size:0.72rem;color:var(--text-tertiary);}
+.p-name-hint.error{color:var(--red);}
+
+/* Sticky counter in header */
+.p-sticky-counter{font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--green-dim);border:1px solid var(--green-border);color:var(--green);}
+
+@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+.shake{animation:shake 0.4s ease;}
+
 /* Contributor count on board (live indicator) */
 .contrib-indicator{display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--text-tertiary);}
 .contrib-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
@@ -313,22 +332,29 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var
       <div class="logo"><div class="logo-pip"></div>S4 Labour <em>/ Retro</em></div>
       <div class="p-sprint-name" id="pSprintName"></div>
     </div>
-    <div class="p-name-wrap">
-      <span class="p-name-label">Your name:</span>
-      <input class="p-name-input" id="pName" placeholder="e.g. Alex" oninput="onPNameChange()">
-    </div>
     <div class="p-hdr-right">
+      <span class="p-sticky-counter" id="pStickyCounter" style="display:none;"></span>
       <button class="btn btn-ghost" onclick="switchToBoard()">← Board view</button>
-      <button class="p-done-btn" id="pDoneBtn" onclick="submitContribution()" disabled>
+      <button class="p-done-btn" id="pDoneBtn" onclick="submitContribution()">
         ✓ Done — copy my stickies
       </button>
     </div>
   </div>
   <div class="p-body">
-    <div class="p-tip">
-      <span style="font-size:1rem;">💡</span>
-      <span><strong>Add your stickies below.</strong> Click any column to start typing. When you're done, hit <strong>Done</strong> to copy a code — give it to the facilitator via Slack/Teams.</span>
+
+    <!-- Step 1: Name -->
+    <div class="p-name-card" id="pNameCard">
+      <div class="p-name-card-inner">
+        <div class="p-step-label">Step 1</div>
+        <div class="p-name-card-content">
+          <label class="p-name-card-label" for="pName">Your name <span style="color:var(--orange)">*</span></label>
+          <input class="p-name-big-input" id="pName" placeholder="e.g. Alex Smith" oninput="onPNameChange()" autocomplete="given-name">
+          <span class="p-name-hint" id="pNameHint">Required before you can submit</span>
+        </div>
+        <div class="p-step-label" style="margin-left:auto;">Step 2 → add stickies below</div>
+      </div>
     </div>
+
     <div class="p-columns">
       <div class="p-col">
         <div class="p-col-hdr col-hdr well-hdr">
@@ -345,7 +371,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var
           <span class="col-title" style="color:var(--amber);font-family:'Outfit',sans-serif;font-size:0.88rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;">What could improve</span>
         </div>
         <div class="p-col-body" id="p-body-improve">
-          <button class="p-add-btn" onclick="pStartAdd('improve')"><span class="p-add-icon">＋</span>Click to add a sticky…</button>
+          <button class="p-add-btn" onclick="pStartAdd('improve')"><span class="p-add-icon">＋</span>Add another…</button>
         </div>
       </div>
     </div>
@@ -723,13 +749,35 @@ function switchToBoard() {
 
 function onPNameChange() {
   const name = document.getElementById('pName').value.trim();
-  document.getElementById('pDoneBtn').disabled = !name || !pStickies.length;
+  const input = document.getElementById('pName');
+  const hint = document.getElementById('pNameHint');
+  if (name) {
+    input.classList.add('filled');
+    hint.textContent = '✓ Looking good';
+    hint.className = 'p-name-hint';
+    hint.style.color = 'var(--green)';
+  } else {
+    input.classList.remove('filled');
+    hint.textContent = 'Required before you can submit';
+    hint.className = 'p-name-hint';
+    hint.style.color = '';
+  }
+  updatePCounter();
 }
 
 function renderPBoard() {
   renderPColumn('well'); renderPColumn('improve');
-  const name = document.getElementById('pName').value.trim();
-  document.getElementById('pDoneBtn').disabled = !name || !pStickies.length;
+  updatePCounter();
+}
+function updatePCounter() {
+  const counter = document.getElementById('pStickyCounter');
+  if (!counter) return;
+  if (pStickies.length > 0) {
+    counter.style.display = 'inline-flex';
+    counter.textContent = pStickies.length + ' ' + (pStickies.length === 1 ? 'sticky' : 'stickies') + ' ready';
+  } else {
+    counter.style.display = 'none';
+  }
 }
 function renderPColumn(col) {
   const body = document.getElementById('p-body-'+col);
@@ -779,7 +827,7 @@ function pCommitEditor() {
   }
   pActiveEditor.el.remove();
   pActiveEditor = null;
-  onPNameChange();
+  updatePCounter();
 }
 function pCancelEditor() {
   if (!pActiveEditor) return;
@@ -790,16 +838,39 @@ function pDelSticky(idx, col) {
   const colStickies = pStickies.filter(s=>s.col===col);
   const toRemove = colStickies[idx];
   if (toRemove) pStickies = pStickies.filter(s=>s.id!==toRemove.id);
-  renderPBoard(); onPNameChange();
+  renderPBoard(); updatePCounter();
 }
 
 function submitContribution() {
   const name = document.getElementById('pName').value.trim();
-  if (!name || !pStickies.length) return;
+
+  // Guard: no name
+  if (!name) {
+    const input = document.getElementById('pName');
+    const card = document.getElementById('pNameCard');
+    const hint = document.getElementById('pNameHint');
+    card.classList.remove('shake');
+    void card.offsetWidth; // reflow to restart animation
+    card.classList.add('shake');
+    input.focus();
+    hint.textContent = '← Enter your name first';
+    hint.className = 'p-name-hint error';
+    hint.style.color = 'var(--red)';
+    setTimeout(() => card.classList.remove('shake'), 500);
+    return;
+  }
+
+  // Guard: no stickies
+  if (!pStickies.length) {
+    toast('Add at least one sticky before submitting.');
+    return;
+  }
+
   const tagged = pStickies.map(s=>({...s, author:name}));
   const payload = { author:name, stickies:tagged, sprint:S.meta.sprintName, ts:Date.now() };
   const code = btoa(JSON.stringify(payload));
-  // Also broadcast directly for same-device
+
+  // Broadcast to same-device board tab
   tagged.forEach(s => {
     if (!S.stickies.find(x=>x.id===s.id)) {
       S.stickies.push(s);
@@ -807,20 +878,26 @@ function submitContribution() {
     }
   });
   save();
+
   showModal(`
     <h3>Your stickies are ready ✓</h3>
-    <p>Copy this code and paste it into Slack, Teams, or give it directly to the facilitator. They'll click <strong>Merge contributions</strong> and paste it in.</p>
+    <p style="margin-bottom:12px;">Copy this code and paste it into <strong>Slack or Teams</strong>. The facilitator clicks <strong>Merge contributions</strong> and pastes it in.</p>
     <div class="modal-code" id="contribCodeEl">${code}</div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Close</button>
-      <button class="btn btn-primary" onclick="copyContribCode('${code.slice(0,20)}...')">📋 Copy code</button>
+      <button class="btn btn-primary" id="copyCodeBtn" onclick="copyContribCode()">📋 Copy code</button>
     </div>
   `);
   pStickies = [];
+  updatePCounter();
 }
-function copyContribCode(preview) {
-  const code = document.getElementById('contribCodeEl').textContent;
-  navigator.clipboard.writeText(code).then(()=>toast('Contribution code copied!'));
+function copyContribCode() {
+  const code = document.getElementById('contribCodeEl').textContent.trim();
+  navigator.clipboard.writeText(code).then(() => {
+    const btn = document.getElementById('copyCodeBtn');
+    if (btn) { btn.textContent = '✓ Copied!'; btn.disabled = true; }
+    toast('Contribution code copied — paste it to the facilitator!');
+  });
 }
 
 // ── HASH ROUTING ──
