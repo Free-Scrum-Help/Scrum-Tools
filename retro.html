@@ -8,93 +8,88 @@
 <style>
 :root {
   --navy-900:#080E1A; --navy-800:#0D1829; --navy-700:#132038;
-  --navy-600:#1A2A48; --navy-500:#243659; --navy-400:#2E4270;
+  --navy-600:#1A2A48; --navy-500:#243659;
   --orange:#FF6A1A; --orange-dim:rgba(255,106,26,0.18); --orange-border:rgba(255,106,26,0.45);
   --text-primary:#F0F4FF; --text-secondary:#8BA0C4; --text-tertiary:#4F6080;
   --border:rgba(255,255,255,0.07); --border-strong:rgba(255,255,255,0.13);
   --green:#22C97A; --green-dim:rgba(34,201,122,0.16); --green-border:rgba(34,201,122,0.4);
   --amber:#F5A623; --amber-dim:rgba(245,166,35,0.16); --amber-border:rgba(245,166,35,0.4);
   --red:#FF5252; --red-dim:rgba(255,82,82,0.13); --red-border:rgba(255,82,82,0.35);
-  --blue:#4A9EFF; --purple:#A78BFA;
+  --blue:#4A9EFF; --blue-dim:rgba(74,158,255,0.14); --blue-border:rgba(74,158,255,0.38);
+  --purple:#A78BFA; --purple-dim:rgba(167,139,250,0.14); --purple-border:rgba(167,139,250,0.38);
   --r:8px; --r-lg:14px;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var(--text-primary);min-height:100vh;overflow-x:hidden;background-image:radial-gradient(ellipse 80% 50% at 20% -10%,rgba(255,106,26,0.07) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 100%,rgba(34,201,122,0.06) 0%,transparent 55%);}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var(--text-primary);min-height:100vh;overflow-x:hidden;
+  background-image:radial-gradient(ellipse 80% 50% at 20% -10%,rgba(255,106,26,0.07) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%,rgba(34,201,122,0.06) 0%,transparent 55%);}
 
-/* ── Shared button ── */
 .btn{font-family:'IBM Plex Sans',sans-serif;font-size:0.75rem;font-weight:600;padding:6px 13px;border-radius:6px;border:none;cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
-.btn-primary{background:var(--orange);color:#fff;}
-.btn-primary:hover{background:#FF7E3D;}
-.btn-primary:disabled{opacity:0.35;cursor:not-allowed;}
-.btn-ghost{background:rgba(255,255,255,0.06);color:var(--text-secondary);border:1px solid var(--border);}
-.btn-ghost:hover{background:rgba(255,255,255,0.11);color:var(--text-primary);}
-.btn-danger{background:rgba(255,82,82,0.08);color:var(--red);border:1px solid rgba(255,82,82,0.18);}
-.btn-danger:hover{background:rgba(255,82,82,0.16);}
+.btn-primary{background:var(--orange);color:#fff;}.btn-primary:hover{background:#FF7E3D;}
+.btn-ghost{background:rgba(255,255,255,0.06);color:var(--text-secondary);border:1px solid var(--border);}.btn-ghost:hover{background:rgba(255,255,255,0.11);color:var(--text-primary);}
+.btn-danger{background:rgba(255,82,82,0.08);color:var(--red);border:1px solid rgba(255,82,82,0.18);}.btn-danger:hover{background:rgba(255,82,82,0.16);}
 
-/* ──────────────────────────────────────────
-   BOARD VIEW (facilitator)
-────────────────────────────────────────── */
-#boardView { display:block; }
-#participantView { display:none; }
-
+/* ── Header ── */
 .hdr{background:var(--navy-900);border-bottom:1px solid var(--border);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:200;}
 .logo{font-family:'Outfit',sans-serif;font-size:0.92rem;font-weight:700;display:flex;align-items:center;gap:7px;white-space:nowrap;}
 .logo-pip{width:7px;height:7px;background:var(--orange);border-radius:50%;flex-shrink:0;}
 .logo em{color:var(--orange);font-style:normal;}
-.hdr-center{display:flex;align-items:center;gap:8px;flex:1;max-width:500px;margin:0 auto;}
+.hdr-center{display:flex;align-items:center;gap:8px;flex:1;max-width:540px;margin:0 auto;}
 .hdr-input{background:var(--navy-700);border:1px solid var(--border-strong);border-radius:6px;color:var(--text-primary);font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;padding:5px 11px;outline:none;transition:border-color 0.2s;}
 .hdr-input:focus{border-color:var(--orange);}
 .hdr-input::placeholder{color:var(--text-tertiary);}
-.hdr-input-name{width:170px;}
-.hdr-input-date{width:120px;}
+.hdr-input-name{width:160px;}.hdr-input-date{width:118px;}
 .save-lz{font-size:0.68rem;color:var(--text-tertiary);padding:3px 9px;border-radius:20px;border:1px solid var(--border);white-space:nowrap;transition:all 0.3s;}
 .save-lz.saved{color:var(--green);border-color:var(--green-border);}
 .hdr-right{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+
+/* Format pill in header */
+.format-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;background:var(--navy-600);border:1px solid var(--border-strong);cursor:pointer;font-size:0.72rem;font-weight:700;color:var(--text-secondary);transition:all 0.15s;white-space:nowrap;}
+.format-pill:hover{border-color:rgba(255,255,255,0.25);color:var(--text-primary);}
+.format-pill-dot{width:7px;height:7px;border-radius:50%;}
 
 /* Share bar */
 .share-bar{background:var(--navy-700);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .share-label{font-size:0.72rem;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;}
 .share-code-box{display:flex;align-items:center;gap:8px;background:var(--navy-900);border:1px solid var(--border-strong);border-radius:7px;padding:5px 12px;flex:1;max-width:420px;}
-.share-code{font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;color:var(--orange);letter-spacing:0.06em;flex:1;word-break:break-all;}
-.share-hint{font-size:0.72rem;color:var(--text-tertiary);margin-left:auto;}
+.share-code{font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;color:var(--orange);flex:1;word-break:break-all;}
+.contrib-indicator{display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--text-tertiary);}
+.contrib-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
 
-/* Board columns */
-.page{padding:24px 24px 80px;max-width:1400px;margin:0 auto;}
-.columns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;}
-@media(max-width:900px){.columns{grid-template-columns:1fr;}}
+/* Board layout */
+.page{padding:24px 24px 80px;max-width:1500px;margin:0 auto;}
+.columns{display:grid;gap:16px;margin-bottom:24px;}
+.cols-3{grid-template-columns:repeat(3,1fr);}
+.cols-4{grid-template-columns:repeat(4,1fr);}
+.cols-5{grid-template-columns:repeat(5,1fr);}
+@media(max-width:1100px){.cols-4,.cols-5{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:900px){.columns{grid-template-columns:1fr!important;}}
 
-.col{background:var(--navy-700);border:1px solid var(--border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:360px;overflow:hidden;}
-.col-hdr{padding:16px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.col-hdr.well-hdr{background:linear-gradient(135deg,rgba(34,201,122,0.2) 0%,rgba(34,201,122,0.07) 100%);border-bottom-color:rgba(34,201,122,0.2);}
-.col-hdr.improve-hdr{background:linear-gradient(135deg,rgba(245,166,35,0.2) 0%,rgba(245,166,35,0.07) 100%);border-bottom-color:rgba(245,166,35,0.2);}
-.col-hdr.topics-hdr{background:linear-gradient(135deg,rgba(255,106,26,0.2) 0%,rgba(255,106,26,0.07) 100%);border-bottom-color:rgba(255,106,26,0.2);}
-.col-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px currentColor;}
-.col-title{font-family:'Outfit',sans-serif;font-size:0.88rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;flex:1;}
+/* Column card */
+.col{border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:340px;overflow:hidden;border:1px solid var(--border);}
+.col-hdr{padding:14px 16px 13px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.col-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.col-title{font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;flex:1;}
+.col-desc{font-size:0.68rem;margin-top:2px;opacity:0.7;}
 .col-count{font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:10px;}
-.well-hdr .col-count{background:rgba(34,201,122,0.2);color:var(--green);border:1px solid rgba(34,201,122,0.3);}
-.improve-hdr .col-count{background:rgba(245,166,35,0.2);color:var(--amber);border:1px solid rgba(245,166,35,0.3);}
-.topics-hdr .col-count{background:rgba(255,106,26,0.2);color:var(--orange);border:1px solid rgba(255,106,26,0.3);}
-.col-body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1;}
-.col-add{border:1.5px dashed var(--border-strong);border-radius:var(--r);padding:10px 13px;background:transparent;color:var(--text-tertiary);font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;cursor:pointer;transition:all 0.15s;text-align:left;width:100%;}
+.col-body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1;background:var(--navy-700);}
+.col-add{border:1.5px dashed rgba(255,255,255,0.12);border-radius:var(--r);padding:10px 13px;background:transparent;color:var(--text-tertiary);font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;cursor:pointer;transition:all 0.15s;text-align:left;width:100%;}
 .col-add:hover{border-color:rgba(255,255,255,0.25);color:var(--text-secondary);background:rgba(255,255,255,0.03);}
 
 /* Sticky card */
-.sticky{border-radius:var(--r);padding:12px 13px;border:1px solid var(--border);background:var(--navy-600);position:relative;animation:stickyIn 0.22s ease both;}
 @keyframes stickyIn{from{opacity:0;transform:scale(0.94) translateY(6px);}to{opacity:1;transform:none;}}
-.sticky.well{border:1px solid rgba(34,201,122,0.3);background:linear-gradient(135deg,rgba(34,201,122,0.13) 0%,rgba(34,201,122,0.06) 100%);border-left:3px solid var(--green);}
-.sticky.improve{border:1px solid rgba(245,166,35,0.3);background:linear-gradient(135deg,rgba(245,166,35,0.13) 0%,rgba(245,166,35,0.06) 100%);border-left:3px solid var(--amber);}
-.sticky.topics{border:1px solid rgba(255,106,26,0.3);background:linear-gradient(135deg,rgba(255,106,26,0.13) 0%,rgba(255,106,26,0.06) 100%);border-left:3px solid var(--orange);}
+.sticky{border-radius:var(--r);padding:12px 13px;position:relative;animation:stickyIn 0.22s ease both;border-left-width:3px;border-left-style:solid;}
 .sticky-text{font-size:0.88rem;line-height:1.5;color:var(--text-primary);word-break:break-word;}
 .sticky-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px;}
 .sticky-author{display:flex;align-items:center;gap:5px;}
-.author-dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:800;color:#fff;flex-shrink:0;box-shadow:0 0 6px rgba(0,0,0,0.3);}
+.author-dot{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:800;color:#fff;flex-shrink:0;}
 .author-name{font-size:0.68rem;color:var(--text-tertiary);font-weight:500;}
 .sticky-meta{display:flex;align-items:center;gap:6px;}
-.vote-btn{display:flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid var(--border-strong);cursor:pointer;font-size:0.68rem;font-weight:600;color:var(--text-secondary);transition:all 0.15s;font-family:'IBM Plex Sans',sans-serif;}
+.vote-btn{display:flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid var(--border-strong);cursor:pointer;font-size:0.68rem;font-weight:700;color:var(--text-secondary);transition:all 0.15s;font-family:'IBM Plex Sans',sans-serif;}
 .vote-btn:hover{background:rgba(255,106,26,0.15);border-color:var(--orange-border);color:var(--orange);}
 .vote-btn.voted{background:var(--orange-dim);border-color:var(--orange-border);color:var(--orange);}
-.vote-count{font-family:'Outfit',sans-serif;font-size:0.78rem;font-weight:700;}
-.sticky-del{background:none;border:none;cursor:pointer;color:var(--text-tertiary);font-size:0.9rem;line-height:1;padding:2px;opacity:0;transition:opacity 0.15s;}
+.sticky-del{background:none;border:none;cursor:pointer;color:var(--text-tertiary);font-size:0.9rem;padding:2px;opacity:0;transition:opacity 0.15s;}
 .sticky:hover .sticky-del{opacity:1;}
 .sticky-del:hover{color:var(--red);}
 .inherited-badge{display:inline-flex;align-items:center;gap:4px;font-size:0.62rem;font-weight:700;color:var(--blue);background:rgba(74,158,255,0.12);border:1px solid rgba(74,158,255,0.25);border-radius:10px;padding:1px 7px;margin-bottom:5px;}
@@ -106,11 +101,16 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var
 .editor-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
 .editor-hint{font-size:0.68rem;color:var(--text-tertiary);}
 
-/* Actions section */
+/* Summary */
+.summary{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+.sum-card{border-radius:var(--r);padding:12px 18px;display:flex;flex-direction:column;gap:3px;min-width:100px;border:1px solid transparent;}
+.sum-lbl{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;}
+.sum-val{font-family:'Outfit',sans-serif;font-size:1.55rem;font-weight:800;}
+
+/* Actions */
 .actions-card{background:var(--navy-700);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;}
 .actions-hdr{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.actions-hdr-left{display:flex;align-items:center;gap:10px;}
-.actions-hdr h2{font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-secondary);}
+.actions-hdr h2{font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-secondary);display:flex;align-items:center;gap:8px;}
 .act-count{font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--orange-dim);color:var(--orange);border:1px solid var(--orange-border);}
 .action-table{width:100%;border-collapse:collapse;}
 .action-table thead th{padding:8px 16px;font-size:0.64rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-tertiary);text-align:left;border-bottom:1px solid var(--border);}
@@ -119,9 +119,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var
 .action-table tbody tr:hover td{background:rgba(255,255,255,0.015);}
 .act-input{background:transparent;border:none;outline:none;color:var(--text-primary);font-family:'IBM Plex Sans',sans-serif;font-size:0.84rem;width:100%;}
 .act-input::placeholder{color:var(--text-tertiary);}
-.act-owner{color:var(--text-secondary);font-size:0.82rem;}
 .status-sel{background:var(--navy-600);border:1px solid var(--border-strong);border-radius:5px;color:var(--text-secondary);font-family:'IBM Plex Sans',sans-serif;font-size:0.75rem;padding:3px 7px;outline:none;cursor:pointer;}
-.status-sel:focus{border-color:var(--orange);}
 .carry-btn{display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:10px;background:transparent;border:1px solid var(--border);cursor:pointer;font-size:0.7rem;font-weight:600;color:var(--text-tertiary);transition:all 0.15s;font-family:'IBM Plex Sans',sans-serif;white-space:nowrap;}
 .carry-btn:hover{border-color:var(--orange-border);color:var(--orange);}
 .carry-btn.on{background:var(--orange-dim);border-color:var(--orange-border);color:var(--orange);}
@@ -131,79 +129,27 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var
 .add-action-row{padding:12px 16px;border-top:1px solid var(--border);}
 .inherited-action{background:rgba(74,158,255,0.04);}
 
-/* Summary bar */
-.summary{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
-.sum-card{border-radius:var(--r);padding:14px 20px;display:flex;flex-direction:column;gap:4px;min-width:110px;border:1px solid transparent;}
-.sum-card.c-green{background:linear-gradient(135deg,rgba(34,201,122,0.18),rgba(34,201,122,0.06));border-color:rgba(34,201,122,0.3);}
-.sum-card.c-amber{background:linear-gradient(135deg,rgba(245,166,35,0.18),rgba(245,166,35,0.06));border-color:rgba(245,166,35,0.3);}
-.sum-card.c-orange{background:linear-gradient(135deg,rgba(255,106,26,0.18),rgba(255,106,26,0.06));border-color:rgba(255,106,26,0.3);}
-.sum-card.c-blue{background:linear-gradient(135deg,rgba(74,158,255,0.18),rgba(74,158,255,0.06));border-color:rgba(74,158,255,0.3);}
-.sum-card.c-purple{background:linear-gradient(135deg,rgba(167,139,250,0.18),rgba(167,139,250,0.06));border-color:rgba(167,139,250,0.3);}
-.sum-lbl{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;}
-.c-green .sum-lbl{color:var(--green);}
-.c-amber .sum-lbl{color:var(--amber);}
-.c-orange .sum-lbl{color:var(--orange);}
-.c-blue .sum-lbl{color:var(--blue);}
-.c-purple .sum-lbl{color:var(--purple);}
-.sum-val{font-family:'Outfit',sans-serif;font-size:1.7rem;font-weight:800;}
-.c-green .sum-val{color:var(--green);}
-.c-amber .sum-val{color:var(--amber);}
-.c-orange .sum-val{color:var(--orange);}
-.c-blue .sum-val{color:var(--blue);}
-.c-purple .sum-val{color:var(--purple);}
+/* Format picker modal cards */
+.format-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.fmt-card{border:1.5px solid var(--border-strong);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:all 0.15s;background:var(--navy-600);}
+.fmt-card:hover{border-color:rgba(255,255,255,0.28);background:var(--navy-500);}
+.fmt-card.selected{border-color:var(--orange);background:var(--orange-dim);}
+.fmt-card-name{font-family:'Outfit',sans-serif;font-size:0.88rem;font-weight:700;margin-bottom:4px;}
+.fmt-card-cols{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;}
+.fmt-col-chip{font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:8px;}
+.fmt-card-desc{font-size:0.72rem;color:var(--text-secondary);line-height:1.4;}
 
-/* Modal */
-.modal-bg{position:fixed;inset:0;background:rgba(8,14,26,0.8);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;backdrop-filter:blur(4px);}
-.modal{background:var(--navy-700);border:1px solid var(--border-strong);border-radius:var(--r-lg);width:100%;max-width:480px;padding:28px;animation:modalIn 0.2s ease;}
-@keyframes modalIn{from{opacity:0;transform:scale(0.96) translateY(8px);}to{opacity:1;transform:none;}}
-.modal h3{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:8px;}
-.modal p{font-size:0.84rem;color:var(--text-secondary);line-height:1.6;margin-bottom:20px;}
-.modal-code{background:var(--navy-900);border:1px solid var(--border-strong);border-radius:var(--r);padding:14px 16px;font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:700;color:var(--orange);word-break:break-all;margin-bottom:16px;line-height:1.5;max-height:120px;overflow-y:auto;}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;}
-.modal-textarea{width:100%;min-height:90px;background:var(--navy-900);border:1px solid var(--border-strong);border-radius:var(--r);color:var(--text-primary);font-family:'Outfit',sans-serif;font-size:0.85rem;padding:12px;outline:none;resize:vertical;margin-bottom:16px;}
-.modal-textarea:focus{border-color:var(--orange);}
-.modal-textarea::placeholder{color:var(--text-tertiary);}
-
-/* ──────────────────────────────────────────
-   PARTICIPANT VIEW
-────────────────────────────────────────── */
+/* Participant view */
 #participantView{min-height:100vh;display:none;flex-direction:column;}
 .p-hdr{background:var(--navy-900);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:sticky;top:0;z-index:200;}
-.p-hdr-left{display:flex;align-items:center;gap:12px;}
 .p-sprint-name{font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:700;color:var(--orange);}
-.p-name-wrap{display:flex;align-items:center;gap:8px;}
-.p-name-label{font-size:0.72rem;color:var(--text-tertiary);white-space:nowrap;}
-.p-name-input{background:var(--navy-700);border:1px solid var(--border-strong);border-radius:6px;color:var(--text-primary);font-family:'IBM Plex Sans',sans-serif;font-size:0.85rem;font-weight:600;padding:6px 12px;outline:none;width:150px;transition:border-color 0.2s;}
-.p-name-input:focus{border-color:var(--orange);}
-.p-name-input::placeholder{color:var(--text-tertiary);}
 .p-hdr-right{display:flex;align-items:center;gap:8px;}
 .p-done-btn{background:var(--orange);color:#fff;font-family:'IBM Plex Sans',sans-serif;font-size:0.82rem;font-weight:700;padding:8px 18px;border-radius:7px;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.15s;}
 .p-done-btn:hover{background:#FF7E3D;}
-.p-done-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.p-sticky-counter{font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--green-dim);border:1px solid var(--green-border);color:var(--green);}
 
-.p-body{flex:1;padding:24px;display:flex;flex-direction:column;gap:20px;max-width:1200px;margin:0 auto;width:100%;}
-.p-tip{background:var(--navy-700);border:1px solid var(--border);border-radius:var(--r);padding:12px 18px;font-size:0.82rem;color:var(--text-secondary);display:flex;align-items:center;gap:10px;}
-.p-tip strong{color:var(--text-primary);}
-.p-columns{display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;}
-@media(max-width:700px){.p-columns{grid-template-columns:1fr;}}
-
-.p-col{background:var(--navy-700);border:1px solid var(--border);border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:300px;overflow:hidden;}
-.p-col-hdr{padding:0;border-bottom:none;}
-.p-col-body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1;}
-.p-add-btn{border:1.5px dashed var(--border-strong);border-radius:var(--r);padding:12px 14px;background:transparent;color:var(--text-tertiary);font-family:'IBM Plex Sans',sans-serif;font-size:0.84rem;cursor:pointer;transition:all 0.15s;text-align:left;width:100%;display:flex;align-items:center;gap:8px;}
-.p-add-btn:hover{border-color:rgba(255,255,255,0.25);color:var(--text-secondary);background:rgba(255,255,255,0.03);}
-.p-add-icon{font-size:1rem;line-height:1;}
-
-.p-sticky{border-radius:var(--r);padding:12px 13px;border:1px solid var(--border);background:var(--navy-600);position:relative;animation:stickyIn 0.2s ease both;}
-.p-sticky.well{border:1px solid rgba(34,201,122,0.3);background:linear-gradient(135deg,rgba(34,201,122,0.14),rgba(34,201,122,0.06));border-left:3px solid var(--green);}
-.p-sticky.improve{border:1px solid rgba(245,166,35,0.3);background:linear-gradient(135deg,rgba(245,166,35,0.14),rgba(245,166,35,0.06));border-left:3px solid var(--amber);}
-.p-sticky-text{font-size:0.88rem;line-height:1.5;color:var(--text-primary);word-break:break-word;}
-.p-sticky-del{position:absolute;top:6px;right:7px;background:none;border:none;cursor:pointer;color:var(--text-tertiary);font-size:0.85rem;opacity:0;transition:opacity 0.15s;}
-.p-sticky:hover .p-sticky-del{opacity:1;}
-.p-sticky-del:hover{color:var(--red);}
-
-/* Participant name card */
-.p-name-card{background:linear-gradient(135deg,rgba(255,106,26,0.1),rgba(255,106,26,0.04));border:1px solid rgba(255,106,26,0.25);border-radius:var(--r-lg);padding:16px 20px;margin-bottom:4px;}
+.p-body{flex:1;padding:24px;display:flex;flex-direction:column;gap:20px;max-width:1500px;margin:0 auto;width:100%;}
+.p-name-card{background:linear-gradient(135deg,rgba(255,106,26,0.1),rgba(255,106,26,0.04));border:1px solid rgba(255,106,26,0.25);border-radius:var(--r-lg);padding:16px 20px;}
 .p-name-card-inner{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
 .p-step-label{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--orange);opacity:0.7;white-space:nowrap;}
 .p-name-card-content{display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap;}
@@ -213,46 +159,63 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var
 .p-name-big-input::placeholder{color:var(--text-tertiary);font-weight:400;}
 .p-name-big-input.filled{border-color:var(--green);background:rgba(34,201,122,0.07);}
 .p-name-hint{font-size:0.72rem;color:var(--text-tertiary);}
-.p-name-hint.error{color:var(--red);}
 
-/* Sticky counter in header */
-.p-sticky-counter{font-size:0.72rem;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--green-dim);border:1px solid var(--green-border);color:var(--green);}
+.p-columns{display:grid;gap:14px;flex:1;}
+.p-cols-2{grid-template-columns:1fr 1fr;}
+.p-cols-3{grid-template-columns:repeat(3,1fr);}
+.p-cols-4{grid-template-columns:repeat(4,1fr);}
+@media(max-width:900px){.p-cols-3,.p-cols-4{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.p-columns{grid-template-columns:1fr!important;}}
 
-@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
-.shake{animation:shake 0.4s ease;}
+.p-col{border-radius:var(--r-lg);display:flex;flex-direction:column;min-height:240px;overflow:hidden;border:1px solid var(--border);}
+.p-col-body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1;background:var(--navy-700);}
+.p-add-btn{border:1.5px dashed rgba(255,255,255,0.12);border-radius:var(--r);padding:12px 14px;background:transparent;color:var(--text-tertiary);font-family:'IBM Plex Sans',sans-serif;font-size:0.84rem;cursor:pointer;transition:all 0.15s;text-align:left;width:100%;display:flex;align-items:center;gap:8px;}
+.p-add-btn:hover{border-color:rgba(255,255,255,0.25);color:var(--text-secondary);background:rgba(255,255,255,0.03);}
+.p-sticky{border-radius:var(--r);padding:12px 13px;position:relative;animation:stickyIn 0.2s ease both;border-left-width:3px;border-left-style:solid;}
+.p-sticky-text{font-size:0.88rem;line-height:1.5;color:var(--text-primary);word-break:break-word;}
+.p-sticky-del{position:absolute;top:6px;right:7px;background:none;border:none;cursor:pointer;color:var(--text-tertiary);font-size:0.85rem;opacity:0;transition:opacity 0.15s;}
+.p-sticky:hover .p-sticky-del{opacity:1;}
+.p-sticky-del:hover{color:var(--red);}
 
-/* Contributor count on board (live indicator) */
-.contrib-indicator{display:flex;align-items:center;gap:6px;font-size:0.72rem;color:var(--text-tertiary);}
-.contrib-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(8,14,26,0.82);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;backdrop-filter:blur(4px);}
+.modal{background:var(--navy-700);border:1px solid var(--border-strong);border-radius:var(--r-lg);width:100%;max-width:500px;padding:28px;animation:modalIn 0.2s ease;}
+@keyframes modalIn{from{opacity:0;transform:scale(0.96) translateY(8px);}to{opacity:1;transform:none;}}
+.modal h3{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:8px;}
+.modal p{font-size:0.84rem;color:var(--text-secondary);line-height:1.6;margin-bottom:16px;}
+.modal-code{background:var(--navy-900);border:1px solid var(--border-strong);border-radius:var(--r);padding:14px 16px;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:700;color:var(--orange);word-break:break-all;margin-bottom:16px;line-height:1.5;max-height:120px;overflow-y:auto;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;}
+.modal-textarea{width:100%;min-height:90px;background:var(--navy-900);border:1px solid var(--border-strong);border-radius:var(--r);color:var(--text-primary);font-family:'Outfit',sans-serif;font-size:0.85rem;padding:12px;outline:none;resize:vertical;margin-bottom:16px;}
+.modal-textarea:focus{border-color:var(--orange);}
+.modal-textarea::placeholder{color:var(--text-tertiary);}
 
-/* Notification toast */
 .toast{position:fixed;bottom:24px;right:24px;background:var(--navy-700);border:1px solid var(--border-strong);border-radius:var(--r);padding:12px 18px;font-size:0.82rem;color:var(--text-primary);z-index:999;animation:toastIn 0.2s ease;box-shadow:0 4px 20px rgba(0,0,0,0.4);}
 @keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
-
-/* Import panel for actions carry-forward */
-.carry-forward-notice{background:rgba(74,158,255,0.07);border:1px solid rgba(74,158,255,0.2);border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:0.82rem;color:var(--blue);margin-bottom:16px;}
+@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+.shake{animation:shake 0.4s ease;}
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════
-     BOARD VIEW (Facilitator)
-══════════════════════════════════════════ -->
+<!-- ══ BOARD VIEW ══ -->
 <div id="boardView">
   <div class="hdr">
     <div class="logo"><div class="logo-pip"></div>S4 Labour <em>/ Retro</em></div>
     <div class="hdr-center">
       <input class="hdr-input hdr-input-name" id="sprintName" placeholder="Sprint name…" oninput="meta('sprintName',this.value)">
       <input class="hdr-input hdr-input-date" id="retroDate" type="date" oninput="meta('retroDate',this.value)">
+      <button class="format-pill" id="formatPill" onclick="openFormatPicker()">
+        <div class="format-pill-dot" id="formatPillDot"></div>
+        <span id="formatPillLabel">Format</span> ▾
+      </button>
       <span class="save-lz" id="saveLz">Ready</span>
     </div>
     <div class="hdr-right">
-      <button class="btn btn-ghost" onclick="openContribute()">👥 Open for contributions</button>
+      <button class="btn btn-ghost" onclick="openContribute()">👥 Share with team</button>
       <button class="btn btn-ghost" onclick="openImportContrib()">⬇ Merge contributions</button>
       <button class="btn btn-ghost" onclick="doExport()">Export</button>
       <button class="btn btn-ghost" onclick="openImportRetro()">Import previous</button>
-      <button class="btn btn-danger btn-small" onclick="confirmReset()">Reset</button>
+      <button class="btn btn-danger" onclick="confirmReset()">Reset</button>
     </div>
   </div>
 
@@ -263,86 +226,37 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var
       <button class="btn btn-ghost" style="padding:3px 9px;font-size:0.7rem;" onclick="copyShareLink()">Copy link</button>
     </div>
     <div class="contrib-indicator"><div class="contrib-dot"></div><span id="contribCount">Waiting for contributors…</span></div>
-    <button class="btn btn-ghost" style="padding:3px 9px;font-size:0.68rem;margin-left:auto;" onclick="closeShareBar()">✕ Close</button>
+    <button class="btn btn-ghost" style="padding:3px 9px;font-size:0.68rem;margin-left:auto;" onclick="closeShareBar()">✕</button>
   </div>
 
   <div class="page">
-    <!-- Summary -->
     <div class="summary" id="summary"></div>
-
-    <!-- Columns -->
-    <div class="columns">
-      <div class="col" id="col-well">
-        <div class="col-hdr well-hdr">
-          <div class="col-dot" style="background:var(--green);color:var(--green)"></div>
-          <span class="col-title" style="color:var(--green)">What went well</span>
-          <span class="col-count" id="cnt-well">0</span>
-        </div>
-        <div class="col-body" id="body-well">
-          <button class="col-add" onclick="startAdd('well')">+ Add sticky</button>
-        </div>
-      </div>
-      <div class="col" id="col-improve">
-        <div class="col-hdr improve-hdr">
-          <div class="col-dot" style="background:var(--amber);color:var(--amber)"></div>
-          <span class="col-title" style="color:var(--amber)">What could improve</span>
-          <span class="col-count" id="cnt-improve">0</span>
-        </div>
-        <div class="col-body" id="body-improve">
-          <button class="col-add" onclick="startAdd('improve')">+ Add sticky</button>
-        </div>
-      </div>
-      <div class="col" id="col-actions">
-        <div class="col-hdr topics-hdr">
-          <div class="col-dot" style="background:var(--orange);color:var(--orange)"></div>
-          <span class="col-title" style="color:var(--orange)">Topics / parking lot</span>
-          <span class="col-count" id="cnt-topics">0</span>
-        </div>
-        <div class="col-body" id="body-topics">
-          <button class="col-add" onclick="startAdd('topics')">+ Add sticky</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Actions -->
+    <div class="columns" id="columns"></div>
     <div class="actions-card">
       <div class="actions-hdr">
-        <div class="actions-hdr-left">
-          <h2>Actions</h2>
-          <span class="act-count" id="actCount">0</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:0.7rem;color:var(--text-tertiary);">📌 = carry to next retro</span>
-        </div>
+        <h2>Actions <span class="act-count" id="actCount">0</span></h2>
+        <span style="font-size:0.7rem;color:var(--text-tertiary);">📌 = carry to next retro</span>
       </div>
       <div id="actionsBody"></div>
-      <div class="add-action-row">
-        <button class="btn btn-ghost" onclick="addAction()">+ Add action</button>
-      </div>
+      <div class="add-action-row"><button class="btn btn-ghost" onclick="addAction()">+ Add action</button></div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     PARTICIPANT VIEW
-══════════════════════════════════════════ -->
+<!-- ══ PARTICIPANT VIEW ══ -->
 <div id="participantView">
   <div class="p-hdr">
-    <div class="p-hdr-left">
+    <div style="display:flex;align-items:center;gap:12px;">
       <div class="logo"><div class="logo-pip"></div>S4 Labour <em>/ Retro</em></div>
       <div class="p-sprint-name" id="pSprintName"></div>
     </div>
     <div class="p-hdr-right">
       <span class="p-sticky-counter" id="pStickyCounter" style="display:none;"></span>
       <button class="btn btn-ghost" onclick="switchToBoard()">← Board view</button>
-      <button class="p-done-btn" id="pDoneBtn" onclick="submitContribution()">
-        ✓ Done — copy my stickies
-      </button>
+      <button class="p-done-btn" id="pDoneBtn" onclick="submitContribution()">✓ Done — copy my stickies</button>
     </div>
   </div>
   <div class="p-body">
-
-    <!-- Step 1: Name -->
     <div class="p-name-card" id="pNameCard">
       <div class="p-name-card-inner">
         <div class="p-step-label">Step 1</div>
@@ -354,36 +268,67 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var
         <div class="p-step-label" style="margin-left:auto;">Step 2 → add stickies below</div>
       </div>
     </div>
-
-    <div class="p-columns">
-      <div class="p-col">
-        <div class="p-col-hdr col-hdr well-hdr">
-          <div class="col-dot" style="background:var(--green);color:var(--green)"></div>
-          <span class="col-title" style="color:var(--green);font-family:'Outfit',sans-serif;font-size:0.88rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;">What went well</span>
-        </div>
-        <div class="p-col-body" id="p-body-well">
-          <button class="p-add-btn" onclick="pStartAdd('well')"><span class="p-add-icon">＋</span>Click to add a sticky…</button>
-        </div>
-      </div>
-      <div class="p-col">
-        <div class="p-col-hdr col-hdr improve-hdr">
-          <div class="col-dot" style="background:var(--amber);color:var(--amber)"></div>
-          <span class="col-title" style="color:var(--amber);font-family:'Outfit',sans-serif;font-size:0.88rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;">What could improve</span>
-        </div>
-        <div class="p-col-body" id="p-body-improve">
-          <button class="p-add-btn" onclick="pStartAdd('improve')"><span class="p-add-icon">＋</span>Add another…</button>
-        </div>
-      </div>
-    </div>
+    <div class="p-columns" id="pColumns"></div>
   </div>
 </div>
 
-<!-- ══ MODALS ══ -->
+<!-- ══ MODAL ══ -->
 <div class="modal-bg" id="modalBg" style="display:none;" onclick="if(event.target===this)closeModal()">
   <div class="modal" id="modalBox"></div>
 </div>
 
 <script>
+// ── FORMAT DEFINITIONS ──
+const FORMATS = {
+  classic: {
+    name: 'Classic',
+    desc: 'The standard retrospective. What worked, what didn\'t, open discussion.',
+    cols: [
+      { id:'went-well', label:'Went well',      emoji:'✅', color:'#22C97A', dim:'rgba(34,201,122,0.14)',  border:'rgba(34,201,122,0.35)',  desc:'What went well this sprint?' },
+      { id:'improve',   label:'To improve',     emoji:'🔧', color:'#F5A623', dim:'rgba(245,166,35,0.14)', border:'rgba(245,166,35,0.35)',  desc:'What could have gone better?' },
+      { id:'actions',   label:'Ideas & topics', emoji:'💡', color:'#FF6A1A', dim:'rgba(255,106,26,0.14)', border:'rgba(255,106,26,0.38)',  desc:'Topics to discuss or ideas to try' },
+    ]
+  },
+  ssc: {
+    name: 'Start · Stop · Continue',
+    desc: 'Action-oriented. Identify new practices, things to drop, and what\'s working.',
+    cols: [
+      { id:'start',    label:'Start',    emoji:'🚀', color:'#22C97A', dim:'rgba(34,201,122,0.14)',  border:'rgba(34,201,122,0.35)',  desc:'New things we should start doing' },
+      { id:'stop',     label:'Stop',     emoji:'🛑', color:'#FF5252', dim:'rgba(255,82,82,0.13)',   border:'rgba(255,82,82,0.35)',   desc:'Things we should stop doing' },
+      { id:'continue', label:'Continue', emoji:'✅', color:'#4A9EFF', dim:'rgba(74,158,255,0.14)',  border:'rgba(74,158,255,0.38)',  desc:'Things that are working — keep them' },
+    ]
+  },
+  '4ls': {
+    name: '4 Ls',
+    desc: 'Liked · Learned · Lacked · Longed for. Great for deeper team reflection.',
+    cols: [
+      { id:'liked',    label:'Liked',      emoji:'💚', color:'#22C97A', dim:'rgba(34,201,122,0.14)',  border:'rgba(34,201,122,0.35)',  desc:'What did you enjoy or appreciate?' },
+      { id:'learned',  label:'Learned',    emoji:'🧠', color:'#4A9EFF', dim:'rgba(74,158,255,0.14)',  border:'rgba(74,158,255,0.38)',  desc:'What did you learn this sprint?' },
+      { id:'lacked',   label:'Lacked',     emoji:'😕', color:'#F5A623', dim:'rgba(245,166,35,0.14)', border:'rgba(245,166,35,0.35)',  desc:'What was missing or insufficient?' },
+      { id:'longed',   label:'Longed for', emoji:'🌟', color:'#A78BFA', dim:'rgba(167,139,250,0.14)',border:'rgba(167,139,250,0.38)', desc:'What do you wish had happened?' },
+    ]
+  },
+  madsadglad: {
+    name: 'Mad · Sad · Glad',
+    desc: 'Emotion-focused. Surfaces feelings to uncover what really matters to the team.',
+    cols: [
+      { id:'mad',  label:'Mad',  emoji:'😡', color:'#FF5252', dim:'rgba(255,82,82,0.13)',   border:'rgba(255,82,82,0.35)',  desc:'What frustrated you this sprint?' },
+      { id:'sad',  label:'Sad',  emoji:'😔', color:'#4A9EFF', dim:'rgba(74,158,255,0.14)',  border:'rgba(74,158,255,0.38)', desc:'What disappointed you?' },
+      { id:'glad', label:'Glad', emoji:'😊', color:'#22C97A', dim:'rgba(34,201,122,0.14)',  border:'rgba(34,201,122,0.35)', desc:'What made you happy or proud?' },
+    ]
+  },
+  daki: {
+    name: 'DAKI',
+    desc: 'Drop · Add · Keep · Improve. Hyper-focused on process change.',
+    cols: [
+      { id:'drop',    label:'Drop',    emoji:'🗑️', color:'#FF5252', dim:'rgba(255,82,82,0.13)',   border:'rgba(255,82,82,0.35)',   desc:'Stop doing this completely' },
+      { id:'add',     label:'Add',     emoji:'➕',  color:'#22C97A', dim:'rgba(34,201,122,0.14)',  border:'rgba(34,201,122,0.35)',  desc:'New practices to introduce' },
+      { id:'keep',    label:'Keep',    emoji:'🔒', color:'#4A9EFF', dim:'rgba(74,158,255,0.14)',  border:'rgba(74,158,255,0.38)',  desc:'What\'s working — protect it' },
+      { id:'improve', label:'Improve', emoji:'📈', color:'#F5A623', dim:'rgba(245,166,35,0.14)', border:'rgba(245,166,35,0.35)',  desc:'Keep, but make it better' },
+    ]
+  },
+};
+
 // ── AUTHOR COLOURS ──
 const AUTHOR_COLORS = ['#FF6A1A','#22C97A','#4A9EFF','#A78BFA','#F5A623','#FF5252','#38BDF8','#34D399','#FB923C','#C084FC'];
 function authorColor(name) {
@@ -397,114 +342,169 @@ function initials(name) {
 }
 
 // ── STATE ──
-let S = {
-  meta: { sprintName:'', retroDate:'' },
-  stickies: [],   // {id,col,text,author,votes:[]}
-  actions: [],    // {id,text,owner,status,carryForward,inherited,inheritedFrom}
-};
-let pStickies = [];  // participant's local stickies (not in S)
+let S = { meta:{ sprintName:'', retroDate:'', format:'classic' }, stickies:[], actions:[] };
+let pStickies = [];
 let saveTimer = null;
 
-// ── BROADCAST (same device/tab sync) ──
+function currentFormat() { return FORMATS[S.meta.format] || FORMATS.classic; }
+function currentCols() { return currentFormat().cols; }
+
+// ── BROADCAST ──
 let bc = null;
 try { bc = new BroadcastChannel('s4retro'); bc.onmessage = onBCMsg; } catch(e){}
 function bcPost(msg) { try { if(bc) bc.postMessage(msg); } catch(e){} }
 function onBCMsg(e) {
-  if (e.data.type === 'sticky') {
-    const existing = S.stickies.find(s=>s.id===e.data.sticky.id);
-    if (!existing) { S.stickies.push(e.data.sticky); renderBoard(); save(); }
-  }
-  if (e.data.type === 'ping') {
-    const n = parseInt(document.getElementById('contribCount')?.dataset.n||'0')+1;
-    const el = document.getElementById('contribCount');
-    if(el){el.textContent = n+' contributor'+(n!==1?'s':'')+' online';el.dataset.n=n;}
-    bcPost({type:'pong'});
-  }
-  if (e.data.type === 'pong') {
-    const n = parseInt(document.getElementById('contribCount')?.dataset.n||'0')+1;
-    const el = document.getElementById('contribCount');
-    if(el){el.textContent = n+' contributor'+(n!==1?'s':'')+' online';el.dataset.n=n;}
-  }
+  if (e.data.type==='sticky') { if (!S.stickies.find(s=>s.id===e.data.sticky.id)) { S.stickies.push(e.data.sticky); renderBoard(); save(); } }
+  if (e.data.type==='ping')  { updateContribCount(1); bcPost({type:'pong'}); }
+  if (e.data.type==='pong')  { updateContribCount(1); }
+  if (e.data.type==='format') { S.meta.format = e.data.format; save(); applyFormat(); renderBoard(); }
+}
+function updateContribCount(delta) {
+  const el = document.getElementById('contribCount'); if(!el) return;
+  const n = (parseInt(el.dataset.n||'0') + delta);
+  el.dataset.n = n; el.textContent = n+' contributor'+(n!==1?'s':'')+' online';
 }
 
 // ── SAVE / LOAD ──
 function save() {
-  clearTimeout(saveTimer);
-  showSave('saving');
-  saveTimer = setTimeout(()=>{
-    try { localStorage.setItem('s4retro_v2', JSON.stringify(S)); showSave('saved'); } catch(e){}
-  }, 700);
+  clearTimeout(saveTimer); showSave('saving');
+  saveTimer = setTimeout(()=>{ try { localStorage.setItem('s4retro_v3', JSON.stringify(S)); showSave('saved'); } catch(e){} }, 700);
 }
-function load() {
-  try {
-    const d = JSON.parse(localStorage.getItem('s4retro_v2'));
-    if (d) S = d;
-  } catch(e){}
-}
+function load() { try { const d=JSON.parse(localStorage.getItem('s4retro_v3')); if(d) S=d; } catch(e){} }
 function showSave(s) {
-  const el = document.getElementById('saveLz');
-  if (!el) return;
-  if (s==='saving'){el.textContent='Saving…';el.className='save-lz';}
+  const el=document.getElementById('saveLz'); if(!el) return;
+  if(s==='saving'){el.textContent='Saving…';el.className='save-lz';}
   else if(s==='saved'){el.textContent='✓ Saved';el.className='save-lz saved';setTimeout(()=>{el.textContent='Auto-saved';el.className='save-lz';},2000);}
 }
 function meta(k,v) { S.meta[k]=v; save(); }
 
-// ── RENDER BOARD ──
-function renderBoard() {
-  renderColumn('well'); renderColumn('improve'); renderColumn('topics');
-  renderActions(); renderSummary();
+// ── FORMAT ──
+function applyFormat() {
+  const fmt = currentFormat();
+  const cols = currentCols();
+  // Update pill
+  document.getElementById('formatPillLabel').textContent = fmt.name;
+  document.getElementById('formatPillDot').style.background = cols[0].color;
+  // Update columns grid class
+  const colsEl = document.getElementById('columns');
+  colsEl.className = 'columns cols-' + Math.min(cols.length, 5);
+  // Re-render board columns HTML
+  renderBoardColumns();
+  renderPColumns();
 }
-function renderColumn(col) {
-  const body = document.getElementById('body-'+col);
-  if (!body) return;
-  const stickies = S.stickies.filter(s=>s.col===col);
-  document.getElementById('cnt-'+col).textContent = stickies.length;
+
+function openFormatPicker() {
+  const cur = S.meta.format || 'classic';
+  let cards = Object.entries(FORMATS).map(([key, fmt]) => {
+    const chips = fmt.cols.map(c=>`<span class="fmt-col-chip" style="background:${c.dim};color:${c.color};border:1px solid ${c.border}">${c.emoji} ${c.label}</span>`).join('');
+    return `<div class="fmt-card ${key===cur?'selected':''}" onclick="selectFormat('${key}')">
+      <div class="fmt-card-name">${fmt.name}</div>
+      <div class="fmt-card-cols">${chips}</div>
+      <div class="fmt-card-desc">${fmt.desc}</div>
+    </div>`;
+  }).join('');
+  showModal(`
+    <h3>Choose retrospective format</h3>
+    <p>Pick a format for this session. Changing it will clear existing stickies if any exist.</p>
+    <div class="format-grid">${cards}</div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>
+  `);
+}
+function selectFormat(key) {
+  if (key === S.meta.format) { closeModal(); return; }
+  if (S.stickies.length > 0) {
+    if (!confirm('Changing format will clear all existing stickies. Continue?')) return;
+    S.stickies = [];
+  }
+  S.meta.format = key;
+  save(); closeModal(); applyFormat(); renderBoard();
+  bcPost({ type:'format', format:key });
+}
+
+// ── RENDER BOARD ──
+function renderBoard() { renderBoardColumns(); renderActions(); renderSummary(); }
+
+function renderBoardColumns() {
+  const colsEl = document.getElementById('columns');
+  const cols = currentCols();
+  colsEl.className = 'columns cols-' + cols.length;
+  // Render or update each column
   let html = '';
-  stickies.forEach(s => {
-    const color = authorColor(s.author);
-    html += `<div class="sticky ${col}" id="sticky-${s.id}">
-      ${s.inherited ? `<div class="inherited-badge">↩ from ${escH(s.inheritedFrom||'prev retro')}</div>` : ''}
-      <div class="sticky-text">${escH(s.text)}</div>
-      <div class="sticky-foot">
-        <div class="sticky-author">
-          <div class="author-dot" style="background:${color}">${initials(s.author)}</div>
-          <span class="author-name">${escH(s.author||'Anon')}</span>
+  cols.forEach(col => {
+    const stickies = S.stickies.filter(s=>s.col===col.id);
+    const countBadgeStyle = `background:${col.dim};color:${col.color};border:1px solid ${col.border}`;
+    const hdrStyle = `background:linear-gradient(135deg,${col.dim} 0%,rgba(0,0,0,0) 100%);border-bottom:1px solid ${col.border.replace('0.35','0.2').replace('0.38','0.2').replace('0.4','0.2')}`;
+    let stickiesHtml = '';
+    stickies.forEach(s => {
+      const ac = authorColor(s.author);
+      const stickyStyle = `background:linear-gradient(135deg,${col.dim},rgba(0,0,0,0) 100%);border-color:${col.border};border-left-color:${col.color};`;
+      stickiesHtml += `<div class="sticky" style="${stickyStyle}" id="sticky-${s.id}">
+        ${s.inherited?`<div class="inherited-badge">↩ from ${escH(s.inheritedFrom||'prev retro')}</div>`:''}
+        <div class="sticky-text">${escH(s.text)}</div>
+        <div class="sticky-foot">
+          <div class="sticky-author">
+            <div class="author-dot" style="background:${ac}">${initials(s.author)}</div>
+            <span class="author-name">${escH(s.author||'Anon')}</span>
+          </div>
+          <div class="sticky-meta">
+            <button class="vote-btn ${s.votes&&s.votes.length?'voted':''}" onclick="vote('${s.id}')">▲ <span>${s.votes?s.votes.length:0}</span></button>
+            <button class="sticky-del" onclick="delSticky('${s.id}')">✕</button>
+          </div>
         </div>
-        <div class="sticky-meta">
-          <button class="vote-btn ${s.votes&&s.votes.length?'voted':''}" onclick="vote('${s.id}')">
-            ▲ <span class="vote-count">${s.votes?s.votes.length:0}</span>
-          </button>
-          <button class="sticky-del" onclick="delSticky('${s.id}')" title="Delete">✕</button>
+      </div>`;
+    });
+    html += `<div class="col" style="border-color:${col.border.replace('0.35','0.18').replace('0.38','0.18')}">
+      <div class="col-hdr" style="${hdrStyle}">
+        <div class="col-dot" style="background:${col.color};box-shadow:0 0 7px ${col.color}"></div>
+        <div style="flex:1">
+          <div class="col-title" style="color:${col.color}">${col.emoji} ${col.label}</div>
+          <div class="col-desc" style="color:${col.color}">${col.desc}</div>
         </div>
+        <span class="col-count" style="${countBadgeStyle}">${stickies.length}</span>
+      </div>
+      <div class="col-body" id="body-${col.id}">
+        ${stickiesHtml}
+        <button class="col-add" onclick="startAdd('${col.id}')">+ Add sticky</button>
       </div>
     </div>`;
   });
-  html += `<button class="col-add" onclick="startAdd('${col}')">+ Add sticky</button>`;
-  body.innerHTML = html;
+  colsEl.innerHTML = html;
 }
 
 function renderSummary() {
-  const well = S.stickies.filter(s=>s.col==='well').length;
-  const improve = S.stickies.filter(s=>s.col==='improve').length;
+  const cols = currentCols();
   const open = S.actions.filter(a=>a.status!=='Done').length;
   const carry = S.actions.filter(a=>a.carryForward).length;
-  document.getElementById('summary').innerHTML = `
-    <div class="sum-card c-green"><div class="sum-lbl">Went well</div><div class="sum-val">${well}</div></div>
-    <div class="sum-card c-amber"><div class="sum-lbl">To improve</div><div class="sum-val">${improve}</div></div>
-    <div class="sum-card c-orange"><div class="sum-lbl">Open actions</div><div class="sum-val">${open}</div></div>
-    <div class="sum-card c-blue"><div class="sum-lbl">Carry forward</div><div class="sum-val">${carry}</div></div>
-    <div class="sum-card c-purple"><div class="sum-lbl">Total stickies</div><div class="sum-val">${S.stickies.length}</div></div>
-  `;
+  let html = '';
+  cols.forEach(col => {
+    const n = S.stickies.filter(s=>s.col===col.id).length;
+    html += `<div class="sum-card" style="background:linear-gradient(135deg,${col.dim},rgba(0,0,0,0));border-color:${col.border}">
+      <div class="sum-lbl" style="color:${col.color}">${col.label}</div>
+      <div class="sum-val" style="color:${col.color}">${n}</div>
+    </div>`;
+  });
+  html += `<div class="sum-card" style="background:var(--orange-dim);border-color:var(--orange-border)">
+    <div class="sum-lbl" style="color:var(--orange)">Open actions</div>
+    <div class="sum-val" style="color:var(--orange)">${open}</div>
+  </div>
+  <div class="sum-card" style="background:var(--navy-700);border-color:var(--border-strong)">
+    <div class="sum-lbl" style="color:var(--text-tertiary)">Carry fwd</div>
+    <div class="sum-val" style="color:var(--text-secondary)">${carry}</div>
+  </div>`;
+  document.getElementById('summary').innerHTML = html;
 }
 
-// ── ADD STICKY (inline editor on board) ──
+// ── ADD STICKY ──
 let activeEditor = null;
-function startAdd(col) {
+function startAdd(colId) {
   if (activeEditor) commitEditor();
-  const body = document.getElementById('body-'+col);
+  const col = currentCols().find(c=>c.id===colId);
+  const body = document.getElementById('body-'+colId);
+  if (!body) return;
   const addBtn = body.querySelector('.col-add');
   const editorEl = document.createElement('div');
   editorEl.className = 'sticky-editor';
+  editorEl.style.borderColor = col ? col.color : 'var(--orange)';
   editorEl.innerHTML = `
     <textarea id="editorTA" placeholder="Type your sticky… (Enter to save, Shift+Enter for new line)" autofocus></textarea>
     <div class="editor-foot">
@@ -515,13 +515,10 @@ function startAdd(col) {
       </div>
     </div>`;
   body.insertBefore(editorEl, addBtn);
-  activeEditor = { col, el: editorEl };
+  activeEditor = { colId, el:editorEl };
   const ta = editorEl.querySelector('#editorTA');
   ta.focus();
-  ta.addEventListener('keydown', e => {
-    if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); commitEditor(); }
-    if (e.key==='Escape') { cancelEditor(); }
-  });
+  ta.addEventListener('keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();commitEditor();} if(e.key==='Escape') cancelEditor(); });
 }
 function commitEditor() {
   if (!activeEditor) return;
@@ -529,405 +526,264 @@ function commitEditor() {
   const authorEl = activeEditor.el.querySelector('#editorAuthor');
   const text = ta.value.trim();
   const author = (authorEl.value||'').trim();
+  const colId = activeEditor.colId;
   if (text) {
-    const sticky = { id:'s_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), col:activeEditor.col, text, author, votes:[] };
+    const sticky = { id:'s_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), col:colId, text, author, votes:[] };
     S.stickies.push(sticky);
     if (author) S.meta._lastAuthor = author;
-    save();
-    bcPost({ type:'sticky', sticky });
-    renderColumn(activeEditor.col);
-    renderSummary();
+    save(); bcPost({type:'sticky',sticky}); renderBoard();
   }
-  activeEditor.el.remove();
-  activeEditor = null;
-  // keep adding
-  if (text) startAdd(S.stickies[S.stickies.length-1].col);
+  activeEditor.el.remove(); activeEditor = null;
+  if (text) startAdd(colId);
 }
-function cancelEditor() {
-  if (!activeEditor) return;
-  activeEditor.el.remove();
-  activeEditor = null;
-}
+function cancelEditor() { if (!activeEditor) return; activeEditor.el.remove(); activeEditor = null; }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') cancelEditor(); });
 
 function vote(id) {
-  const s = S.stickies.find(x=>x.id===id);
-  if (!s) return;
-  if (!s.votes) s.votes = [];
-  const myVote = 'board';
-  const idx = s.votes.indexOf(myVote);
-  if (idx>=0) s.votes.splice(idx,1); else s.votes.push(myVote);
-  save(); renderColumn(s.col);
+  const s=S.stickies.find(x=>x.id===id); if(!s) return;
+  if(!s.votes) s.votes=[];
+  const idx=s.votes.indexOf('board');
+  if(idx>=0) s.votes.splice(idx,1); else s.votes.push('board');
+  save(); renderBoard();
 }
 function delSticky(id) {
-  const s = S.stickies.find(x=>x.id===id);
-  if (!s) return;
-  S.stickies = S.stickies.filter(x=>x.id!==id);
-  save(); renderColumn(s.col); renderSummary();
+  S.stickies=S.stickies.filter(x=>x.id!==id); save(); renderBoard();
 }
 
 // ── ACTIONS ──
 function renderActions() {
-  const body = document.getElementById('actionsBody');
-  const inherited = S.actions.filter(a=>a.inherited);
-  document.getElementById('actCount').textContent = S.actions.length;
-  if (!S.actions.length) {
-    body.innerHTML = '<div style="padding:20px 20px;font-size:0.84rem;color:var(--text-tertiary);">No actions yet. Add actions based on the discussion above.</div>';
-    return;
-  }
-  let html = `<table class="action-table"><thead><tr>
-    <th style="width:38%">Action</th><th style="width:18%">Owner</th>
-    <th style="width:13%">Status</th><th style="width:15%">Carry fwd</th><th></th>
-  </tr></thead><tbody>`;
-  S.actions.forEach((a,i) => {
-    const rowClass = a.inherited ? 'inherited-action' : '';
-    html += `<tr class="${rowClass}">
-      <td>
-        ${a.inherited?`<div class="inherited-badge" style="margin-bottom:4px;">↩ from ${escH(a.inheritedFrom||'prev retro')}</div>`:''}
-        <input class="act-input" value="${escH(a.text)}" placeholder="Describe the action…" oninput="setAct(${i},'text',this.value)">
-      </td>
-      <td><input class="act-input act-owner" value="${escH(a.owner||'')}" placeholder="Owner…" oninput="setAct(${i},'owner',this.value)"></td>
-      <td>
-        <select class="status-sel" onchange="setAct(${i},'status',this.value)">
-          <option ${a.status==='To Do'?'selected':''}>To Do</option>
-          <option ${a.status==='In Progress'?'selected':''}>In Progress</option>
-          <option ${a.status==='Done'?'selected':''}>Done</option>
-        </select>
-      </td>
-      <td>
-        <button class="carry-btn ${a.carryForward?'on':''}" onclick="toggleCarry(${i})">
-          ${a.carryForward?'📌 Yes':'Pin'}
-        </button>
-      </td>
-      <td style="text-align:right;padding-right:12px;">
-        <button class="act-del" onclick="delAction(${i})" title="Delete">✕</button>
-      </td>
+  const body=document.getElementById('actionsBody');
+  document.getElementById('actCount').textContent=S.actions.length;
+  if (!S.actions.length) { body.innerHTML='<div style="padding:20px;font-size:0.84rem;color:var(--text-tertiary);">No actions yet. Add actions based on the discussion above.</div>'; return; }
+  let html=`<table class="action-table"><thead><tr><th style="width:38%">Action</th><th style="width:16%">Owner</th><th style="width:13%">Status</th><th style="width:14%">Carry fwd</th><th></th></tr></thead><tbody>`;
+  S.actions.forEach((a,i)=>{
+    html+=`<tr class="${a.inherited?'inherited-action':''}">
+      <td>${a.inherited?`<div class="inherited-badge" style="margin-bottom:4px;">↩ from ${escH(a.inheritedFrom||'prev retro')}</div>`:''}
+        <input class="act-input" value="${escH(a.text)}" placeholder="Describe the action…" oninput="setAct(${i},'text',this.value)"></td>
+      <td><input class="act-input" style="color:var(--text-secondary);font-size:0.82rem;" value="${escH(a.owner||'')}" placeholder="Owner…" oninput="setAct(${i},'owner',this.value)"></td>
+      <td><select class="status-sel" onchange="setAct(${i},'status',this.value)">
+        <option ${a.status==='To Do'?'selected':''}>To Do</option>
+        <option ${a.status==='In Progress'?'selected':''}>In Progress</option>
+        <option ${a.status==='Done'?'selected':''}>Done</option>
+      </select></td>
+      <td><button class="carry-btn ${a.carryForward?'on':''}" onclick="toggleCarry(${i})">${a.carryForward?'📌 Yes':'Pin'}</button></td>
+      <td style="text-align:right;padding-right:12px;"><button class="act-del" onclick="delAction(${i})">✕</button></td>
     </tr>`;
   });
-  html += '</tbody></table>';
-  body.innerHTML = html;
+  html+='</tbody></table>'; body.innerHTML=html;
 }
-function addAction(prefill) {
-  S.actions.push({ id:'a_'+Date.now(), text:prefill||'', owner:'', status:'To Do', carryForward:false, inherited:false });
-  save(); renderActions();
-  // focus last input
-  setTimeout(()=>{
-    const inputs = document.querySelectorAll('#actionsBody .act-input');
-    if (inputs.length) inputs[inputs.length-2].focus();
-  },50);
-}
+function addAction(prefill) { S.actions.push({id:'a_'+Date.now(),text:prefill||'',owner:'',status:'To Do',carryForward:false,inherited:false}); save(); renderActions(); setTimeout(()=>{ const inputs=document.querySelectorAll('#actionsBody .act-input'); if(inputs.length) inputs[inputs.length-2].focus(); },50); }
 function setAct(i,k,v) { S.actions[i][k]=v; save(); if(k==='status') renderActions(); }
-function toggleCarry(i) { S.actions[i].carryForward = !S.actions[i].carryForward; save(); renderActions(); }
+function toggleCarry(i) { S.actions[i].carryForward=!S.actions[i].carryForward; save(); renderActions(); renderSummary(); }
 function delAction(i) { S.actions.splice(i,1); save(); renderActions(); renderSummary(); }
 
-// ── CONTRIBUTION FLOW ──
+// ── CONTRIBUTION ──
 function openContribute() {
-  const bar = document.getElementById('sharebar');
-  bar.style.display = 'flex';
-  const link = window.location.href.split('?')[0].split('#')[0] + '#contribute';
-  document.getElementById('shareCodeDisplay').textContent = link;
+  const bar=document.getElementById('sharebar'); bar.style.display='flex';
+  const link=window.location.href.split('?')[0].split('#')[0]+'#contribute';
+  document.getElementById('shareCodeDisplay').textContent=link;
   bcPost({type:'ping'});
 }
 function closeShareBar() { document.getElementById('sharebar').style.display='none'; }
 function copyShareLink() {
-  const link = window.location.href.split('?')[0].split('#')[0] + '#contribute';
-  navigator.clipboard.writeText(link).then(()=>toast('Link copied to clipboard'));
+  const link=window.location.href.split('?')[0].split('#')[0]+'#contribute';
+  navigator.clipboard.writeText(link).then(()=>toast('Link copied!'));
 }
-
 function openImportContrib() {
-  showModal(`
-    <h3>Merge contributions</h3>
-    <p>Paste the contribution code from a team member (shared via Slack, Teams, or chat). Their stickies will appear on the board instantly.</p>
+  showModal(`<h3>Merge contributions</h3><p>Paste the contribution code from a team member.</p>
     <textarea class="modal-textarea" id="pasteTA" placeholder="Paste contribution code here…"></textarea>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="doMergeContrib()">Merge stickies</button>
-    </div>
-  `);
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="doMergeContrib()">Merge stickies</button></div>`);
 }
 function doMergeContrib() {
-  const raw = document.getElementById('pasteTA').value.trim();
-  let data;
-  try { data = JSON.parse(atob(raw)); } catch(e) { try { data = JSON.parse(raw); } catch(e2) { alert('Invalid code — ask the contributor to copy again.'); return; } }
-  if (!data.stickies || !Array.isArray(data.stickies)) { alert('No stickies found in this code.'); return; }
-  let added = 0;
-  data.stickies.forEach(s => {
-    if (!S.stickies.find(x=>x.id===s.id)) { S.stickies.push(s); added++; }
-  });
-  save(); renderBoard(); closeModal();
-  toast(`✓ Merged ${added} ${added===1?'sticky':'stickies'} from ${data.author||'contributor'}`);
+  const raw=document.getElementById('pasteTA').value.trim(); let data;
+  try { data=JSON.parse(atob(raw)); } catch(e) { try { data=JSON.parse(raw); } catch(e2) { alert('Invalid code.'); return; } }
+  if (!data.stickies||!Array.isArray(data.stickies)) { alert('No stickies found.'); return; }
+  let added=0;
+  data.stickies.forEach(s=>{ if(!S.stickies.find(x=>x.id===s.id)){ S.stickies.push(s); added++; } });
+  save(); renderBoard(); closeModal(); toast(`✓ Merged ${added} ${added===1?'sticky':'stickies'} from ${data.author||'contributor'}`);
 }
 
-// ── IMPORT PREVIOUS RETRO (carry-forward actions) ──
+// ── IMPORT PREVIOUS ──
 function openImportRetro() {
-  showModal(`
-    <h3>Import previous retro</h3>
-    <p>Paste or upload your previous retro's export. Actions marked as <strong>📌 Carry forward</strong> will be brought in as inherited items.</p>
+  showModal(`<h3>Import previous retro</h3><p>Paste or upload a previous retro export. Actions marked 📌 Carry forward will be brought in as inherited items.</p>
     <textarea class="modal-textarea" id="importTA" placeholder="Paste previous retro JSON here…" style="min-height:110px;"></textarea>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
       <span style="font-size:0.78rem;color:var(--text-tertiary);">or</span>
       <input type="file" accept=".json" id="importFile" style="font-size:0.78rem;color:var(--text-secondary);" onchange="fileToImport(this)">
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="doImportRetro()">Bring in carry-forward actions</button>
-    </div>
-  `);
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="doImportRetro()">Bring in carry-forward actions</button></div>`);
 }
-function fileToImport(input) {
-  const f = input.files[0]; if(!f) return;
-  const r = new FileReader();
-  r.onload = e => { document.getElementById('importTA').value = e.target.result; };
-  r.readAsText(f);
-}
+function fileToImport(input) { const f=input.files[0]; if(!f) return; const r=new FileReader(); r.onload=e=>{document.getElementById('importTA').value=e.target.result;}; r.readAsText(f); }
 function doImportRetro() {
-  let data;
-  try { data = JSON.parse(document.getElementById('importTA').value.trim()); } catch(e) { alert('Invalid JSON.'); return; }
-  const prevSprint = data.meta?.sprintName || 'previous retro';
-  const toCarry = (data.actions||[]).filter(a=>a.carryForward && a.status !== 'Done');
-  if (!toCarry.length) { toast('No carry-forward actions found in that retro.'); closeModal(); return; }
-  let added = 0;
-  toCarry.forEach(a => {
-    const exists = S.actions.find(x=>x.inheritedFrom===prevSprint && x.text===a.text);
-    if (!exists) {
-      S.actions.unshift({ id:'a_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), text:a.text, owner:a.owner||'', status:a.status==='Done'?'To Do':a.status, carryForward:false, inherited:true, inheritedFrom:prevSprint });
-      added++;
-    }
-  });
-  save(); renderActions(); renderSummary(); closeModal();
-  toast(`✓ Brought in ${added} action${added!==1?'s':''} from "${prevSprint}"`);
+  let data; try { data=JSON.parse(document.getElementById('importTA').value.trim()); } catch(e) { alert('Invalid JSON.'); return; }
+  const prev=data.meta?.sprintName||'previous retro';
+  const toCarry=(data.actions||[]).filter(a=>a.carryForward&&a.status!=='Done');
+  if (!toCarry.length) { toast('No carry-forward actions found.'); closeModal(); return; }
+  let added=0;
+  toCarry.forEach(a=>{ if(!S.actions.find(x=>x.inheritedFrom===prev&&x.text===a.text)){ S.actions.unshift({id:'a_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),text:a.text,owner:a.owner||'',status:a.status==='Done'?'To Do':a.status,carryForward:false,inherited:true,inheritedFrom:prev}); added++; } });
+  save(); renderActions(); renderSummary(); closeModal(); toast(`✓ Brought in ${added} action${added!==1?'s':''} from "${prev}"`);
 }
 
 // ── EXPORT ──
 function doExport() {
-  const blob = new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href=url; a.download=`retro-${S.meta.sprintName||'export'}-${(S.meta.retroDate||new Date().toISOString().slice(0,10))}.json`;
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=`retro-${S.meta.sprintName||'export'}-${S.meta.retroDate||new Date().toISOString().slice(0,10)}.json`;
   a.click(); URL.revokeObjectURL(url);
 }
 
 // ── RESET ──
 function confirmReset() {
-  showModal(`
-    <h3>Reset everything?</h3>
-    <p>This will clear all stickies and actions. This cannot be undone. Export first if you want to keep this retro.</p>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-danger" onclick="doReset()">Yes, reset</button>
-    </div>
-  `);
+  showModal(`<h3>Reset everything?</h3><p>This will clear all stickies and actions. Export first if you want to keep this retro.</p>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="doReset()">Yes, reset</button></div>`);
 }
 function doReset() {
-  S = { meta:{sprintName:'',retroDate:''}, stickies:[], actions:[] };
-  localStorage.removeItem('s4retro_v2');
-  document.getElementById('sprintName').value='';
-  document.getElementById('retroDate').value='';
-  renderBoard(); closeModal();
+  S={meta:{sprintName:'',retroDate:'',format:'classic'},stickies:[],actions:[]};
+  localStorage.removeItem('s4retro_v3');
+  document.getElementById('sprintName').value=''; document.getElementById('retroDate').value='';
+  applyFormat(); renderBoard(); closeModal();
 }
 
-// ══════════════════════════════════════════
-//   PARTICIPANT VIEW
-// ══════════════════════════════════════════
+// ── PARTICIPANT VIEW ──
 let pMode = false;
-
 function switchToParticipant() {
-  pMode = true;
-  document.getElementById('boardView').style.display = 'none';
-  document.getElementById('participantView').style.display = 'flex';
-  document.getElementById('pSprintName').textContent = S.meta.sprintName || '';
-  pStickies = [];
-  renderPBoard();
+  pMode=true;
+  document.getElementById('boardView').style.display='none';
+  document.getElementById('participantView').style.display='flex';
+  document.getElementById('pSprintName').textContent=S.meta.sprintName||'';
+  pStickies=[]; renderPColumns(); updatePCounter();
   bcPost({type:'ping'});
-  setTimeout(()=>document.getElementById('pName').focus(), 100);
+  setTimeout(()=>document.getElementById('pName').focus(),100);
 }
 function switchToBoard() {
-  pMode = false;
-  document.getElementById('participantView').style.display = 'none';
-  document.getElementById('boardView').style.display = 'block';
+  pMode=false;
+  document.getElementById('participantView').style.display='none';
+  document.getElementById('boardView').style.display='block';
 }
-
 function onPNameChange() {
-  const name = document.getElementById('pName').value.trim();
-  const input = document.getElementById('pName');
-  const hint = document.getElementById('pNameHint');
-  if (name) {
-    input.classList.add('filled');
-    hint.textContent = '✓ Looking good';
-    hint.className = 'p-name-hint';
-    hint.style.color = 'var(--green)';
-  } else {
-    input.classList.remove('filled');
-    hint.textContent = 'Required before you can submit';
-    hint.className = 'p-name-hint';
-    hint.style.color = '';
-  }
-  updatePCounter();
-}
-
-function renderPBoard() {
-  renderPColumn('well'); renderPColumn('improve');
+  const name=document.getElementById('pName').value.trim();
+  const input=document.getElementById('pName'); const hint=document.getElementById('pNameHint');
+  if(name){ input.classList.add('filled'); hint.textContent='✓ Good'; hint.style.color='var(--green)'; }
+  else { input.classList.remove('filled'); hint.textContent='Required before you can submit'; hint.style.color=''; }
   updatePCounter();
 }
 function updatePCounter() {
-  const counter = document.getElementById('pStickyCounter');
-  if (!counter) return;
-  if (pStickies.length > 0) {
-    counter.style.display = 'inline-flex';
-    counter.textContent = pStickies.length + ' ' + (pStickies.length === 1 ? 'sticky' : 'stickies') + ' ready';
-  } else {
-    counter.style.display = 'none';
-  }
-}
-function renderPColumn(col) {
-  const body = document.getElementById('p-body-'+col);
-  if (!body) return;
-  const mine = pStickies.filter(s=>s.col===col);
-  let html = '';
-  mine.forEach((s,i) => {
-    html += `<div class="p-sticky ${col}">
-      <button class="p-sticky-del" onclick="pDelSticky(${i},'${col}')">✕</button>
-      <div class="p-sticky-text">${escH(s.text)}</div>
-    </div>`;
-  });
-  html += `<button class="p-add-btn" onclick="pStartAdd('${col}')"><span class="p-add-icon">＋</span>Add another…</button>`;
-  body.innerHTML = html;
+  const el=document.getElementById('pStickyCounter'); if(!el) return;
+  if(pStickies.length>0){ el.style.display='inline-flex'; el.textContent=pStickies.length+' '+(pStickies.length===1?'sticky':'stickies')+' ready'; }
+  else { el.style.display='none'; }
 }
 
-let pActiveEditor = null;
-function pStartAdd(col) {
-  if (pActiveEditor) pCommitEditor();
-  const body = document.getElementById('p-body-'+col);
-  const addBtn = body.querySelector('.p-add-btn');
-  const editorEl = document.createElement('div');
-  editorEl.className = 'sticky-editor p-sticky '+(col);
-  editorEl.style.borderColor = col==='well'?'var(--green)':'var(--amber)';
-  editorEl.innerHTML = `
+function renderPColumns() {
+  const pColsEl=document.getElementById('pColumns'); if(!pColsEl) return;
+  const cols=currentCols();
+  const colCount=cols.length;
+  const gridClass=colCount<=2?'p-cols-2':colCount===3?'p-cols-3':'p-cols-4';
+  pColsEl.className='p-columns '+gridClass;
+  let html='';
+  cols.forEach(col=>{
+    const mine=pStickies.filter(s=>s.col===col.id);
+    const hdrStyle=`background:linear-gradient(135deg,${col.dim} 0%,rgba(0,0,0,0) 100%);border-bottom:1px solid ${col.border.replace('0.35','0.2').replace('0.38','0.2')}`;
+    let stickiesHtml='';
+    mine.forEach((s,i)=>{
+      const stickyStyle=`background:linear-gradient(135deg,${col.dim},rgba(0,0,0,0));border-left-color:${col.color};border-color:${col.border};`;
+      stickiesHtml+=`<div class="p-sticky" style="${stickyStyle}">
+        <button class="p-sticky-del" onclick="pDelSticky('${s.id}')">✕</button>
+        <div class="p-sticky-text">${escH(s.text)}</div>
+      </div>`;
+    });
+    html+=`<div class="p-col" style="border-color:${col.border.replace('0.35','0.18').replace('0.38','0.18')}">
+      <div class="col-hdr" style="${hdrStyle}">
+        <div class="col-dot" style="background:${col.color};box-shadow:0 0 7px ${col.color}"></div>
+        <div style="flex:1">
+          <div class="col-title" style="color:${col.color};font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:800;text-transform:uppercase;letter-spacing:0.07em;">${col.emoji} ${col.label}</div>
+          <div class="col-desc" style="color:${col.color}">${col.desc}</div>
+        </div>
+      </div>
+      <div class="p-col-body" id="p-body-${col.id}">
+        ${stickiesHtml}
+        <button class="p-add-btn" onclick="pStartAdd('${col.id}')">＋ Click to add a sticky…</button>
+      </div>
+    </div>`;
+  });
+  pColsEl.innerHTML=html;
+}
+
+let pActiveEditor=null;
+function pStartAdd(colId) {
+  if(pActiveEditor) pCommitEditor();
+  const col=currentCols().find(c=>c.id===colId);
+  const body=document.getElementById('p-body-'+colId); if(!body) return;
+  const addBtn=body.querySelector('.p-add-btn');
+  const editorEl=document.createElement('div');
+  editorEl.className='sticky-editor';
+  editorEl.style.borderColor=col?col.color:'var(--orange)';
+  editorEl.innerHTML=`
     <textarea id="pEditorTA" placeholder="What's on your mind? (Enter to save)" autofocus style="background:none;border:none;outline:none;width:100%;font-family:'IBM Plex Sans',sans-serif;font-size:0.88rem;color:var(--text-primary);line-height:1.5;resize:none;min-height:60px;"></textarea>
     <div class="editor-foot">
       <span class="editor-hint">Enter ↵ save · Esc cancel</span>
       <button class="btn btn-primary" style="padding:4px 12px;font-size:0.75rem;" onclick="pCommitEditor()">Add</button>
     </div>`;
-  body.insertBefore(editorEl, addBtn);
-  pActiveEditor = { col, el:editorEl };
-  const ta = editorEl.querySelector('#pEditorTA');
-  ta.focus();
-  ta.addEventListener('keydown', e=>{
-    if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();pCommitEditor();}
-    if (e.key==='Escape'){pCancelEditor();}
-  });
+  body.insertBefore(editorEl,addBtn);
+  pActiveEditor={colId,el:editorEl};
+  const ta=editorEl.querySelector('#pEditorTA'); ta.focus();
+  ta.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();pCommitEditor();} if(e.key==='Escape') pCancelEditor(); });
 }
 function pCommitEditor() {
-  if (!pActiveEditor) return;
-  const ta = pActiveEditor.el.querySelector('#pEditorTA');
-  const text = ta.value.trim();
-  if (text) {
-    pStickies.push({ id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,7), col:pActiveEditor.col, text, votes:[] });
-    renderPBoard();
-  }
-  pActiveEditor.el.remove();
-  pActiveEditor = null;
-  updatePCounter();
+  if(!pActiveEditor) return;
+  const ta=pActiveEditor.el.querySelector('#pEditorTA');
+  const text=ta.value.trim(); const colId=pActiveEditor.colId;
+  if(text) { pStickies.push({id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),col:colId,text,votes:[]}); renderPColumns(); }
+  pActiveEditor.el.remove(); pActiveEditor=null; updatePCounter();
 }
-function pCancelEditor() {
-  if (!pActiveEditor) return;
-  pActiveEditor.el.remove();
-  pActiveEditor = null;
-}
-function pDelSticky(idx, col) {
-  const colStickies = pStickies.filter(s=>s.col===col);
-  const toRemove = colStickies[idx];
-  if (toRemove) pStickies = pStickies.filter(s=>s.id!==toRemove.id);
-  renderPBoard(); updatePCounter();
-}
+function pCancelEditor() { if(!pActiveEditor) return; pActiveEditor.el.remove(); pActiveEditor=null; }
+function pDelSticky(id) { pStickies=pStickies.filter(s=>s.id!==id); renderPColumns(); updatePCounter(); }
 
 function submitContribution() {
-  const name = document.getElementById('pName').value.trim();
-
-  // Guard: no name
-  if (!name) {
-    const input = document.getElementById('pName');
-    const card = document.getElementById('pNameCard');
-    const hint = document.getElementById('pNameHint');
-    card.classList.remove('shake');
-    void card.offsetWidth; // reflow to restart animation
-    card.classList.add('shake');
-    input.focus();
-    hint.textContent = '← Enter your name first';
-    hint.className = 'p-name-hint error';
-    hint.style.color = 'var(--red)';
-    setTimeout(() => card.classList.remove('shake'), 500);
-    return;
+  const name=document.getElementById('pName').value.trim();
+  if(!name) {
+    const card=document.getElementById('pNameCard'); const hint=document.getElementById('pNameHint');
+    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+    document.getElementById('pName').focus();
+    hint.textContent='← Enter your name first'; hint.style.color='var(--red)';
+    setTimeout(()=>card.classList.remove('shake'),500); return;
   }
-
-  // Guard: no stickies
-  if (!pStickies.length) {
-    toast('Add at least one sticky before submitting.');
-    return;
-  }
-
-  const tagged = pStickies.map(s=>({...s, author:name}));
-  const payload = { author:name, stickies:tagged, sprint:S.meta.sprintName, ts:Date.now() };
-  const code = btoa(JSON.stringify(payload));
-
-  // Broadcast to same-device board tab
-  tagged.forEach(s => {
-    if (!S.stickies.find(x=>x.id===s.id)) {
-      S.stickies.push(s);
-      bcPost({type:'sticky', sticky:s});
-    }
-  });
+  if(!pStickies.length) { toast('Add at least one sticky before submitting.'); return; }
+  const tagged=pStickies.map(s=>({...s,author:name}));
+  const payload={author:name,stickies:tagged,sprint:S.meta.sprintName,format:S.meta.format,ts:Date.now()};
+  const code=btoa(JSON.stringify(payload));
+  tagged.forEach(s=>{ if(!S.stickies.find(x=>x.id===s.id)){S.stickies.push(s);bcPost({type:'sticky',sticky:s});} });
   save();
-
-  showModal(`
-    <h3>Your stickies are ready ✓</h3>
-    <p style="margin-bottom:12px;">Copy this code and paste it into <strong>Slack or Teams</strong>. The facilitator clicks <strong>Merge contributions</strong> and pastes it in.</p>
+  showModal(`<h3>Your stickies are ready ✓</h3>
+    <p style="margin-bottom:12px;">Copy this code and send it to the facilitator via <strong>Slack or Teams</strong>. They click <strong>Merge contributions</strong> and paste it in.</p>
     <div class="modal-code" id="contribCodeEl">${code}</div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal()">Close</button>
       <button class="btn btn-primary" id="copyCodeBtn" onclick="copyContribCode()">📋 Copy code</button>
-    </div>
-  `);
-  pStickies = [];
-  updatePCounter();
+    </div>`);
+  pStickies=[]; updatePCounter();
 }
 function copyContribCode() {
-  const code = document.getElementById('contribCodeEl').textContent.trim();
-  navigator.clipboard.writeText(code).then(() => {
-    const btn = document.getElementById('copyCodeBtn');
-    if (btn) { btn.textContent = '✓ Copied!'; btn.disabled = true; }
-    toast('Contribution code copied — paste it to the facilitator!');
-  });
+  const code=document.getElementById('contribCodeEl').textContent.trim();
+  navigator.clipboard.writeText(code).then(()=>{ const btn=document.getElementById('copyCodeBtn'); if(btn){btn.textContent='✓ Copied!';btn.disabled=true;} toast('Contribution code copied — send it to the facilitator!'); });
 }
 
 // ── HASH ROUTING ──
-function checkRoute() {
-  if (window.location.hash === '#contribute') switchToParticipant();
-  else { switchToBoard(); }
-}
+function checkRoute() { if(window.location.hash==='#contribute') switchToParticipant(); else { if(pMode) switchToBoard(); } }
 window.addEventListener('hashchange', checkRoute);
 
-// ── MODAL HELPERS ──
+// ── MODAL / TOAST ──
 function showModal(html) { document.getElementById('modalBox').innerHTML=html; document.getElementById('modalBg').style.display='flex'; }
 function closeModal() { document.getElementById('modalBg').style.display='none'; }
-
-// ── TOAST ──
-function toast(msg) {
-  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
-  document.body.appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300);},2400);
-}
-
-// ── UTIL ──
+function toast(msg) { const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300);},2400); }
 function escH(s) { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
 
 // ── BOOT ──
 function boot() {
   load();
-  document.getElementById('sprintName').value = S.meta.sprintName||'';
-  document.getElementById('retroDate').value = S.meta.retroDate||'';
-  checkRoute();
-  if (!pMode) renderBoard();
+  if (!S.meta.format) S.meta.format='classic';
+  document.getElementById('sprintName').value=S.meta.sprintName||'';
+  document.getElementById('retroDate').value=S.meta.retroDate||'';
+  applyFormat(); renderBoard(); checkRoute();
 }
 boot();
 </script>
