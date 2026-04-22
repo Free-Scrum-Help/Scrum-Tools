@@ -29,6 +29,7 @@
     --rota-color: #00C9A7;
     --mobile-color: #5B9BF5;
     --payroll-color: #FF721E;
+    --infra-color: #F472B6;
     --radius: 12px;
     --radius-lg: 18px;
   }
@@ -123,6 +124,7 @@
   .tab-btn.active.rota    { border-bottom-color:var(--rota-color); }
   .tab-btn.active.mobile  { border-bottom-color:var(--mobile-color); }
   .tab-btn.active.payroll { border-bottom-color:var(--payroll-color); }
+  .tab-btn.active.infra   { border-bottom-color:var(--infra-color); }
   .tab-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; transition:box-shadow 0.2s; }
   .tab-btn.active .tab-dot { box-shadow:0 0 8px currentColor; }
   .tab-count { font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:10px; opacity:0.8; }
@@ -458,6 +460,10 @@
       <span class="tab-dot" style="background:var(--payroll-color)"></span>Payroll
       <span class="tab-count" style="background:rgba(255,114,30,0.12);color:var(--payroll-color)" id="payroll-count">3</span>
     </button>
+    <button class="tab-btn infra" onclick="switchTab('infra')">
+      <span class="tab-dot" style="background:var(--infra-color)"></span>Infrastructure
+      <span class="tab-count" style="background:rgba(244,114,182,0.12);color:var(--infra-color)" id="infra-count">3</span>
+    </button>
   </div>
 </div>
 
@@ -646,6 +652,60 @@
       <textarea class="notes-textarea" id="payroll-notes" placeholder="Risks, blockers, context…" oninput="onNotesChange('payroll')"></textarea></div>
   </div>
 
+  <!-- ═══ INFRASTRUCTURE ═══ -->
+  <div class="team-panel" id="panel-infra">
+    <div class="config-row">
+      <div class="glass-card">
+        <div class="card-title"><div class="card-title-icon" style="background:rgba(244,114,182,0.12);color:var(--infra-color)">🗓</div>Sprint Configuration</div>
+        <div class="config-fields">
+          <div class="field-group"><div class="field-label">Start Date</div>
+            <input type="date" class="field-input date-w" id="infra-startDate" oninput="onConfigChange('infra')" /></div>
+          <div class="field-group"><div class="field-label">Sprint Days</div>
+            <input type="number" class="field-input" id="infra-sprintDays" value="10" min="1" max="30" oninput="onConfigChange('infra')" /></div>
+          <div class="field-group"><div class="field-label">Avg Velocity</div>
+            <input type="number" class="field-input" id="infra-velocity" placeholder="pts" min="0" oninput="onConfigChange('infra')" /></div>
+          <div class="field-group"><div class="field-label">Sprint Goal</div>
+            <input type="text" class="field-input wide" id="infra-goal" placeholder="What's the mission?" oninput="onConfigChange('infra')" /></div>
+          <div class="toggle-wrap">
+            <div class="field-label">UK Bank Hols</div>
+            <label class="toggle-label-row">
+              <label class="toggle"><input type="checkbox" id="infra-useBH" checked onchange="onConfigChange('infra')" /><span class="toggle-track"></span></label>
+              <span class="toggle-text" id="infra-bhToggleLabel">England</span>
+            </label>
+          </div>
+        </div>
+        <div class="sprint-period" id="infra-period"><span class="sprint-period-empty">Set a start date to see the sprint window</span></div>
+        <div class="bh-panel" id="infra-bhPanel"></div>
+      </div>
+      <div class="glass-card">
+        <div class="card-title"><div class="card-title-icon" style="background:rgba(244,114,182,0.12);color:var(--infra-color)">📊</div>Estimated Capacity</div>
+        <div class="capacity-metrics" id="infra-metrics"></div>
+        <div class="progress-wrap">
+          <div class="progress-track"><div class="progress-fill bar-hi" id="infra-bar" style="width:0%"></div></div>
+          <div class="progress-labels"><span>0%</span><span id="infra-pct-label">—</span><span>100%</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="members-card">
+      <div class="members-card-header"><div class="members-card-header-left">
+        <span class="role-tag" style="color:var(--infra-color);border-color:rgba(244,114,182,0.3);background:rgba(244,114,182,0.08)">Dev</span>
+        <span class="role-tag-title">Developers</span></div></div>
+      <div class="table-header"><div class="th">Member</div><div class="th">Sprint Days</div><div class="th">Leave Days</div><div class="th">Available</div><div class="th">Avail %</div><div class="th"></div></div>
+      <div id="infra-dev-rows"></div>
+      <div class="add-member-row"><input class="add-input" id="infra-dev-addInput" placeholder="+ Add developer…" onkeydown="if(event.key==='Enter')addMember('infra','dev')" /><button class="btn btn-glass btn-small" onclick="addMember('infra','dev')">Add</button></div>
+    </div>
+    <div class="members-card">
+      <div class="members-card-header"><div class="members-card-header-left">
+        <span class="role-tag" style="color:var(--infra-color);border-color:rgba(244,114,182,0.2);background:rgba(244,114,182,0.05)">QA</span>
+        <span class="role-tag-title">QA Engineers</span></div></div>
+      <div class="table-header"><div class="th">Member</div><div class="th">Sprint Days</div><div class="th">Leave Days</div><div class="th">Available</div><div class="th">Avail %</div><div class="th"></div></div>
+      <div id="infra-qa-rows"></div>
+      <div class="add-member-row"><input class="add-input" id="infra-qa-addInput" placeholder="+ Add QA…" onkeydown="if(event.key==='Enter')addMember('infra','qa')" /><button class="btn btn-glass btn-small" onclick="addMember('infra','qa')">Add</button></div>
+    </div>
+    <div class="notes-card"><div class="notes-label">📝 Sprint Notes</div>
+      <textarea class="notes-textarea" id="infra-notes" placeholder="Risks, blockers, context…" oninput="onNotesChange('infra')"></textarea></div>
+  </div>
+
 </div><!-- /main -->
 
 <script>
@@ -773,9 +833,10 @@ const DEFAULTS = {
   rota:    { dev:['Pat','Tom','Riddhi','Nawab','Faye'],  qa:['Oli','Maryam','Vinu','Anitha'] },
   mobile:  { dev:['Mubean','Harry'],                     qa:['Oli','Maryam'] },
   payroll: { dev:['Joe','Chris'],                        qa:['Fatima'] },
+  infra:   { dev:['Chris','Steve'],                      qa:['Maryam'] },
 };
 const AVATAR_COLORS = ['#FF721E','#00C9A7','#5B9BF5','#A78BFA','#F59E0B','#34D399','#FB7185','#60A5FA','#FBBF24','#6EE7B7'];
-const TEAM_COLORS   = { rota:'#00C9A7', mobile:'#5B9BF5', payroll:'#FF721E' };
+const TEAM_COLORS   = { rota:'#00C9A7', mobile:'#5B9BF5', payroll:'#FF721E', infra:'#F472B6' };
 
 let state = { sprintName:'', teams:{} };
 let autoSaveTimer = null;
@@ -792,7 +853,7 @@ function buildTeam(tid, days=10) {
   };
 }
 function ensureState() {
-  ['rota','mobile','payroll'].forEach(t => {
+  ['rota','mobile','payroll','infra'].forEach(t => {
     if (!state.teams[t]) state.teams[t] = buildTeam(t);
     // backfill new fields
     if (state.teams[t].startDate        === undefined) state.teams[t].startDate        = '';
@@ -1188,7 +1249,7 @@ function initTeam(tid) {
 
 function initAll() {
   document.getElementById('sprintNameInput').value = state.sprintName || '';
-  initTeam('rota'); initTeam('mobile'); initTeam('payroll');
+  initTeam('rota'); initTeam('mobile'); initTeam('payroll'); initTeam('infra');
 }
 
 document.getElementById('sprintNameInput').addEventListener('input', e => {
