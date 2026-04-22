@@ -183,8 +183,8 @@ body {
 /* Per-card accent via CSS custom props */
 .card-capacity  { --card-accent: #00C9A7; --card-rgb: 0,201,167; }
 .card-estimator { --card-accent: #FF721E; --card-rgb: 255,114,30; }
-.card-health    { --card-accent: #A78BFA; --card-rgb: 167,139,250; }
-.card-retro     { --card-accent: #22D17B; --card-rgb: 34,209,123; }
+.card-rota-est  { --card-accent: #22D17B; --card-rgb: 34,209,123; }
+.card-retro     { --card-accent: #A78BFA; --card-rgb: 167,139,250; }
 
 .tool-card-top {
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -378,6 +378,26 @@ body {
       </div>
       <div class="tool-cta">
         <span class="tool-cta-label">Open estimator</span>
+        <div class="tool-cta-arrow">→</div>
+      </div>
+    </a>
+
+    <!-- Rota Team Estimator -->
+    <a class="tool-card card-rota-est" href="story-point-estimator-rota.html">
+      <div class="tool-card-top">
+        <div class="tool-icon" style="background:rgba(34,209,123,0.12);color:#22D17B;">🌿</div>
+        <span class="tool-status status-live">Live</span>
+      </div>
+      <div class="tool-name">Story Point Estimator <span style="color:#22D17B;font-size:0.75em;">Rota Team</span></div>
+      <div class="tool-desc">Product-focused estimation for the Rota greenfield team. Replaces Blast Radius &amp; Reversibility with Risk &amp; Uncertainty and Dependencies.</div>
+      <div class="tool-tags">
+        <span class="tool-tag">5 factors</span>
+        <span class="tool-tag">QA effort</span>
+        <span class="tool-tag">Dependencies</span>
+        <span class="tool-tag">Rota</span>
+      </div>
+      <div class="tool-cta">
+        <span class="tool-cta-label">Open Rota estimator</span>
         <div class="tool-cta-arrow">→</div>
       </div>
     </a>
