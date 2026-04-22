@@ -193,6 +193,59 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var
 @keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
 @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
 .shake{animation:shake 0.4s ease;}
+
+/* ── Tabs ── */
+.tabs{background:var(--navy-900);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;gap:4px;}
+.tab-btn{font-family:'IBM Plex Sans',sans-serif;font-size:0.8rem;font-weight:600;padding:12px 16px;border:none;background:none;color:var(--text-tertiary);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;display:flex;align-items:center;gap:6px;}
+.tab-btn:hover{color:var(--text-secondary);}
+.tab-btn.active{color:var(--text-primary);border-bottom-color:var(--orange);}
+.tab-badge{font-size:0.62rem;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--navy-600);color:var(--text-tertiary);}
+.tab-btn.active .tab-badge{background:var(--orange-dim);color:var(--orange);}
+
+/* ── History view ── */
+.history-page{padding:28px 24px 80px;max-width:1500px;margin:0 auto;}
+.hist-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px;flex-wrap:wrap;}
+.hist-toolbar-left{display:flex;align-items:center;gap:10px;}
+.hist-title{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:800;letter-spacing:-0.01em;}
+.hist-count{font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:12px;background:var(--navy-700);border:1px solid var(--border-strong);color:var(--text-tertiary);}
+.hist-empty{background:var(--navy-700);border:1px solid var(--border);border-radius:var(--r-lg);padding:60px 24px;text-align:center;}
+.hist-empty-icon{font-size:2.5rem;margin-bottom:12px;}
+.hist-empty-title{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:6px;color:var(--text-secondary);}
+.hist-empty-sub{font-size:0.82rem;color:var(--text-tertiary);line-height:1.6;max-width:380px;margin:0 auto;}
+
+/* History grid */
+.hist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+.hist-card{background:var(--navy-700);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:border-color 0.15s;animation:cardIn 0.3s ease both;}
+.hist-card:hover{border-color:var(--border-strong);}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.hist-card-hdr{padding:16px 18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.hist-card-title{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;color:var(--text-primary);margin-bottom:3px;line-height:1.2;}
+.hist-card-date{font-size:0.72rem;color:var(--text-tertiary);}
+.hist-format-pill{font-size:0.62rem;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--orange-dim);color:var(--orange);border:1px solid var(--orange-border);white-space:nowrap;flex-shrink:0;}
+.hist-card-stats{padding:12px 18px;display:flex;gap:16px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.hist-stat{display:flex;flex-direction:column;gap:2px;}
+.hist-stat-val{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:800;}
+.hist-stat-lbl{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-tertiary);}
+.hist-col-chips{padding:10px 18px;display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+.hist-col-chip{font-size:0.62rem;font-weight:600;padding:2px 8px;border-radius:8px;}
+.hist-card-actions{padding:12px 18px;display:flex;gap:8px;align-items:center;}
+.hist-carried{margin-left:auto;font-size:0.7rem;color:var(--blue);display:flex;align-items:center;gap:4px;}
+
+/* Retro detail modal (read-only view) */
+.retro-detail{max-width:780px !important;}
+.detail-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.detail-col{background:var(--navy-600);border-radius:var(--r);overflow:hidden;}
+.detail-col-hdr{padding:10px 14px;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;}
+.detail-col-body{padding:10px 14px;display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;}
+.detail-sticky{font-size:0.82rem;color:var(--text-primary);padding:7px 10px;border-radius:6px;border-left:2px solid;line-height:1.45;}
+.detail-sticky-author{font-size:0.62rem;color:var(--text-tertiary);margin-top:3px;}
+.detail-actions-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.detail-action-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--navy-600);border-radius:var(--r);font-size:0.82rem;}
+.detail-action-status{font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:8px;white-space:nowrap;}
+.s-todo{background:rgba(74,158,255,0.12);color:var(--blue);}
+.s-inprog{background:rgba(245,166,35,0.12);color:var(--amber);}
+.s-done{background:rgba(34,201,122,0.12);color:var(--green);}
+
 </style>
 </head>
 <body>
@@ -213,12 +266,20 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var
     <div class="hdr-right">
       <button class="btn btn-ghost" onclick="openContribute()">👥 Share with team</button>
       <button class="btn btn-ghost" onclick="openImportContrib()">⬇ Merge contributions</button>
+      <button class="btn btn-primary" onclick="archiveRetro()">📁 Archive retro</button>
       <button class="btn btn-ghost" onclick="doExport()">Export</button>
       <button class="btn btn-ghost" onclick="openImportRetro()">Import previous</button>
       <button class="btn btn-danger" onclick="confirmReset()">Reset</button>
     </div>
   </div>
 
+  <!-- Tab bar -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-board" onclick="switchTab('board')">🗂 Board</button>
+    <button class="tab-btn" id="tab-history" onclick="switchTab('history')">🕐 History <span class="tab-badge" id="histTabBadge">0</span></button>
+  </div>
+
+  <div id="boardPage">
   <div class="share-bar" id="sharebar" style="display:none;">
     <span class="share-label">Contribution link</span>
     <div class="share-code-box">
@@ -240,10 +301,26 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--navy-800);color:var
       <div id="actionsBody"></div>
       <div class="add-action-row"><button class="btn btn-ghost" onclick="addAction()">+ Add action</button></div>
     </div>
+    </div>
+  </div>
+
+  <!-- History panel -->
+  <div id="historyPanel" style="display:none;">
+    <div class="history-page">
+      <div class="hist-toolbar">
+        <div class="hist-toolbar-left">
+          <div class="hist-title">Retro History</div>
+          <div class="hist-count" id="histCount">0 retros</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" onclick="importDB()">⬆ Import database</button>
+          <button class="btn btn-ghost" onclick="exportDB()">⬇ Export database</button>
+        </div>
+      </div>
+      <div id="histGrid"></div>
+    </div>
   </div>
 </div>
-
-<!-- ══ PARTICIPANT VIEW ══ -->
 <div id="participantView">
   <div class="p-hdr">
     <div style="display:flex;align-items:center;gap:12px;">
@@ -345,6 +422,20 @@ function initials(name) {
 let S = { meta:{ sprintName:'', retroDate:'', format:'classic' }, stickies:[], actions:[] };
 let pStickies = [];
 let saveTimer = null;
+
+// ── DATABASE (history of archived retros) ──
+let DB = { version:1, retros:[] };
+
+function loadDB() {
+  try { const d=JSON.parse(localStorage.getItem('s4retro-db')); if(d) DB=d; } catch(e){}
+}
+function saveDB() {
+  try { localStorage.setItem('s4retro-db', JSON.stringify(DB)); } catch(e){}
+}
+function updateHistBadge() {
+  const el=document.getElementById('histTabBadge'); if(el) el.textContent=DB.retros.length;
+  const cnt=document.getElementById('histCount'); if(cnt) cnt.textContent=DB.retros.length+' retro'+(DB.retros.length!==1?'s':'');
+}
 
 function currentFormat() { return FORMATS[S.meta.format] || FORMATS.classic; }
 function currentCols() { return currentFormat().cols; }
@@ -641,10 +732,211 @@ function doReset() {
   S={meta:{sprintName:'',retroDate:'',format:'classic'},stickies:[],actions:[]};
   localStorage.removeItem('s4retro_v3');
   document.getElementById('sprintName').value=''; document.getElementById('retroDate').value='';
-  applyFormat(); renderBoard(); closeModal();
+  applyFormat(); renderBoard(); closeModal(); switchTab('board');
 }
 
-// ── PARTICIPANT VIEW ──
+// ── TABS ──
+function switchTab(tab) {
+  document.getElementById('tab-board').classList.toggle('active', tab==='board');
+  document.getElementById('tab-history').classList.toggle('active', tab==='history');
+  document.getElementById('boardPage').style.display = tab==='board' ? '' : 'none';
+  document.getElementById('sharebar').style.display = tab==='board' ? (document.getElementById('sharebar').dataset.open==='1'?'flex':'none') : 'none';
+  document.getElementById('historyPanel').style.display = tab==='history' ? '' : 'none';
+  if (tab==='history') renderHistory();
+}
+
+// ── ARCHIVE ──
+function archiveRetro() {
+  if (!S.meta.sprintName && !S.stickies.length && !S.actions.length) {
+    toast('Nothing to archive — add a sprint name and some stickies first.'); return;
+  }
+  const name = S.meta.sprintName || 'Unnamed retro';
+  showModal(`<h3>Archive "${escH(name)}"?</h3>
+    <p>This will save the current retro to history and clear the board for a fresh start. Carry-forward actions will be available to import into the next retro.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="doArchive()">📁 Archive &amp; clear board</button>
+    </div>`);
+}
+function doArchive() {
+  const entry = {
+    id: 'retro_'+Date.now(),
+    archivedAt: new Date().toISOString(),
+    meta: { ...S.meta },
+    stickies: [...S.stickies],
+    actions: [...S.actions],
+  };
+  DB.retros.unshift(entry);
+  saveDB(); updateHistBadge();
+  // Clear board
+  S = { meta:{ sprintName:'', retroDate:'', format: S.meta.format }, stickies:[], actions:[] };
+  save();
+  document.getElementById('sprintName').value='';
+  document.getElementById('retroDate').value='';
+  applyFormat(); renderBoard(); closeModal();
+  toast(`✓ Retro archived. Board is ready for the next sprint.`);
+}
+
+// ── HISTORY RENDER ──
+function renderHistory() {
+  const grid = document.getElementById('histGrid');
+  updateHistBadge();
+  if (!DB.retros.length) {
+    grid.innerHTML=`<div class="hist-empty">
+      <div class="hist-empty-icon">📂</div>
+      <div class="hist-empty-title">No archived retros yet</div>
+      <div class="hist-empty-sub">When you finish a retro, click <strong>Archive retro</strong> on the board. It will appear here with all its stickies and actions preserved.</div>
+    </div>`; return;
+  }
+  grid.innerHTML = DB.retros.map((r,i) => {
+    const fmt = FORMATS[r.meta.format] || FORMATS.classic;
+    const cols = fmt.cols;
+    const date = r.meta.retroDate ? new Date(r.meta.retroDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : new Date(r.archivedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    const openActs = r.actions.filter(a=>a.status!=='Done').length;
+    const carriedActs = r.actions.filter(a=>a.carryForward).length;
+    const colChips = cols.map(c=>`<span class="hist-col-chip" style="background:${c.dim};color:${c.color};border:1px solid ${c.border}">${c.emoji} ${r.stickies.filter(s=>s.col===c.id).length}</span>`).join('');
+    return `<div class="hist-card" id="hcard-${r.id}">
+      <div class="hist-card-hdr">
+        <div>
+          <div class="hist-card-title">${escH(r.meta.sprintName||'Unnamed retro')}</div>
+          <div class="hist-card-date">${date}</div>
+        </div>
+        <div class="hist-format-pill">${fmt.name}</div>
+      </div>
+      <div class="hist-card-stats">
+        <div class="hist-stat"><div class="hist-stat-val" style="color:var(--orange)">${r.stickies.length}</div><div class="hist-stat-lbl">Stickies</div></div>
+        <div class="hist-stat"><div class="hist-stat-val" style="color:var(--amber)">${r.actions.length}</div><div class="hist-stat-lbl">Actions</div></div>
+        <div class="hist-stat"><div class="hist-stat-val" style="color:var(--red)">${openActs}</div><div class="hist-stat-lbl">Open</div></div>
+        <div class="hist-stat"><div class="hist-stat-val" style="color:var(--blue)">${carriedActs}</div><div class="hist-stat-lbl">Carried fwd</div></div>
+        <div class="hist-stat"><div class="hist-stat-val" style="color:var(--green)">${new Set(r.stickies.map(s=>s.author).filter(Boolean)).size}</div><div class="hist-stat-lbl">Contributors</div></div>
+      </div>
+      <div class="hist-col-chips">${colChips}</div>
+      <div class="hist-card-actions">
+        <button class="btn btn-ghost" onclick="viewRetro('${r.id}')">👁 View</button>
+        <button class="btn btn-ghost" onclick="editRetro('${r.id}')">✏️ Edit</button>
+        <button class="btn btn-ghost" onclick="loadCarryForward('${r.id}')">📌 Import actions</button>
+        <button class="btn btn-danger" onclick="deleteRetro('${r.id}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function viewRetro(id) {
+  const r = DB.retros.find(x=>x.id===id); if(!r) return;
+  const fmt = FORMATS[r.meta.format] || FORMATS.classic;
+  const date = r.meta.retroDate ? new Date(r.meta.retroDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
+  const colsHtml = fmt.cols.map(col=>{
+    const stickies = r.stickies.filter(s=>s.col===col.id);
+    if (!stickies.length) return '';
+    return `<div class="detail-col">
+      <div class="detail-col-hdr" style="background:${col.dim};color:${col.color}">${col.emoji} ${col.label} (${stickies.length})</div>
+      <div class="detail-col-body">${stickies.map(s=>`<div class="detail-sticky" style="background:${col.dim};border-left-color:${col.color}">
+        ${escH(s.text)}
+        ${s.author?`<div class="detail-sticky-author">— ${escH(s.author)}</div>`:''}
+      </div>`).join('')}</div>
+    </div>`;
+  }).filter(Boolean).join('');
+  const actsHtml = r.actions.length ? r.actions.map(a=>`<div class="detail-action-row">
+    <span class="detail-action-status ${a.status==='Done'?'s-done':a.status==='In Progress'?'s-inprog':'s-todo'}">${a.status}</span>
+    <span style="flex:1;color:var(--text-primary)">${escH(a.text)}</span>
+    ${a.owner?`<span style="font-size:0.75rem;color:var(--text-tertiary)">${escH(a.owner)}</span>`:''}
+    ${a.carryForward?`<span style="font-size:0.68rem;color:var(--orange)">📌</span>`:''}
+  </div>`).join('') : '<div style="font-size:0.82rem;color:var(--text-tertiary)">No actions recorded.</div>';
+  showModal(`
+    <h3>${escH(r.meta.sprintName||'Unnamed retro')}</h3>
+    <p style="margin-bottom:14px;">${date} · ${fmt.name} · ${r.stickies.length} stickies · ${r.actions.length} actions</p>
+    <div class="detail-cols">${colsHtml||'<div style="color:var(--text-tertiary);font-size:0.82rem;padding:12px;">No stickies recorded.</div>'}</div>
+    <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-tertiary);margin-bottom:10px;">Actions</div>
+    <div class="detail-actions-list">${actsHtml}</div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Close</button><button class="btn btn-ghost" onclick="closeModal();editRetro('${id}')">✏️ Edit</button></div>
+  `);
+  document.querySelector('.modal').classList.add('retro-detail');
+}
+
+function editRetro(id) {
+  const r = DB.retros.find(x=>x.id===id); if(!r) return;
+  const hasActive = S.stickies.length || S.actions.length || S.meta.sprintName;
+  const doEdit = () => {
+    S = { meta:{...r.meta}, stickies:[...r.stickies], actions:[...r.actions] };
+    // Remove from DB while editing — it goes back on archive
+    DB.retros = DB.retros.filter(x=>x.id!==id);
+    saveDB(); save();
+    document.getElementById('sprintName').value = S.meta.sprintName||'';
+    document.getElementById('retroDate').value = S.meta.retroDate||'';
+    applyFormat(); renderBoard(); closeModal();
+    switchTab('board');
+    toast(`Editing "${escH(r.meta.sprintName||'retro')}" — archive it again when done.`);
+  };
+  if (hasActive) {
+    showModal(`<h3>Load "${escH(r.meta.sprintName||'retro')}" for editing?</h3>
+      <p>Your current board has unsaved work. It will be replaced. Archive it first if you want to keep it.</p>
+      <div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="doEditConfirmed('${id}')">Load for editing</button></div>`);
+  } else { doEdit(); }
+}
+// Store pending edit id for confirmed callback
+let _pendingEditId = null;
+function doEditConfirmed(id) { _pendingEditId=id; editRetro(id); }
+
+function deleteRetro(id) {
+  const r = DB.retros.find(x=>x.id===id); if(!r) return;
+  showModal(`<h3>Delete "${escH(r.meta.sprintName||'this retro')}"?</h3>
+    <p>This permanently removes it from history. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="doDeleteRetro('${id}')">Delete permanently</button>
+    </div>`);
+}
+function doDeleteRetro(id) {
+  DB.retros = DB.retros.filter(x=>x.id!==id);
+  saveDB(); renderHistory(); closeModal();
+  toast('Retro deleted.');
+}
+
+function loadCarryForward(id) {
+  const r = DB.retros.find(x=>x.id===id); if(!r) return;
+  const toCarry = r.actions.filter(a=>a.carryForward && a.status!=='Done');
+  if (!toCarry.length) { toast('No carry-forward actions in this retro.'); return; }
+  let added=0;
+  toCarry.forEach(a=>{
+    if(!S.actions.find(x=>x.inheritedFrom===r.meta.sprintName&&x.text===a.text)){
+      S.actions.unshift({id:'a_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),text:a.text,owner:a.owner||'',status:'To Do',carryForward:false,inherited:true,inheritedFrom:r.meta.sprintName||'prev retro'});
+      added++;
+    }
+  });
+  save(); renderActions(); renderSummary(); closeModal(); switchTab('board');
+  toast(`✓ Imported ${added} action${added!==1?'s':''} from "${r.meta.sprintName||'retro'}"`);
+}
+
+// ── DB EXPORT / IMPORT ──
+function exportDB() {
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=`s4-retro-database-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+}
+function importDB() {
+  showModal(`<h3>Import retro database</h3>
+    <p>Import a previously exported database JSON file. Existing history will be <strong>merged</strong> — duplicates are skipped.</p>
+    <div style="margin-bottom:16px;"><input type="file" accept=".json" id="dbImportFile" style="font-size:0.82rem;color:var(--text-secondary);"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="doImportDB()">Import &amp; merge</button>
+    </div>`);
+}
+function doImportDB() {
+  const f=document.getElementById('dbImportFile').files[0]; if(!f){alert('Select a file.');return;}
+  const r=new FileReader(); r.onload=e=>{
+    try {
+      const d=JSON.parse(e.target.result);
+      const incoming=(d.retros||[]);
+      let added=0;
+      incoming.forEach(retro=>{ if(!DB.retros.find(x=>x.id===retro.id)){DB.retros.push(retro);added++;} });
+      DB.retros.sort((a,b)=>new Date(b.archivedAt)-new Date(a.archivedAt));
+      saveDB(); renderHistory(); closeModal();
+      toast(`✓ Imported ${added} retro${added!==1?'s':''} (${incoming.length-added} already existed).`);
+    } catch { alert('Invalid database file.'); }
+  }; r.readAsText(f);
+}
 let pMode = false;
 function switchToParticipant() {
   pMode=true;
@@ -779,11 +1071,11 @@ function escH(s) { const d=document.createElement('div'); d.textContent=s||''; r
 
 // ── BOOT ──
 function boot() {
-  load();
+  load(); loadDB();
   if (!S.meta.format) S.meta.format='classic';
   document.getElementById('sprintName').value=S.meta.sprintName||'';
   document.getElementById('retroDate').value=S.meta.retroDate||'';
-  applyFormat(); renderBoard(); checkRoute();
+  applyFormat(); renderBoard(); updateHistBadge(); checkRoute();
 }
 boot();
 </script>
