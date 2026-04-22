@@ -215,7 +215,7 @@ body { font-family:'IBM Plex Sans',sans-serif; background:var(--navy-800); color
     <div class="result-block" id="resultBlock">
       <div class="res-lbl">Suggested</div>
       <div class="res-pts" id="resPts">—</div>
-      <div class="res-name" id="resName">Select all three factors</div>
+      <div class="res-name" id="resName">Select all five factors</div>
     </div>
     <button class="btn btn-primary" id="addBtn2" onclick="addToHistory()" disabled>Add to Session ↓</button>
   </div>
@@ -262,21 +262,28 @@ const FACTORS = [
       high: { label:'Irreversible',sub:'Migration, deletion\nor live data change', score:3 },
     }
   },
+  { id:'qa', name:'QA Effort', hint:'How much testing effort does this story require?',
+    options: {
+      low:  { label:'Low',    sub:'Happy path,\nfew scenarios',          score:1 },
+      med:  { label:'Medium', sub:'Edge cases,\nintegration checks',     score:2 },
+      high: { label:'High',   sub:'Complex matrix,\nregression risk',    score:3 },
+    }
+  },
 ];
 
-const SCORE_MAP = { 4:'1', 5:'2', 6:'3', 7:'5', 8:'8', 9:'13', 10:'13', 11:'21', 12:'21' };
+const SCORE_MAP = { 5:'1', 6:'2', 7:'3', 8:'5', 9:'5', 10:'8', 11:'8', 12:'13', 13:'13', 14:'21', 15:'21' };
 const PT_NAMES  = { '1':'Very Small','2':'Small','3':'Medium','5':'Medium-Large','8':'Large','13':'Very Large','21':'Epic — consider splitting' };
 const FIB = ['1','2','3','5','8','13','21'];
 
-let sel = { complexity:null, effort:null, blast:null, reversibility:null };
+let sel = { complexity:null, effort:null, blast:null, reversibility:null, qa:null };
 let overridePt = null;
 let history = [];
 let saveTimer = null;
 
 function init() {
-  const d = (() => { try { return JSON.parse(localStorage.getItem('s4est2')); } catch { return null; } })();
+  const d = (() => { try { return JSON.parse(localStorage.getItem('s4est3')); } catch { return null; } })();
   if (d) {
-    sel      = d.sel      || { complexity:null, effort:null, blast:null, reversibility:null };
+    sel      = d.sel      || { complexity:null, effort:null, blast:null, reversibility:null, qa:null };
     overridePt = d.overridePt || null;
     history  = d.history  || [];
     document.getElementById('storyRef').value   = d.ref   || '';
@@ -289,7 +296,7 @@ function triggerSave() {
   showLz('saving'); clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     try {
-      localStorage.setItem('s4est2', JSON.stringify({
+      localStorage.setItem('s4est3', JSON.stringify({
         sel, overridePt, history,
         ref:   document.getElementById('storyRef').value,
         title: document.getElementById('storyTitle').value,
@@ -334,7 +341,7 @@ function pick(fid, tier) {
 }
 
 function getSuggested() {
-  if (!sel.complexity||!sel.effort||!sel.blast||!sel.reversibility) return null;
+  if (!sel.complexity||!sel.effort||!sel.blast||!sel.reversibility||!sel.qa) return null;
   const sum = FACTORS.reduce((a,f) => a + f.options[sel[f.id]].score, 0);
   return SCORE_MAP[sum] || null;
 }
@@ -352,7 +359,7 @@ function renderScore() {
       <div class="sc-pill-tier">${lbl}</div>
     </div>${i<FACTORS.length-1?'<div class="sep">+</div>':''}`;
   }).join('');
-  const sum = (sel.complexity&&sel.effort&&sel.blast&&sel.reversibility) ? FACTORS.reduce((a,f)=>a+f.options[sel[f.id]].score,0) : '?';
+  const sum = (sel.complexity&&sel.effort&&sel.blast&&sel.reversibility&&sel.qa) ? FACTORS.reduce((a,f)=>a+f.options[sel[f.id]].score,0) : '?';
   html += `<div class="sep">=</div><div class="total-pill"><div class="total-pill-lbl">Score</div><div class="total-pill-val">${sum}</div></div>`;
   document.getElementById('breakdown').innerHTML = html;
 
@@ -362,7 +369,7 @@ function renderScore() {
   document.getElementById('resPts').textContent  = final || '—';
   document.getElementById('resName').textContent = final
     ? (PT_NAMES[final]||'') + (overridePt&&overridePt!==getSuggested()?' (overridden)':'')
-    : 'Select all three factors';
+    : 'Select all five factors';
 }
 
 function renderOverride() {
@@ -390,7 +397,7 @@ function addToHistory() {
   const title = document.getElementById('storyTitle').value.trim();
   const final = getFinal();
   if (!title||!final) return;
-  history.unshift({ id:Date.now(), ref, title, complexity:sel.complexity, effort:sel.effort, blast:sel.blast, reversibility:sel.reversibility, suggested:getSuggested(), final, overridden: overridePt&&overridePt!==getSuggested() });
+  history.unshift({ id:Date.now(), ref, title, complexity:sel.complexity, effort:sel.effort, blast:sel.blast, reversibility:sel.reversibility, qa:sel.qa, suggested:getSuggested(), final, overridden: overridePt&&overridePt!==getSuggested() });
   clearForm(); triggerSave(); renderHistory();
 }
 
@@ -401,7 +408,7 @@ function removeHistory(id) {
 function clearForm() {
   document.getElementById('storyRef').value   = '';
   document.getElementById('storyTitle').value = '';
-  sel = { complexity:null, effort:null, blast:null, reversibility:null }; overridePt = null;
+  sel = { complexity:null, effort:null, blast:null, reversibility:null, qa:null }; overridePt = null;
   renderMatrix(); renderOverride(); renderScore(); updateAddBtn();
 }
 
@@ -418,12 +425,13 @@ function renderHistory() {
     <td><span class="td-tag ${tc(h.effort)}">${tl(h.effort)}</span></td>
     <td><span class="td-tag ${tc(h.blast)}">${tl(h.blast)}</span></td>
     <td><span class="td-tag ${tc(h.reversibility)}">${h.reversibility==='low'?'Easy':h.reversibility==='med'?'Partial':'Irreversible'}</span></td>
+    <td><span class="td-tag ${tc(h.qa)}">${tl(h.qa)}</span></td>
     <td class="td-pts" title="${h.overridden?'Overridden from '+h.suggested:'Matrix suggested'}">${h.final}${h.overridden?' *':''}</td>
     <td style="text-align:right;padding-right:14px;"><button class="btn btn-ghost" style="padding:3px 8px;font-size:0.68rem;" onclick="removeHistory(${h.id})">✕</button></td>
   </tr>`).join('');
   const total = history.reduce((a,h)=>a+(parseInt(h.final)||0),0);
   body.innerHTML = `<table class="h-table">
-    <thead><tr><th>Ref</th><th>Story</th><th>Complexity</th><th>Effort</th><th>Blast Radius</th><th>Reversibility</th><th style="text-align:right">Points</th><th></th></tr></thead>
+    <thead><tr><th>Ref</th><th>Story</th><th>Complexity</th><th>Effort</th><th>Blast Radius</th><th>Reversibility</th><th>QA Effort</th><th style="text-align:right">Points</th><th></th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
   <div class="h-foot">
@@ -447,9 +455,9 @@ function triggerImport() {
   };
 }
 function resetAll() {
-  history=[]; sel={complexity:null,effort:null,blast:null,reversibility:null}; overridePt=null;
+  history=[]; sel={complexity:null,effort:null,blast:null,reversibility:null,qa:null}; overridePt=null;
   document.getElementById('storyRef').value=''; document.getElementById('storyTitle').value='';
-  localStorage.removeItem('s4est2');
+  localStorage.removeItem('s4est3');
   renderMatrix(); renderOverride(); renderScore(); renderHistory(); updateAddBtn();
 }
 
