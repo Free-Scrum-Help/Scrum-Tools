@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sprint Capacity Planner · S4 Labour</title>
+<title>Sprint Capacity Planner</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -418,6 +418,67 @@
     .header{position:static;}
     .btn,.add-member-row{display:none!important;}
   }
+
+  /* ── Dynamic tabs ── */
+  .tabs { flex-wrap:wrap; align-items:flex-end; }
+  .tab-btn { position:relative; }
+  .tab-btn .tab-close {
+    margin-left:2px; width:16px; height:16px; border-radius:4px;
+    display:none; align-items:center; justify-content:center;
+    font-size:0.78rem; line-height:1; color:var(--text-muted);
+    background:transparent; border:none; cursor:pointer; padding:0; transition:all 0.15s;
+  }
+  .tab-btn:hover .tab-close { display:inline-flex; }
+  .tab-btn .tab-close:hover { background:var(--red-dim); color:var(--red); }
+  .add-team-btn {
+    padding:12px 18px 14px; border:none; background:transparent;
+    font-family:'Outfit',sans-serif; font-size:0.86rem; font-weight:600;
+    cursor:pointer; color:var(--text-muted); border-radius:10px 10px 0 0;
+    transition:all 0.2s; display:flex; align-items:center; gap:7px;
+  }
+  .add-team-btn:hover { color:var(--orange); background:rgba(255,114,30,0.06); }
+
+  /* ── Add-team inline form ── */
+  .add-team-form { display:flex; align-items:center; gap:8px; padding:8px 0 0; }
+  .add-team-form input {
+    background:rgba(255,255,255,0.06); border:1px solid var(--orange);
+    border-radius:8px; color:var(--text); font-family:'Outfit',sans-serif;
+    font-size:0.9rem; font-weight:600; padding:7px 12px; width:200px; outline:none;
+  }
+  .add-team-form input::placeholder { color:var(--text-muted); font-weight:400; }
+
+  /* ── Empty state ── */
+  .empty-state {
+    max-width:560px; margin:60px auto; text-align:center;
+    padding:48px 40px; border:1px dashed rgba(255,255,255,0.12);
+    border-radius:var(--radius-lg); background:rgba(15,31,56,0.4);
+  }
+  .empty-state .empty-icon { font-size:2.6rem; margin-bottom:16px; }
+  .empty-state h2 {
+    font-family:'Outfit',sans-serif; font-weight:800; font-size:1.4rem;
+    margin-bottom:10px; letter-spacing:-0.02em;
+  }
+  .empty-state p { color:var(--text-secondary); font-size:0.9rem; margin-bottom:24px; line-height:1.6; }
+  .empty-state .add-team-form { justify-content:center; }
+  .btn-primary {
+    background:linear-gradient(135deg,var(--orange) 0%,var(--orange-hot) 100%);
+    color:white; box-shadow:0 0 16px rgba(255,114,30,0.3);
+  }
+  .btn-primary:hover { box-shadow:0 0 24px rgba(255,114,30,0.45); }
+
+  /* ── Rename/delete team controls in panel header ── */
+  .team-toolbar { display:flex; align-items:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .team-toolbar .team-title-big {
+    font-family:'Outfit',sans-serif; font-weight:800; font-size:1.25rem;
+    letter-spacing:-0.02em; display:flex; align-items:center; gap:10px;
+  }
+  .team-name-edit {
+    background:rgba(255,255,255,0.06); border:1px solid var(--orange);
+    border-radius:8px; color:var(--text); font-family:'Outfit',sans-serif;
+    font-size:1.1rem; font-weight:800; padding:4px 10px; width:240px; outline:none;
+  }
+  .team-color-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; box-shadow:0 0 8px currentColor; }
+  .team-toolbar-actions { margin-left:auto; display:flex; gap:6px; }
 </style>
 </head>
 <body>
@@ -426,9 +487,9 @@
 <div class="header">
   <div class="header-inner">
     <div class="logo-area">
-      <div class="logo-mark">S4</div>
+      <div class="logo-mark">CP</div>
       <div class="logo-text">
-        <div class="brand">S4<span>Labour</span></div>
+        <div class="brand">Capacity<span>Planner</span></div>
         <div class="sub">Sprint Capacity Planner</div>
       </div>
     </div>
@@ -447,266 +508,11 @@
 
 <!-- ══ TABS ══ -->
 <div class="tabs-area">
-  <div class="tabs">
-    <button class="tab-btn rota active" onclick="switchTab('rota')">
-      <span class="tab-dot" style="background:var(--rota-color)"></span>Rota
-      <span class="tab-count" style="background:rgba(0,201,167,0.12);color:var(--rota-color)" id="rota-count">9</span>
-    </button>
-    <button class="tab-btn mobile" onclick="switchTab('mobile')">
-      <span class="tab-dot" style="background:var(--mobile-color)"></span>Mobile
-      <span class="tab-count" style="background:rgba(91,155,245,0.12);color:var(--mobile-color)" id="mobile-count">4</span>
-    </button>
-    <button class="tab-btn payroll" onclick="switchTab('payroll')">
-      <span class="tab-dot" style="background:var(--payroll-color)"></span>Payroll
-      <span class="tab-count" style="background:rgba(255,114,30,0.12);color:var(--payroll-color)" id="payroll-count">3</span>
-    </button>
-    <button class="tab-btn infra" onclick="switchTab('infra')">
-      <span class="tab-dot" style="background:var(--infra-color)"></span>Infrastructure
-      <span class="tab-count" style="background:rgba(244,114,182,0.12);color:var(--infra-color)" id="infra-count">3</span>
-    </button>
-  </div>
+  <div class="tabs" id="tabsBar"></div>
 </div>
 
 <!-- ══ MAIN ══ -->
-<div class="main">
-
-  <!-- ═══ ROTA ═══ -->
-  <div class="team-panel active" id="panel-rota">
-    <div class="config-row">
-      <div class="glass-card">
-        <div class="card-title"><div class="card-title-icon" style="background:rgba(0,201,167,0.12);color:var(--rota-color)">🗓</div>Sprint Configuration</div>
-        <div class="config-fields">
-          <div class="field-group"><div class="field-label">Start Date</div>
-            <input type="date" class="field-input date-w" id="rota-startDate" oninput="onConfigChange('rota')" /></div>
-          <div class="field-group"><div class="field-label">Sprint Days</div>
-            <input type="number" class="field-input" id="rota-sprintDays" value="10" min="1" max="30" oninput="onConfigChange('rota')" /></div>
-          <div class="field-group"><div class="field-label">Avg Velocity</div>
-            <input type="number" class="field-input" id="rota-velocity" placeholder="pts" min="0" oninput="onConfigChange('rota')" /></div>
-          <div class="field-group"><div class="field-label">Sprint Goal</div>
-            <input type="text" class="field-input wide" id="rota-goal" placeholder="What's the mission?" oninput="onConfigChange('rota')" /></div>
-          <div class="toggle-wrap">
-            <div class="field-label">UK Bank Hols</div>
-            <label class="toggle-label-row">
-              <label class="toggle"><input type="checkbox" id="rota-useBH" checked onchange="onConfigChange('rota')" /><span class="toggle-track"></span></label>
-              <span class="toggle-text" id="rota-bhToggleLabel">England</span>
-            </label>
-          </div>
-        </div>
-        <div class="sprint-period" id="rota-period"><span class="sprint-period-empty">Set a start date to see the sprint window</span></div>
-        <div class="bh-panel" id="rota-bhPanel"></div>
-      </div>
-      <div class="glass-card">
-        <div class="card-title"><div class="card-title-icon" style="background:rgba(0,201,167,0.12);color:var(--rota-color)">📊</div>Estimated Capacity</div>
-        <div class="capacity-metrics" id="rota-metrics"></div>
-        <div class="progress-wrap">
-          <div class="progress-track"><div class="progress-fill bar-hi" id="rota-bar" style="width:0%"></div></div>
-          <div class="progress-labels"><span>0%</span><span id="rota-pct-label">—</span><span>100%</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="members-card">
-      <div class="members-card-header">
-        <div class="members-card-header-left">
-          <span class="role-tag" style="color:var(--rota-color);border-color:rgba(0,201,167,0.3);background:rgba(0,201,167,0.08)">Dev</span>
-          <span class="role-tag-title">Developers</span>
-        </div>
-      </div>
-      <div class="table-header">
-        <div class="th">Member</div><div class="th">Sprint Days</div>
-        <div class="th">Leave Days</div><div class="th">Available</div>
-        <div class="th">Avail %</div><div class="th"></div>
-      </div>
-      <div id="rota-dev-rows"></div>
-      <div class="add-member-row">
-        <input class="add-input" id="rota-dev-addInput" placeholder="+ Add developer…" onkeydown="if(event.key==='Enter')addMember('rota','dev')" />
-        <button class="btn btn-glass btn-small" onclick="addMember('rota','dev')">Add</button>
-      </div>
-    </div>
-    <div class="members-card">
-      <div class="members-card-header">
-        <div class="members-card-header-left">
-          <span class="role-tag" style="color:var(--teal);border-color:rgba(0,201,167,0.2);background:rgba(0,201,167,0.05)">QA</span>
-          <span class="role-tag-title">QA Engineers</span>
-        </div>
-      </div>
-      <div class="table-header">
-        <div class="th">Member</div><div class="th">Sprint Days</div>
-        <div class="th">Leave Days</div><div class="th">Available</div>
-        <div class="th">Avail %</div><div class="th"></div>
-      </div>
-      <div id="rota-qa-rows"></div>
-      <div class="add-member-row">
-        <input class="add-input" id="rota-qa-addInput" placeholder="+ Add QA…" onkeydown="if(event.key==='Enter')addMember('rota','qa')" />
-        <button class="btn btn-glass btn-small" onclick="addMember('rota','qa')">Add</button>
-      </div>
-    </div>
-    <div class="notes-card"><div class="notes-label">📝 Sprint Notes</div>
-      <textarea class="notes-textarea" id="rota-notes" placeholder="Risks, blockers, context…" oninput="onNotesChange('rota')"></textarea></div>
-  </div>
-
-  <!-- ═══ MOBILE ═══ -->
-  <div class="team-panel" id="panel-mobile">
-    <div class="config-row">
-      <div class="glass-card">
-        <div class="card-title"><div class="card-title-icon" style="background:rgba(91,155,245,0.12);color:var(--mobile-color)">🗓</div>Sprint Configuration</div>
-        <div class="config-fields">
-          <div class="field-group"><div class="field-label">Start Date</div>
-            <input type="date" class="field-input date-w" id="mobile-startDate" oninput="onConfigChange('mobile')" /></div>
-          <div class="field-group"><div class="field-label">Sprint Days</div>
-            <input type="number" class="field-input" id="mobile-sprintDays" value="10" min="1" max="30" oninput="onConfigChange('mobile')" /></div>
-          <div class="field-group"><div class="field-label">Avg Velocity</div>
-            <input type="number" class="field-input" id="mobile-velocity" placeholder="pts" min="0" oninput="onConfigChange('mobile')" /></div>
-          <div class="field-group"><div class="field-label">Sprint Goal</div>
-            <input type="text" class="field-input wide" id="mobile-goal" placeholder="What's the mission?" oninput="onConfigChange('mobile')" /></div>
-          <div class="toggle-wrap">
-            <div class="field-label">UK Bank Hols</div>
-            <label class="toggle-label-row">
-              <label class="toggle"><input type="checkbox" id="mobile-useBH" checked onchange="onConfigChange('mobile')" /><span class="toggle-track"></span></label>
-              <span class="toggle-text" id="mobile-bhToggleLabel">England</span>
-            </label>
-          </div>
-        </div>
-        <div class="sprint-period" id="mobile-period"><span class="sprint-period-empty">Set a start date to see the sprint window</span></div>
-        <div class="bh-panel" id="mobile-bhPanel"></div>
-      </div>
-      <div class="glass-card">
-        <div class="card-title"><div class="card-title-icon" style="background:rgba(91,155,245,0.12);color:var(--mobile-color)">📊</div>Estimated Capacity</div>
-        <div class="capacity-metrics" id="mobile-metrics"></div>
-        <div class="progress-wrap">
-          <div class="progress-track"><div class="progress-fill bar-hi" id="mobile-bar" style="width:0%"></div></div>
-          <div class="progress-labels"><span>0%</span><span id="mobile-pct-label">—</span><span>100%</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="members-card">
-      <div class="members-card-header"><div class="members-card-header-left">
-        <span class="role-tag" style="color:var(--mobile-color);border-color:rgba(91,155,245,0.3);background:rgba(91,155,245,0.08)">Dev</span>
-        <span class="role-tag-title">Developers</span></div></div>
-      <div class="table-header"><div class="th">Member</div><div class="th">Sprint Days</div><div class="th">Leave Days</div><div class="th">Available</div><div class="th">Avail %</div><div class="th"></div></div>
-      <div id="mobile-dev-rows"></div>
-      <div class="add-member-row"><input class="add-input" id="mobile-dev-addInput" placeholder="+ Add developer…" onkeydown="if(event.key==='Enter')addMember('mobile','dev')" /><button class="btn btn-glass btn-small" onclick="addMember('mobile','dev')">Add</button></div>
-    </div>
-    <div class="members-card">
-      <div class="members-card-header"><div class="members-card-header-left">
-        <span class="role-tag" style="color:var(--mobile-color);border-color:rgba(91,155,245,0.2);background:rgba(91,155,245,0.05)">QA</span>
-        <span class="role-tag-title">QA Engineers</span></div></div>
-      <div class="table-header"><div class="th">Member</div><div class="th">Sprint Days</div><div class="th">Leave Days</div><div class="th">Available</div><div class="th">Avail %</div><div class="th"></div></div>
-      <div id="mobile-qa-rows"></div>
-      <div class="add-member-row"><input class="add-input" id="mobile-qa-addInput" placeholder="+ Add QA…" onkeydown="if(event.key==='Enter')addMember('mobile','qa')" /><button class="btn btn-glass btn-small" onclick="addMember('mobile','qa')">Add</button></div>
-    </div>
-    <div class="notes-card"><div class="notes-label">📝 Sprint Notes</div>
-      <textarea class="notes-textarea" id="mobile-notes" placeholder="Risks, blockers, context…" oninput="onNotesChange('mobile')"></textarea></div>
-  </div>
-
-  <!-- ═══ PAYROLL ═══ -->
-  <div class="team-panel" id="panel-payroll">
-    <div class="config-row">
-      <div class="glass-card">
-        <div class="card-title"><div class="card-title-icon" style="background:rgba(255,114,30,0.12);color:var(--orange)">🗓</div>Sprint Configuration</div>
-        <div class="config-fields">
-          <div class="field-group"><div class="field-label">Start Date</div>
-            <input type="date" class="field-input date-w" id="payroll-startDate" oninput="onConfigChange('payroll')" /></div>
-          <div class="field-group"><div class="field-label">Sprint Days</div>
-            <input type="number" class="field-input" id="payroll-sprintDays" value="10" min="1" max="30" oninput="onConfigChange('payroll')" /></div>
-          <div class="field-group"><div class="field-label">Avg Velocity</div>
-            <input type="number" class="field-input" id="payroll-velocity" placeholder="pts" min="0" oninput="onConfigChange('payroll')" /></div>
-          <div class="field-group"><div class="field-label">Sprint Goal</div>
-            <input type="text" class="field-input wide" id="payroll-goal" placeholder="What's the mission?" oninput="onConfigChange('payroll')" /></div>
-          <div class="toggle-wrap">
-            <div class="field-label">UK Bank Hols</div>
-            <label class="toggle-label-row">
-              <label class="toggle"><input type="checkbox" id="payroll-useBH" checked onchange="onConfigChange('payroll')" /><span class="toggle-track"></span></label>
-              <span class="toggle-text" id="payroll-bhToggleLabel">England</span>
-            </label>
-          </div>
-        </div>
-        <div class="sprint-period" id="payroll-period"><span class="sprint-period-empty">Set a start date to see the sprint window</span></div>
-        <div class="bh-panel" id="payroll-bhPanel"></div>
-      </div>
-      <div class="glass-card">
-        <div class="card-title"><div class="card-title-icon" style="background:rgba(255,114,30,0.12);color:var(--orange)">📊</div>Estimated Capacity</div>
-        <div class="capacity-metrics" id="payroll-metrics"></div>
-        <div class="progress-wrap">
-          <div class="progress-track"><div class="progress-fill bar-hi" id="payroll-bar" style="width:0%"></div></div>
-          <div class="progress-labels"><span>0%</span><span id="payroll-pct-label">—</span><span>100%</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="members-card">
-      <div class="members-card-header"><div class="members-card-header-left">
-        <span class="role-tag" style="color:var(--orange);border-color:rgba(255,114,30,0.3);background:rgba(255,114,30,0.08)">Dev</span>
-        <span class="role-tag-title">Developers</span></div></div>
-      <div class="table-header"><div class="th">Member</div><div class="th">Sprint Days</div><div class="th">Leave Days</div><div class="th">Available</div><div class="th">Avail %</div><div class="th"></div></div>
-      <div id="payroll-dev-rows"></div>
-      <div class="add-member-row"><input class="add-input" id="payroll-dev-addInput" placeholder="+ Add developer…" onkeydown="if(event.key==='Enter')addMember('payroll','dev')" /><button class="btn btn-glass btn-small" onclick="addMember('payroll','dev')">Add</button></div>
-    </div>
-    <div class="members-card">
-      <div class="members-card-header"><div class="members-card-header-left">
-        <span class="role-tag" style="color:var(--orange);border-color:rgba(255,114,30,0.2);background:rgba(255,114,30,0.05)">QA</span>
-        <span class="role-tag-title">QA Engineers</span></div></div>
-      <div class="table-header"><div class="th">Member</div><div class="th">Sprint Days</div><div class="th">Leave Days</div><div class="th">Available</div><div class="th">Avail %</div><div class="th"></div></div>
-      <div id="payroll-qa-rows"></div>
-      <div class="add-member-row"><input class="add-input" id="payroll-qa-addInput" placeholder="+ Add QA…" onkeydown="if(event.key==='Enter')addMember('payroll','qa')" /><button class="btn btn-glass btn-small" onclick="addMember('payroll','qa')">Add</button></div>
-    </div>
-    <div class="notes-card"><div class="notes-label">📝 Sprint Notes</div>
-      <textarea class="notes-textarea" id="payroll-notes" placeholder="Risks, blockers, context…" oninput="onNotesChange('payroll')"></textarea></div>
-  </div>
-
-  <!-- ═══ INFRASTRUCTURE ═══ -->
-  <div class="team-panel" id="panel-infra">
-    <div class="config-row">
-      <div class="glass-card">
-        <div class="card-title"><div class="card-title-icon" style="background:rgba(244,114,182,0.12);color:var(--infra-color)">🗓</div>Sprint Configuration</div>
-        <div class="config-fields">
-          <div class="field-group"><div class="field-label">Start Date</div>
-            <input type="date" class="field-input date-w" id="infra-startDate" oninput="onConfigChange('infra')" /></div>
-          <div class="field-group"><div class="field-label">Sprint Days</div>
-            <input type="number" class="field-input" id="infra-sprintDays" value="10" min="1" max="30" oninput="onConfigChange('infra')" /></div>
-          <div class="field-group"><div class="field-label">Avg Velocity</div>
-            <input type="number" class="field-input" id="infra-velocity" placeholder="pts" min="0" oninput="onConfigChange('infra')" /></div>
-          <div class="field-group"><div class="field-label">Sprint Goal</div>
-            <input type="text" class="field-input wide" id="infra-goal" placeholder="What's the mission?" oninput="onConfigChange('infra')" /></div>
-          <div class="toggle-wrap">
-            <div class="field-label">UK Bank Hols</div>
-            <label class="toggle-label-row">
-              <label class="toggle"><input type="checkbox" id="infra-useBH" checked onchange="onConfigChange('infra')" /><span class="toggle-track"></span></label>
-              <span class="toggle-text" id="infra-bhToggleLabel">England</span>
-            </label>
-          </div>
-        </div>
-        <div class="sprint-period" id="infra-period"><span class="sprint-period-empty">Set a start date to see the sprint window</span></div>
-        <div class="bh-panel" id="infra-bhPanel"></div>
-      </div>
-      <div class="glass-card">
-        <div class="card-title"><div class="card-title-icon" style="background:rgba(244,114,182,0.12);color:var(--infra-color)">📊</div>Estimated Capacity</div>
-        <div class="capacity-metrics" id="infra-metrics"></div>
-        <div class="progress-wrap">
-          <div class="progress-track"><div class="progress-fill bar-hi" id="infra-bar" style="width:0%"></div></div>
-          <div class="progress-labels"><span>0%</span><span id="infra-pct-label">—</span><span>100%</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="members-card">
-      <div class="members-card-header"><div class="members-card-header-left">
-        <span class="role-tag" style="color:var(--infra-color);border-color:rgba(244,114,182,0.3);background:rgba(244,114,182,0.08)">Dev</span>
-        <span class="role-tag-title">Developers</span></div></div>
-      <div class="table-header"><div class="th">Member</div><div class="th">Sprint Days</div><div class="th">Leave Days</div><div class="th">Available</div><div class="th">Avail %</div><div class="th"></div></div>
-      <div id="infra-dev-rows"></div>
-      <div class="add-member-row"><input class="add-input" id="infra-dev-addInput" placeholder="+ Add developer…" onkeydown="if(event.key==='Enter')addMember('infra','dev')" /><button class="btn btn-glass btn-small" onclick="addMember('infra','dev')">Add</button></div>
-    </div>
-    <div class="members-card">
-      <div class="members-card-header"><div class="members-card-header-left">
-        <span class="role-tag" style="color:var(--infra-color);border-color:rgba(244,114,182,0.2);background:rgba(244,114,182,0.05)">QA</span>
-        <span class="role-tag-title">QA Engineers</span></div></div>
-      <div class="table-header"><div class="th">Member</div><div class="th">Sprint Days</div><div class="th">Leave Days</div><div class="th">Available</div><div class="th">Avail %</div><div class="th"></div></div>
-      <div id="infra-qa-rows"></div>
-      <div class="add-member-row"><input class="add-input" id="infra-qa-addInput" placeholder="+ Add QA…" onkeydown="if(event.key==='Enter')addMember('infra','qa')" /><button class="btn btn-glass btn-small" onclick="addMember('infra','qa')">Add</button></div>
-    </div>
-    <div class="notes-card"><div class="notes-label">📝 Sprint Notes</div>
-      <textarea class="notes-textarea" id="infra-notes" placeholder="Risks, blockers, context…" oninput="onNotesChange('infra')"></textarea></div>
-  </div>
-
-</div><!-- /main -->
+<div class="main" id="mainArea"></div>
 
 <script>
 // ════════════════════════════════════════════════
@@ -775,38 +581,26 @@ const ENGLAND_BH = {
   ],
 };
 
-// Returns array of BH objects that fall within the sprint window
-// (start date + N working days ahead, walking forward day by day)
 function getBankHolsInSprint(startDateStr, sprintWorkingDays) {
   if (!startDateStr) return [];
   const allBH = Object.values(ENGLAND_BH).flat();
   const bhSet = {};
   allBH.forEach(bh => { bhSet[bh.date] = bh.name; });
 
-  // Walk forward from startDate, counting working days (Mon-Fri, excluding BH)
   const start = parseDateLocal(startDateStr);
   if (!start) return [];
 
   const sprintDates = [];
   let current = new Date(start);
   let workingDaysCounted = 0;
-
-  // Collect all working dates in sprint
   while (workingDaysCounted < sprintWorkingDays) {
     const dow = current.getDay();
-    if (dow !== 0 && dow !== 6) { // Mon-Fri
-      sprintDates.push(toDateStr(current));
-      workingDaysCounted++;
-    }
+    if (dow !== 0 && dow !== 6) { sprintDates.push(toDateStr(current)); workingDaysCounted++; }
     current.setDate(current.getDate() + 1);
-    if (workingDaysCounted > 100) break; // safety
+    if (workingDaysCounted > 100) break;
   }
-
-  // Find BH that fall on sprint working days
   const result = [];
-  sprintDates.forEach(ds => {
-    if (bhSet[ds]) result.push({ date: ds, name: bhSet[ds] });
-  });
+  sprintDates.forEach(ds => { if (bhSet[ds]) result.push({ date: ds, name: bhSet[ds] }); });
   return result;
 }
 
@@ -827,60 +621,74 @@ function formatBHDate(str) {
 }
 
 // ════════════════════════════════════════════════
-// DEFAULTS & STATE
+// STATE  (teams is now an ordered array — user-created)
 // ════════════════════════════════════════════════
-const DEFAULTS = {
-  rota:    { dev:['Pat','Tom','Riddhi','Nawab','Faye'],  qa:['Oli','Maryam','Vinu','Anitha'] },
-  mobile:  { dev:['Mubean','Harry'],                     qa:['Oli','Maryam'] },
-  payroll: { dev:['Joe','Chris'],                        qa:['Fatima'] },
-  infra:   { dev:['Chris','Steve'],                      qa:['Maryam'] },
-};
 const AVATAR_COLORS = ['#FF721E','#00C9A7','#5B9BF5','#A78BFA','#F59E0B','#34D399','#FB7185','#60A5FA','#FBBF24','#6EE7B7'];
-const TEAM_COLORS   = { rota:'#00C9A7', mobile:'#5B9BF5', payroll:'#FF721E', infra:'#F472B6' };
+const TEAM_PALETTE  = ['#00C9A7','#5B9BF5','#FF721E','#F472B6','#A78BFA','#22D17B','#FFBE45','#FB7185','#60A5FA','#34D399'];
 
-let state = { sprintName:'', teams:{} };
+let state = { sprintName:'', teams:[], activeTeamId:null };
 let autoSaveTimer = null;
+let editingTeamId = null;
 
-function buildMember(name, idx) {
-  return { id:'m_'+idx+'_'+name.replace(/\s/g,''), name, holidays:0, sprintDaysOverride:null };
+function rgbaFromHex(hex, a) {
+  const h = hex.replace('#','');
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
 }
-function buildTeam(tid, days=10) {
+function uid(prefix) { return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function buildMember(name) {
+  return { id: uid('m'), name, holidays:0, sprintDaysOverride:null };
+}
+function buildTeam(name) {
+  const color = TEAM_PALETTE[state.teams.length % TEAM_PALETTE.length];
   return {
-    sprintDays:days, velocity:'', goal:'', notes:'',
+    id: uid('t'), name: name || 'New Team', color,
+    sprintDays:10, velocity:'', goal:'', notes:'',
     startDate:'', useBankHols:true, excludedBankHols:[],
-    dev:DEFAULTS[tid].dev.map((n,i)=>buildMember(n,i)),
-    qa: DEFAULTS[tid].qa.map((n,i)=>buildMember(n,i+100)),
+    dev:[], qa:[],
   };
 }
-function ensureState() {
-  ['rota','mobile','payroll','infra'].forEach(t => {
-    if (!state.teams[t]) state.teams[t] = buildTeam(t);
-    // backfill new fields
-    if (state.teams[t].startDate        === undefined) state.teams[t].startDate        = '';
-    if (state.teams[t].useBankHols      === undefined) state.teams[t].useBankHols      = true;
-    if (state.teams[t].excludedBankHols === undefined) state.teams[t].excludedBankHols = [];
-    // migrate old sprintDays-per-member to sprintDaysOverride: null
-    [...state.teams[t].dev, ...state.teams[t].qa].forEach(m => {
-      if (m.sprintDaysOverride === undefined) {
-        // if they had a custom per-member sprintDays different from team default, preserve it
-        m.sprintDaysOverride = (m.sprintDays && m.sprintDays !== state.teams[t].sprintDays)
-          ? m.sprintDays : null;
-        delete m.sprintDays;
-      }
+
+// Migrate any legacy object-shaped state (old S4 version) into the new array shape
+function migrateLegacy(loaded) {
+  if (!loaded) return;
+  if (Array.isArray(loaded.teams)) { state = loaded; return; }
+  // old shape: teams was an object keyed by rota/mobile/payroll/infra
+  const LEGACY_NAMES = { rota:'Rota', mobile:'Mobile', payroll:'Payroll', infra:'Infrastructure' };
+  const LEGACY_COLORS = { rota:'#00C9A7', mobile:'#5B9BF5', payroll:'#FF721E', infra:'#F472B6' };
+  const arr = [];
+  Object.keys(loaded.teams || {}).forEach(k => {
+    const t = loaded.teams[k];
+    arr.push({
+      id: uid('t'), name: LEGACY_NAMES[k] || k, color: LEGACY_COLORS[k] || TEAM_PALETTE[arr.length % TEAM_PALETTE.length],
+      sprintDays: t.sprintDays || 10, velocity: t.velocity || '', goal: t.goal || '', notes: t.notes || '',
+      startDate: t.startDate || '', useBankHols: t.useBankHols !== false, excludedBankHols: t.excludedBankHols || [],
+      dev: (t.dev||[]).map(m => ({ id: m.id||uid('m'), name:m.name, holidays:m.holidays||0, sprintDaysOverride: m.sprintDaysOverride ?? null })),
+      qa:  (t.qa ||[]).map(m => ({ id: m.id||uid('m'), name:m.name, holidays:m.holidays||0, sprintDaysOverride: m.sprintDaysOverride ?? null })),
     });
   });
+  state = { sprintName: loaded.sprintName || '', teams: arr, activeTeamId: arr[0]?.id || null };
 }
+
+function getTeam(id) { return state.teams.find(t => t.id === id); }
 
 // ════════════════════════════════════════════════
 // SAVE / LOAD
 // ════════════════════════════════════════════════
 function saveState() {
-  try { localStorage.setItem('s4CapacityPlannerV2', JSON.stringify(state)); showSaveStatus('saved'); }
+  try { localStorage.setItem('capacityPlannerV3', JSON.stringify(state)); showSaveStatus('saved'); }
   catch(e) { showSaveStatus('error'); }
 }
 function loadState() {
-  try { const s=localStorage.getItem('s4CapacityPlannerV2'); if(s) state=JSON.parse(s); } catch(e){}
-  ensureState();
+  let loaded = null;
+  try { const s=localStorage.getItem('capacityPlannerV3'); if(s) loaded=JSON.parse(s); } catch(e){}
+  if (!loaded) { // try migrating from the old key once
+    try { const old=localStorage.getItem('s4CapacityPlannerV2'); if(old) loaded=JSON.parse(old); } catch(e){}
+  }
+  migrateLegacy(loaded);
+  if (!state.teams) state.teams = [];
+  if (!state.activeTeamId && state.teams.length) state.activeTeamId = state.teams[0].id;
 }
 function triggerAutoSave() {
   showSaveStatus('saving');
@@ -909,7 +717,7 @@ function importJSON() {
     const f=e.target.files[0]; if(!f) return;
     const r=new FileReader();
     r.onload=(ev)=>{
-      try { state=JSON.parse(ev.target.result); ensureState(); saveState(); initAll(); }
+      try { migrateLegacy(JSON.parse(ev.target.result)); if(!state.activeTeamId && state.teams.length) state.activeTeamId=state.teams[0].id; saveState(); renderAll(); }
       catch { alert('Invalid file format.'); }
     };
     r.readAsText(f);
@@ -917,14 +725,43 @@ function importJSON() {
 }
 
 // ════════════════════════════════════════════════
-// TABS
+// TEAM MANAGEMENT
 // ════════════════════════════════════════════════
-function switchTab(tid) {
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelector('.tab-btn.'+tid).classList.add('active');
-  document.querySelectorAll('.team-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+tid).classList.add('active');
+function addTeam(name) {
+  const clean = (name||'').trim();
+  if (!clean) return;
+  const t = buildTeam(clean);
+  state.teams.push(t);
+  state.activeTeamId = t.id;
+  triggerAutoSave(); renderAll();
 }
+function promptAddTeamFromEmpty() {
+  const input = document.getElementById('emptyTeamInput');
+  if (input) addTeam(input.value);
+}
+function promptAddTeamFromTabs() {
+  const input = document.getElementById('tabTeamInput');
+  if (input) { addTeam(input.value); }
+}
+function removeTeam(id) {
+  const t = getTeam(id); if (!t) return;
+  if (!confirm(`Delete team “${t.name}” and all its members?`)) return;
+  const idx = state.teams.findIndex(x => x.id === id);
+  state.teams = state.teams.filter(x => x.id !== id);
+  if (state.activeTeamId === id) {
+    state.activeTeamId = state.teams[Math.max(0, idx-1)]?.id || null;
+  }
+  triggerAutoSave(); renderAll();
+}
+function startRenameTeam(id) { editingTeamId = id; renderPanel(); }
+function commitRenameTeam(id, val) {
+  const t = getTeam(id); if (!t) return;
+  const clean = (val||'').trim();
+  if (clean) t.name = clean;
+  editingTeamId = null;
+  triggerAutoSave(); renderAll();
+}
+function switchTab(id) { state.activeTeamId = id; editingTeamId = null; triggerAutoSave(); renderAll(); }
 
 // ════════════════════════════════════════════════
 // HELPERS
@@ -936,39 +773,202 @@ function chipClass(p)   { return p>=80?'chip-hi':p>=50?'chip-mid':'chip-lo'; }
 function barClass(p)    { return p>=80?'bar-hi':p>=50?'bar-mid':'bar-lo'; }
 function esc(s)         { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
 
-// Returns effective sprint days for a member:
-// - If manually overridden: use that value
-// - Otherwise: teamSprintDays - bhDays (auto, floors at 1)
 function getEffectiveDays(member, teamSprintDays, bhDays) {
   if (member.sprintDaysOverride !== null && member.sprintDaysOverride !== undefined) {
     return Math.max(1, member.sprintDaysOverride);
   }
   return Math.max(1, teamSprintDays - bhDays);
 }
+function getActiveBHCount(team) {
+  if (!team.useBankHols || !team.startDate) return 0;
+  const sprintDays = parseInt(team.sprintDays) || 10;
+  const detected = getBankHolsInSprint(team.startDate, sprintDays);
+  const excluded = team.excludedBankHols || [];
+  return detected.filter(bh => !excluded.includes(bh.date)).length;
+}
 
 // ════════════════════════════════════════════════
-// SPRINT PERIOD (start → end date display)
+// RENDER — TABS
 // ════════════════════════════════════════════════
-function updateSprintPeriod(tid) {
-  const team    = state.teams[tid];
-  const el      = document.getElementById(`${tid}-period`);
+function renderTabs() {
+  const bar = document.getElementById('tabsBar');
+  const tabs = state.teams.map(t => {
+    const active = t.id === state.activeTeamId;
+    const count = t.dev.length + t.qa.length;
+    return `<button class="tab-btn ${active?'active':''}" style="${active?`border-bottom-color:${t.color}`:''}" onclick="switchTab('${t.id}')">
+      <span class="tab-dot" style="background:${t.color};${active?`box-shadow:0 0 8px ${t.color}`:''}"></span>
+      ${esc(t.name)}
+      <span class="tab-count" style="background:${rgbaFromHex(t.color,0.12)};color:${t.color}">${count}</span>
+      <button class="tab-close" title="Delete team" onclick="event.stopPropagation();removeTeam('${t.id}')">✕</button>
+    </button>`;
+  }).join('');
+  const addBtn = `<button class="add-team-btn" onclick="showTabAddForm()" id="tabAddBtn">＋ Add team</button>
+    <span id="tabAddFormSlot"></span>`;
+  bar.innerHTML = tabs + addBtn;
+}
+function showTabAddForm() {
+  document.getElementById('tabAddBtn').style.display = 'none';
+  document.getElementById('tabAddFormSlot').innerHTML =
+    `<span class="add-team-form">
+      <input id="tabTeamInput" placeholder="Team name…" onkeydown="if(event.key==='Enter')promptAddTeamFromTabs();if(event.key==='Escape')renderTabs()" />
+      <button class="btn btn-glass btn-small" onclick="promptAddTeamFromTabs()">Add</button>
+    </span>`;
+  document.getElementById('tabTeamInput').focus();
+}
+
+// ════════════════════════════════════════════════
+// RENDER — PANEL (config + capacity + members + notes)
+// ════════════════════════════════════════════════
+function renderPanel() {
+  const main = document.getElementById('mainArea');
+
+  if (!state.teams.length) {
+    main.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <h2>Plan your first sprint</h2>
+        <p>Add a team to get started. Each team tracks its own members, sprint dates, personal leave, and UK bank holidays — all saved automatically in your browser.</p>
+        <div class="add-team-form">
+          <input id="emptyTeamInput" placeholder="e.g. Product, Infrastructure…" onkeydown="if(event.key==='Enter')promptAddTeamFromEmpty()" />
+          <button class="btn btn-primary" onclick="promptAddTeamFromEmpty()">＋ Add team</button>
+        </div>
+      </div>`;
+    const inp = document.getElementById('emptyTeamInput'); if (inp) inp.focus();
+    return;
+  }
+
+  const t = getTeam(state.activeTeamId);
+  if (!t) { state.activeTeamId = state.teams[0].id; return renderPanel(); }
+
+  const accent = t.color;
+  const accentDim = rgbaFromHex(accent, 0.12);
+
+  const titleHTML = (editingTeamId === t.id)
+    ? `<input class="team-name-edit" id="teamNameEdit" value="${esc(t.name)}"
+         onkeydown="if(event.key==='Enter')commitRenameTeam('${t.id}',this.value);if(event.key==='Escape'){editingTeamId=null;renderPanel();}"
+         onblur="commitRenameTeam('${t.id}',this.value)" />`
+    : `<span class="team-title-big"><span class="team-color-dot" style="background:${accent};color:${accent}"></span>${esc(t.name)}</span>`;
+
+  main.innerHTML = `
+    <div class="team-panel active">
+      <div class="team-toolbar">
+        ${titleHTML}
+        <div class="team-toolbar-actions">
+          <button class="btn btn-glass btn-small" onclick="startRenameTeam('${t.id}')">✏️ Rename</button>
+          <button class="btn btn-danger-soft btn-small" onclick="removeTeam('${t.id}')">🗑 Delete team</button>
+        </div>
+      </div>
+
+      <div class="config-row">
+        <div class="glass-card">
+          <div class="card-title"><div class="card-title-icon" style="background:${accentDim};color:${accent}">🗓</div>Sprint Configuration</div>
+          <div class="config-fields">
+            <div class="field-group"><div class="field-label">Start Date</div>
+              <input type="date" class="field-input date-w" id="cfg-startDate" oninput="onConfigChange()" /></div>
+            <div class="field-group"><div class="field-label">Sprint Days</div>
+              <input type="number" class="field-input" id="cfg-sprintDays" value="10" min="1" max="30" oninput="onConfigChange()" /></div>
+            <div class="field-group"><div class="field-label">Avg Velocity</div>
+              <input type="number" class="field-input" id="cfg-velocity" placeholder="pts" min="0" oninput="onConfigChange()" /></div>
+            <div class="field-group"><div class="field-label">Sprint Goal</div>
+              <input type="text" class="field-input wide" id="cfg-goal" placeholder="What's the mission?" oninput="onConfigChange()" /></div>
+            <div class="toggle-wrap">
+              <div class="field-label">UK Bank Hols</div>
+              <label class="toggle-label-row">
+                <label class="toggle"><input type="checkbox" id="cfg-useBH" checked onchange="onConfigChange()" /><span class="toggle-track"></span></label>
+                <span class="toggle-text" id="cfg-bhToggleLabel">England</span>
+              </label>
+            </div>
+          </div>
+          <div class="sprint-period" id="cfg-period"><span class="sprint-period-empty">Set a start date to see the sprint window</span></div>
+          <div class="bh-panel" id="cfg-bhPanel"></div>
+        </div>
+        <div class="glass-card">
+          <div class="card-title"><div class="card-title-icon" style="background:${accentDim};color:${accent}">📊</div>Estimated Capacity</div>
+          <div class="capacity-metrics" id="cfg-metrics"></div>
+          <div class="progress-wrap">
+            <div class="progress-track"><div class="progress-fill bar-hi" id="cfg-bar" style="width:0%"></div></div>
+            <div class="progress-labels"><span>0%</span><span id="cfg-pct-label">—</span><span>100%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="members-card">
+        <div class="members-card-header">
+          <div class="members-card-header-left">
+            <span class="role-tag" style="color:${accent};border-color:${rgbaFromHex(accent,0.3)};background:${rgbaFromHex(accent,0.08)}">Dev</span>
+            <span class="role-tag-title">Developers</span>
+          </div>
+        </div>
+        <div class="table-header">
+          <div class="th">Member</div><div class="th">Sprint Days</div>
+          <div class="th">Leave Days</div><div class="th">Available</div>
+          <div class="th">Avail %</div><div class="th"></div>
+        </div>
+        <div id="dev-rows"></div>
+        <div class="add-member-row">
+          <input class="add-input" id="dev-addInput" placeholder="+ Add developer…" onkeydown="if(event.key==='Enter')addMember('dev')" />
+          <button class="btn btn-glass btn-small" onclick="addMember('dev')">Add</button>
+        </div>
+      </div>
+
+      <div class="members-card">
+        <div class="members-card-header">
+          <div class="members-card-header-left">
+            <span class="role-tag" style="color:${accent};border-color:${rgbaFromHex(accent,0.2)};background:${rgbaFromHex(accent,0.05)}">QA</span>
+            <span class="role-tag-title">QA Engineers</span>
+          </div>
+        </div>
+        <div class="table-header">
+          <div class="th">Member</div><div class="th">Sprint Days</div>
+          <div class="th">Leave Days</div><div class="th">Available</div>
+          <div class="th">Avail %</div><div class="th"></div>
+        </div>
+        <div id="qa-rows"></div>
+        <div class="add-member-row">
+          <input class="add-input" id="qa-addInput" placeholder="+ Add QA…" onkeydown="if(event.key==='Enter')addMember('qa')" />
+          <button class="btn btn-glass btn-small" onclick="addMember('qa')">Add</button>
+        </div>
+      </div>
+
+      <div class="notes-card"><div class="notes-label">📝 Sprint Notes</div>
+        <textarea class="notes-textarea" id="cfg-notes" placeholder="Risks, blockers, context…" oninput="onNotesChange()"></textarea></div>
+    </div>`;
+
+  // hydrate config inputs
+  document.getElementById('cfg-sprintDays').value = t.sprintDays || 10;
+  document.getElementById('cfg-velocity').value   = t.velocity   || '';
+  document.getElementById('cfg-goal').value       = t.goal       || '';
+  document.getElementById('cfg-notes').value      = t.notes      || '';
+  document.getElementById('cfg-startDate').value  = t.startDate  || '';
+  document.getElementById('cfg-useBH').checked    = t.useBankHols !== false;
+  document.getElementById('cfg-bhToggleLabel').textContent = (t.useBankHols !== false) ? 'England' : 'Off';
+
+  if (editingTeamId === t.id) { const e=document.getElementById('teamNameEdit'); if(e){e.focus();e.select();} }
+
+  updateSprintPeriod(t);
+  renderBHPanel(t);
+  renderRows('dev');
+  renderRows('qa');
+  updateCapacity(t);
+}
+
+// ════════════════════════════════════════════════
+// SPRINT PERIOD
+// ════════════════════════════════════════════════
+function updateSprintPeriod(team) {
+  const el = document.getElementById('cfg-period');
+  if (!el) return;
   const startStr = team.startDate;
-
   if (!startStr) {
     el.className = 'sprint-period';
     el.innerHTML = '<span class="sprint-period-empty">Set a start date to see the sprint window</span>';
     return;
   }
-
-  // End date = start + 13 calendar days (14-day window inclusive)
   const start = parseDateLocal(startStr);
-  const end   = new Date(start);
-  end.setDate(end.getDate() + 13);
-
+  const end   = new Date(start); end.setDate(end.getDate() + 13);
   const fmtOpts = { weekday:'short', day:'numeric', month:'short', year:'numeric' };
   const startFmt = start.toLocaleDateString('en-GB', fmtOpts);
   const endFmt   = end.toLocaleDateString('en-GB', fmtOpts);
-
   el.className = 'sprint-period has-dates';
   el.innerHTML = `
     <span class="sprint-period-label">Sprint window</span>
@@ -981,26 +981,22 @@ function updateSprintPeriod(tid) {
 }
 
 // ════════════════════════════════════════════════
-// BANK HOLIDAY PANEL RENDER
+// BANK HOLIDAY PANEL
 // ════════════════════════════════════════════════
-function renderBHPanel(tid) {
-  const team = state.teams[tid];
-  const panel = document.getElementById(`${tid}-bhPanel`);
+function renderBHPanel(team) {
+  const panel = document.getElementById('cfg-bhPanel');
+  if (!panel) return;
   const useBH = team.useBankHols;
   const excluded = team.excludedBankHols || [];
 
-  if (!useBH || !team.startDate) {
-    panel.innerHTML = '';
-    return;
-  }
+  if (!useBH || !team.startDate) { panel.innerHTML = ''; return; }
 
   const sprintDays = parseInt(team.sprintDays) || 10;
   const detected = getBankHolsInSprint(team.startDate, sprintDays);
 
   if (detected.length === 0) {
-    panel.innerHTML = `<div class="bh-header">
-      <div class="bh-title">🇬🇧 Bank Holidays in Sprint</div>
-    </div><div class="bh-none">No England bank holidays fall within this sprint window.</div>`;
+    panel.innerHTML = `<div class="bh-header"><div class="bh-title">🇬🇧 Bank Holidays in Sprint</div></div>
+      <div class="bh-none">No England bank holidays fall within this sprint window.</div>`;
     return;
   }
 
@@ -1008,7 +1004,7 @@ function renderBHPanel(tid) {
   const chips = detected.map(bh => {
     const isExcluded = excluded.includes(bh.date);
     return `<span class="bh-chip ${isExcluded?'excluded':''}" title="${isExcluded?'Click to include':'Click to exclude'}">
-      <span class="bh-chip-toggle" onclick="toggleBH('${tid}','${bh.date}')">${isExcluded?'':'✓'}</span>
+      <span class="bh-chip-toggle" onclick="toggleBH('${bh.date}')">${isExcluded?'':'✓'}</span>
       ${formatBHDate(bh.date)} · ${esc(bh.name)}
     </span>`;
   }).join('');
@@ -1020,43 +1016,34 @@ function renderBHPanel(tid) {
   </div>
   <div class="bh-chips">${chips}</div>
   <div class="bh-summary">
-    Sprint days auto-reduced from <strong>${parseInt(team.sprintDays)||10}</strong> → <strong>${Math.max(1,(parseInt(team.sprintDays)||10) - active.length)}</strong> for UK members.
-    Click a holiday to exclude it (e.g. for India-based members who don't observe it).
+    Sprint days auto-reduced from <strong>${sprintDays}</strong> → <strong>${Math.max(1, sprintDays - active.length)}</strong> for members on the team default.
+    Click a holiday to exclude it (e.g. for members who don't observe it).
   </div>`;
 }
 
-function toggleBH(tid, dateStr) {
-  const team = state.teams[tid];
+function toggleBH(dateStr) {
+  const team = getTeam(state.activeTeamId); if (!team) return;
   const ex = team.excludedBankHols || [];
   const idx = ex.indexOf(dateStr);
   if (idx === -1) ex.push(dateStr); else ex.splice(idx, 1);
   team.excludedBankHols = ex;
   triggerAutoSave();
-  renderBHPanel(tid);
-  renderRows(tid, 'dev');
-  renderRows(tid, 'qa');
-  updateCapacity(tid);
-}
-
-// Count active BH for a team
-function getActiveBHCount(tid) {
-  const team = state.teams[tid];
-  if (!team.useBankHols || !team.startDate) return 0;
-  const sprintDays = parseInt(team.sprintDays) || 10;
-  const detected = getBankHolsInSprint(team.startDate, sprintDays);
-  const excluded = team.excludedBankHols || [];
-  return detected.filter(bh => !excluded.includes(bh.date)).length;
+  renderBHPanel(team);
+  renderRows('dev'); renderRows('qa');
+  updateCapacity(team);
+  renderTabs();
 }
 
 // ════════════════════════════════════════════════
 // RENDER MEMBER ROWS
 // ════════════════════════════════════════════════
-function renderRows(tid, role) {
-  const team = state.teams[tid];
+function renderRows(role) {
+  const team = getTeam(state.activeTeamId); if (!team) return;
   const members = team[role];
   const teamSprintDays = parseInt(team.sprintDays) || 10;
-  const bhDays = getActiveBHCount(tid);
-  const container = document.getElementById(`${tid}-${role}-rows`);
+  const bhDays = getActiveBHCount(team);
+  const container = document.getElementById(`${role}-rows`);
+  if (!container) return;
 
   if (!members.length) {
     container.innerHTML = '<div style="padding:14px 22px;color:var(--text-muted);font-size:0.84rem;">No members yet.</div>';
@@ -1067,15 +1054,14 @@ function renderRows(tid, role) {
     const isOverride  = (m.sprintDaysOverride !== null && m.sprintDaysOverride !== undefined);
     const effectiveDays = getEffectiveDays(m, teamSprintDays, bhDays);
     const leaveDays   = m.holidays || 0;
-    // avail = effective sprint days (already has BH baked in) minus personal leave
     const avail = Math.max(0, effectiveDays - leaveDays);
     const pct   = teamSprintDays > 0 ? Math.round(avail / teamSprintDays * 100) : 0;
     const inputClass  = isOverride ? 'cell-input is-override' : (bhDays > 0 ? 'cell-input is-auto' : 'cell-input');
     const inputTitle  = isOverride
-      ? `Manually set to ${effectiveDays}d — click ↺ to reset to auto (${teamSprintDays - bhDays}d)`
+      ? `Manually set to ${effectiveDays}d — click ↺ to reset to auto (${Math.max(1,teamSprintDays - bhDays)}d)`
       : (bhDays > 0 ? `Auto: ${teamSprintDays} sprint days − ${bhDays} bank holiday(s)` : '');
     const resetBtn = isOverride
-      ? `<button class="reset-days-btn" onclick="resetMemberDays('${tid}','${role}','${m.id}')" title="Reset to auto (${Math.max(1,teamSprintDays-bhDays)}d)">↺</button>`
+      ? `<button class="reset-days-btn" onclick="resetMemberDays('${role}','${m.id}')" title="Reset to auto (${Math.max(1,teamSprintDays-bhDays)}d)">↺</button>`
       : '';
     return `<div class="member-row">
       <div class="member-name-cell">
@@ -1085,15 +1071,15 @@ function renderRows(tid, role) {
       <div class="cell-input-wrap">
         <input type="number" class="${inputClass}" min="1" max="30" value="${effectiveDays}"
           title="${inputTitle}"
-          oninput="setMemberDays('${tid}','${role}','${m.id}',this.value)" />
+          oninput="setMemberDays('${role}','${m.id}',this.value)" />
         ${resetBtn}
       </div>
       <div><input type="number" class="cell-input" min="0" max="${effectiveDays}" placeholder="0"
         value="${leaveDays || ''}"
-        oninput="setMemberHols('${tid}','${role}','${m.id}',this.value)" /></div>
+        oninput="setMemberHols('${role}','${m.id}',this.value)" /></div>
       <div class="avail-days ${pctClass(pct)}">${avail}d</div>
       <div><span class="avail-chip ${chipClass(pct)}">${pct}%</span></div>
-      <div><button class="btn btn-danger-soft" onclick="removeMember('${tid}','${role}','${m.id}')">✕</button></div>
+      <div><button class="btn btn-danger-soft" onclick="removeMember('${role}','${m.id}')">✕</button></div>
     </div>`;
   }).join('');
 }
@@ -1101,16 +1087,14 @@ function renderRows(tid, role) {
 // ════════════════════════════════════════════════
 // CAPACITY CALCULATION
 // ════════════════════════════════════════════════
-function updateCapacity(tid) {
-  const team       = state.teams[tid];
+function updateCapacity(team) {
+  if (!team) return;
   const velocity   = parseFloat(team.velocity);
-  const bhDays     = getActiveBHCount(tid);
+  const bhDays     = getActiveBHCount(team);
   const all        = [...team.dev, ...team.qa];
   const teamSprintDays = parseInt(team.sprintDays) || 10;
 
-  // totalPossible = sum of raw team sprint days per member (before BH)
   const totalPossible = all.length * teamSprintDays;
-  // totalAvail = sum of (effectiveDays - leaveDays) per member
   const totalAvail = all.reduce((s, m) => {
     const eff = getEffectiveDays(m, teamSprintDays, bhDays);
     return s + Math.max(0, eff - (m.holidays || 0));
@@ -1118,10 +1102,10 @@ function updateCapacity(tid) {
 
   const pct    = totalPossible > 0 ? Math.round(totalAvail / totalPossible * 100) : 0;
   const estPts = (!isNaN(velocity) && velocity > 0) ? Math.round(velocity * (pct / 100)) : null;
-  const color  = TEAM_COLORS[tid];
+  const color  = team.color;
   const pc     = pctClass(pct);
 
-  document.getElementById(`${tid}-metrics`).innerHTML = `
+  document.getElementById('cfg-metrics').innerHTML = `
     <div class="cap-metric">
       <div class="cap-label">Members</div>
       <div class="cap-value" style="color:${color}">${all.length}</div>
@@ -1155,109 +1139,94 @@ function updateCapacity(tid) {
       <div class="cap-sub">${estPts!==null?'story pts':'enter velocity'}</div>
     </div>`;
 
-  const bar = document.getElementById(`${tid}-bar`);
-  bar.style.width   = pct + '%';
-  bar.className     = 'progress-fill ' + barClass(pct);
-  document.getElementById(`${tid}-pct-label`).textContent = pct + '%';
-  document.getElementById(`${tid}-count`).textContent = all.length;
+  const bar = document.getElementById('cfg-bar');
+  bar.style.width = pct + '%';
+  bar.className   = 'progress-fill ' + barClass(pct);
+  document.getElementById('cfg-pct-label').textContent = pct + '%';
 }
 
 // ════════════════════════════════════════════════
 // MEMBER MUTATIONS
 // ════════════════════════════════════════════════
-function setMemberHols(tid, role, mid, val) {
-  const m = state.teams[tid][role].find(x=>x.id===mid); if (!m) return;
-  const teamDays = parseInt(state.teams[tid].sprintDays) || 10;
-  const bhDays   = getActiveBHCount(tid);
+function setMemberHols(role, mid, val) {
+  const team = getTeam(state.activeTeamId); if (!team) return;
+  const m = team[role].find(x=>x.id===mid); if (!m) return;
+  const teamDays = parseInt(team.sprintDays) || 10;
+  const bhDays   = getActiveBHCount(team);
   const effDays  = getEffectiveDays(m, teamDays, bhDays);
   let v = parseInt(val); if(isNaN(v)||v<0) v=0; if(v>effDays) v=effDays;
   m.holidays = v;
-  triggerAutoSave(); renderRows(tid,role); updateCapacity(tid);
+  triggerAutoSave(); renderRows(role); updateCapacity(team);
 }
-function setMemberDays(tid, role, mid, val) {
-  const m = state.teams[tid][role].find(x=>x.id===mid); if (!m) return;
+function setMemberDays(role, mid, val) {
+  const team = getTeam(state.activeTeamId); if (!team) return;
+  const m = team[role].find(x=>x.id===mid); if (!m) return;
   let v = parseInt(val); if(isNaN(v)||v<1) v=1;
   m.sprintDaysOverride = v;
   if ((m.holidays||0) > v) m.holidays = v;
-  triggerAutoSave(); renderRows(tid,role); updateCapacity(tid);
+  triggerAutoSave(); renderRows(role); updateCapacity(team);
 }
-function resetMemberDays(tid, role, mid) {
-  const m = state.teams[tid][role].find(x=>x.id===mid); if (!m) return;
+function resetMemberDays(role, mid) {
+  const team = getTeam(state.activeTeamId); if (!team) return;
+  const m = team[role].find(x=>x.id===mid); if (!m) return;
   m.sprintDaysOverride = null;
-  triggerAutoSave(); renderRows(tid,role); updateCapacity(tid);
+  triggerAutoSave(); renderRows(role); updateCapacity(team);
 }
-function addMember(tid, role) {
-  const input = document.getElementById(`${tid}-${role}-addInput`);
+function addMember(role) {
+  const team = getTeam(state.activeTeamId); if (!team) return;
+  const input = document.getElementById(`${role}-addInput`);
   const name  = input.value.trim(); if (!name) return;
-  state.teams[tid][role].push({ id:'m_'+Date.now(), name, holidays:0, sprintDaysOverride:null });
+  // New members inherit the team's bank-holiday behaviour automatically:
+  // sprintDaysOverride is null, so getEffectiveDays applies (teamSprintDays − active BH).
+  team[role].push(buildMember(name));
   input.value = '';
-  triggerAutoSave(); renderRows(tid,role); updateCapacity(tid);
+  triggerAutoSave(); renderRows(role); updateCapacity(team); renderTabs();
+  document.getElementById(`${role}-addInput`).focus();
 }
-function removeMember(tid, role, mid) {
-  state.teams[tid][role] = state.teams[tid][role].filter(m=>m.id!==mid);
-  triggerAutoSave(); renderRows(tid,role); updateCapacity(tid);
+function removeMember(role, mid) {
+  const team = getTeam(state.activeTeamId); if (!team) return;
+  team[role] = team[role].filter(m=>m.id!==mid);
+  triggerAutoSave(); renderRows(role); updateCapacity(team); renderTabs();
 }
 
 // ════════════════════════════════════════════════
 // CONFIG CHANGE
 // ════════════════════════════════════════════════
-function onConfigChange(tid) {
-  const team = state.teams[tid];
-  team.sprintDays  = parseInt(document.getElementById(`${tid}-sprintDays`).value) || 10;
-  team.velocity    = document.getElementById(`${tid}-velocity`).value;
-  team.goal        = document.getElementById(`${tid}-goal`).value;
-  team.startDate   = document.getElementById(`${tid}-startDate`).value;
-  team.useBankHols = document.getElementById(`${tid}-useBH`).checked;
-
-  // Clear excluded BH if toggled off (fresh start if re-enabled)
+function onConfigChange() {
+  const team = getTeam(state.activeTeamId); if (!team) return;
+  team.sprintDays  = parseInt(document.getElementById('cfg-sprintDays').value) || 10;
+  team.velocity    = document.getElementById('cfg-velocity').value;
+  team.goal        = document.getElementById('cfg-goal').value;
+  team.startDate   = document.getElementById('cfg-startDate').value;
+  team.useBankHols = document.getElementById('cfg-useBH').checked;
   if (!team.useBankHols) team.excludedBankHols = [];
-
-  const label = document.getElementById(`${tid}-bhToggleLabel`);
-  label.textContent = team.useBankHols ? 'England' : 'Off';
+  document.getElementById('cfg-bhToggleLabel').textContent = team.useBankHols ? 'England' : 'Off';
 
   triggerAutoSave();
-  updateSprintPeriod(tid);
-  renderBHPanel(tid);
-  renderRows(tid,'dev');
-  renderRows(tid,'qa');
-  updateCapacity(tid);
+  updateSprintPeriod(team);
+  renderBHPanel(team);
+  renderRows('dev'); renderRows('qa');
+  updateCapacity(team);
+  renderTabs();
 }
-
-function onNotesChange(tid) {
-  state.teams[tid].notes = document.getElementById(`${tid}-notes`).value;
+function onNotesChange() {
+  const team = getTeam(state.activeTeamId); if (!team) return;
+  team.notes = document.getElementById('cfg-notes').value;
   triggerAutoSave();
 }
 
 // ════════════════════════════════════════════════
-// INIT
+// TOP-LEVEL RENDER
 // ════════════════════════════════════════════════
-function initTeam(tid) {
-  const t = state.teams[tid];
-  document.getElementById(`${tid}-sprintDays`).value  = t.sprintDays || 10;
-  document.getElementById(`${tid}-velocity`).value    = t.velocity   || '';
-  document.getElementById(`${tid}-goal`).value        = t.goal       || '';
-  document.getElementById(`${tid}-notes`).value       = t.notes      || '';
-  document.getElementById(`${tid}-startDate`).value   = t.startDate  || '';
-  document.getElementById(`${tid}-useBH`).checked     = t.useBankHols !== false;
-  document.getElementById(`${tid}-bhToggleLabel`).textContent = (t.useBankHols !== false) ? 'England' : 'Off';
-  updateSprintPeriod(tid);
-  renderBHPanel(tid);
-  renderRows(tid,'dev');
-  renderRows(tid,'qa');
-  updateCapacity(tid);
-}
-
-function initAll() {
-  document.getElementById('sprintNameInput').value = state.sprintName || '';
-  initTeam('rota'); initTeam('mobile'); initTeam('payroll'); initTeam('infra');
-}
+function renderAll() { renderTabs(); renderPanel(); }
 
 document.getElementById('sprintNameInput').addEventListener('input', e => {
   state.sprintName = e.target.value; triggerAutoSave();
 });
 
 loadState();
-initAll();
+document.getElementById('sprintNameInput').value = state.sprintName || '';
+renderAll();
 </script>
 </body>
 </html>
