@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PBI Refinement — Story Readiness</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy-900:#080E1A; --navy-800:#0D1829; --navy-700:#132038; --navy-600:#1A2A48; --navy-500:#243659;
+  --orange:#FF6A1A; --orange-dim:rgba(255,106,26,0.15);
+  --text-primary:#F0F4FF; --text-secondary:#8BA0C4; --text-tertiary:#4F6080;
+  --border:rgba(255,255,255,0.07); --border-strong:rgba(255,255,255,0.13);
+  --green:#22C97A; --amber:#F5A623; --red:#FF5252; --blue:#5B9BF5;
+  --r:8px; --r-lg:14px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'IBM Plex Sans',sans-serif; background:var(--navy-800); color:var(--text-primary); min-height:100vh; }
+
+.header { background:var(--navy-900); border-bottom:1px solid var(--border); height:52px; padding:0 28px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+.logo { font-family:'Outfit',sans-serif; font-size:0.95rem; font-weight:700; display:flex; align-items:center; gap:8px; }
+.logo-pip { width:7px; height:7px; background:var(--orange); border-radius:50%; }
+.logo em { color:var(--orange); font-style:normal; }
+.logo a { color:var(--text-secondary); text-decoration:none; font-weight:500; font-size:0.85rem; }
+.logo a:hover { color:var(--text-primary); }
+.hdr-right { display:flex; gap:8px; align-items:center; }
+.save-lz { font-size:0.7rem; color:var(--text-tertiary); padding:3px 10px; border-radius:20px; border:1px solid var(--border); transition:all 0.3s; }
+.save-lz.saved { color:var(--green); border-color:rgba(34,201,122,0.3); }
+.btn { font-family:'IBM Plex Sans',sans-serif; font-size:0.78rem; font-weight:600; padding:6px 14px; border-radius:6px; border:none; cursor:pointer; transition:all 0.15s; display:inline-flex; align-items:center; gap:5px; }
+.btn-primary { background:var(--orange); color:white; }
+.btn-primary:hover { background:#FF7E3D; }
+.btn-ghost { background:rgba(255,255,255,0.06); color:var(--text-secondary); border:1px solid var(--border); }
+.btn-ghost:hover { background:rgba(255,255,255,0.1); color:var(--text-primary); }
+.btn-danger { background:rgba(255,82,82,0.08); color:var(--red); border:1px solid rgba(255,82,82,0.18); }
+.btn-danger:hover { background:rgba(255,82,82,0.16); }
+.btn-small { padding:4px 10px; font-size:0.72rem; }
+
+.page { max-width:1080px; margin:0 auto; padding:24px 24px 80px; }
+.layout { display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start; }
+@media (max-width:880px){ .layout{ grid-template-columns:1fr; } }
+
+.card { background:var(--navy-700); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; margin-bottom:20px; }
+.card-head { padding:14px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.card-head h2 { font-family:'Outfit',sans-serif; font-size:0.82rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-tertiary); display:flex; align-items:center; gap:8px; }
+.card-body { padding:20px 22px; }
+
+/* Story builder */
+.story-template { display:flex; flex-direction:column; gap:14px; }
+.tmpl-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.tmpl-label { font-family:'Outfit',sans-serif; font-weight:700; color:var(--orange); font-size:0.95rem; min-width:54px; }
+.tmpl-input { flex:1; min-width:180px; background:var(--navy-600); border:1px solid var(--border-strong); border-radius:6px; padding:9px 12px; color:var(--text-primary); font-family:'IBM Plex Sans',sans-serif; font-size:0.9rem; outline:none; transition:border-color 0.2s; }
+.tmpl-input:focus { border-color:var(--orange); }
+.tmpl-input::placeholder { color:var(--text-tertiary); }
+.field-label { font-size:0.68rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.09em; margin-bottom:6px; display:block; }
+.ref-row { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+.ref-row .fg { display:flex; flex-direction:column; }
+.ref-input { background:var(--navy-600); border:1px solid var(--border-strong); border-radius:6px; padding:8px 12px; color:var(--text-primary); font-size:0.88rem; outline:none; }
+.ref-input:focus { border-color:var(--orange); }
+.ref-input.ref-w { width:140px; }
+.toggle-mode { display:flex; gap:0; border:1px solid var(--border-strong); border-radius:6px; overflow:hidden; }
+.toggle-mode button { background:var(--navy-600); border:none; color:var(--text-secondary); font-family:'IBM Plex Sans',sans-serif; font-size:0.76rem; font-weight:600; padding:7px 14px; cursor:pointer; transition:all 0.15s; }
+.toggle-mode button.on { background:var(--orange); color:white; }
+.freeform { width:100%; min-height:90px; background:var(--navy-600); border:1px solid var(--border-strong); border-radius:8px; padding:11px 13px; color:var(--text-primary); font-family:'IBM Plex Sans',sans-serif; font-size:0.9rem; outline:none; resize:vertical; line-height:1.6; }
+.freeform:focus { border-color:var(--orange); }
+
+/* Acceptance criteria */
+.ac-mode-row { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+.ac-item { background:var(--navy-600); border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; margin-bottom:10px; }
+.ac-gherkin { display:flex; flex-direction:column; gap:7px; }
+.gherkin-line { display:flex; align-items:center; gap:8px; }
+.gherkin-kw { font-family:'Outfit',sans-serif; font-weight:700; font-size:0.8rem; min-width:54px; text-align:right; }
+.kw-given { color:var(--blue); } .kw-when { color:var(--amber); } .kw-then { color:var(--green); } .kw-and { color:var(--text-tertiary); }
+.gherkin-input { flex:1; background:var(--navy-700); border:1px solid var(--border-strong); border-radius:5px; padding:6px 10px; color:var(--text-primary); font-size:0.84rem; outline:none; }
+.gherkin-input:focus { border-color:var(--orange); }
+.ac-checklist-input { display:flex; align-items:center; gap:8px; }
+.ac-checklist-input input[type=text] { flex:1; background:var(--navy-700); border:1px solid var(--border-strong); border-radius:5px; padding:7px 10px; color:var(--text-primary); font-size:0.85rem; outline:none; }
+.ac-checklist-input input[type=text]:focus { border-color:var(--orange); }
+.ac-actions { display:flex; gap:8px; margin-top:6px; }
+.ac-scenario-name { background:var(--navy-700); border:1px solid var(--border-strong); border-radius:5px; padding:6px 10px; color:var(--text-primary); font-size:0.82rem; font-weight:600; outline:none; width:100%; margin-bottom:8px; }
+.ac-scenario-name:focus { border-color:var(--orange); }
+.pattern-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+.pattern-chip { font-size:0.72rem; padding:4px 10px; border-radius:14px; border:1px dashed var(--border-strong); background:transparent; color:var(--text-secondary); cursor:pointer; transition:all 0.15s; }
+.pattern-chip:hover { border-color:var(--orange); color:var(--orange); border-style:solid; }
+
+/* Readiness sidebar */
+.sticky-side { position:sticky; top:72px; }
+.score-ring { display:flex; flex-direction:column; align-items:center; padding:8px 0 4px; }
+.ring-num { font-family:'Outfit',sans-serif; font-size:3rem; font-weight:800; line-height:1; }
+.ring-label { font-size:0.72rem; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.08em; margin-top:4px; font-weight:700; }
+.ring-verdict { font-size:0.8rem; margin-top:8px; padding:4px 12px; border-radius:14px; font-weight:600; }
+.v-ready { color:var(--green); background:rgba(34,201,122,0.1); }
+.v-close { color:var(--amber); background:rgba(245,166,35,0.1); }
+.v-notready { color:var(--red); background:rgba(255,82,82,0.1); }
+.sc-green{color:var(--green)} .sc-amber{color:var(--amber)} .sc-red{color:var(--red)}
+
+.check-list { display:flex; flex-direction:column; gap:2px; }
+.check-row { display:flex; align-items:flex-start; gap:9px; padding:8px 6px; border-radius:6px; cursor:pointer; transition:background 0.15s; }
+.check-row:hover { background:rgba(255,255,255,0.02); }
+.check-box { width:18px; height:18px; border-radius:5px; border:1.5px solid var(--border-strong); flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; font-size:0.7rem; transition:all 0.15s; }
+.check-row.done .check-box { background:var(--green); border-color:var(--green); color:white; }
+.check-row.auto .check-box { background:var(--blue); border-color:var(--blue); color:white; }
+.check-text { font-size:0.82rem; line-height:1.4; }
+.check-row.done .check-text { color:var(--text-secondary); }
+.check-hint { font-size:0.72rem; color:var(--text-tertiary); margin-top:1px; }
+.check-auto-tag { font-size:0.6rem; color:var(--blue); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-left:4px; }
+
+.flags { display:flex; flex-direction:column; gap:7px; }
+.flag { display:flex; align-items:flex-start; gap:8px; padding:9px 11px; border-radius:7px; font-size:0.78rem; line-height:1.4; }
+.flag-warn { background:rgba(245,166,35,0.08); border:1px solid rgba(245,166,35,0.2); color:#f5c97a; }
+.flag-info { background:rgba(91,155,245,0.08); border:1px solid rgba(91,155,245,0.2); color:#a9c9f7; }
+.flag-good { background:rgba(34,201,122,0.08); border:1px solid rgba(34,201,122,0.2); color:#7fdcae; }
+.flag-icon { flex-shrink:0; }
+.section-sub { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-tertiary); margin:4px 0 10px; }
+
+.invest-grid { display:flex; flex-direction:column; gap:2px; }
+.empty-hint { font-size:0.78rem; color:var(--text-tertiary); font-style:italic; padding:6px 0; }
+.mini-toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:310; background:var(--navy-600); border:1px solid var(--border-strong); border-radius:10px; padding:11px 16px; box-shadow:0 12px 40px rgba(0,0,0,0.5); font-size:0.82rem; display:none; }
+.disclaimer { font-size:0.72rem; color:var(--text-tertiary); line-height:1.5; padding:12px 14px; background:rgba(91,155,245,0.05); border:1px solid rgba(91,155,245,0.15); border-radius:8px; margin-top:4px; }
+
+@media print {
+  body{background:white;color:black;}
+  .header,.hdr-right,.sticky-side,.btn,.pattern-chips,.toggle-mode,.ac-actions{display:none!important;}
+  .layout{grid-template-columns:1fr;}
+  .card{border:1px solid #ccc;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo"><div class="logo-pip"></div>PBI Refinement <em>/ Story Readiness</em> &nbsp;<a href="index.html">← All tools</a></div>
+  <div class="hdr-right">
+    <span class="save-lz" id="saveLz">Ready</span>
+    <button class="btn btn-ghost" onclick="copyOut()">📋 Copy</button>
+    <button class="btn btn-ghost" onclick="exportPDF()">📄 PDF</button>
+    <button class="btn btn-ghost" onclick="exportWord()">📝 Word</button>
+    <button class="btn btn-danger" onclick="if(confirm('Clear this story and start over?'))resetAll()">Clear</button>
+  </div>
+</div>
+
+<div class="page">
+  <div class="layout">
+    <!-- LEFT: builder -->
+    <div>
+      <div class="card">
+        <div class="card-head"><h2>📝 The Story</h2>
+          <div class="toggle-mode">
+            <button id="mode-template" class="on" onclick="setStoryMode('template')">Template</button>
+            <button id="mode-free" onclick="setStoryMode('free')">Free text</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="ref-row">
+            <div class="fg"><label class="field-label">Ref (optional)</label><input class="ref-input ref-w" id="storyRef" placeholder="e.g. ABC-123" oninput="onInput()"></div>
+            <div class="fg" style="flex:1"><label class="field-label">Title (optional)</label><input class="ref-input" style="width:100%" id="storyTitle" placeholder="Short summary" oninput="onInput()"></div>
+          </div>
+
+          <div id="templateMode" class="story-template">
+            <div class="tmpl-row"><span class="tmpl-label">As a</span><input class="tmpl-input" id="t-role" placeholder="type of user / persona" oninput="onInput()"></div>
+            <div class="tmpl-row"><span class="tmpl-label">I want</span><input class="tmpl-input" id="t-want" placeholder="an action or capability" oninput="onInput()"></div>
+            <div class="tmpl-row"><span class="tmpl-label">so that</span><input class="tmpl-input" id="t-benefit" placeholder="a benefit / value / why" oninput="onInput()"></div>
+          </div>
+
+          <div id="freeMode" style="display:none">
+            <label class="field-label">User story</label>
+            <textarea class="freeform" id="freeText" placeholder="As a …, I want …, so that …" oninput="onInput()"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>✅ Acceptance Criteria</h2>
+          <div class="toggle-mode">
+            <button id="ac-gherkin" class="on" onclick="setAcMode('gherkin')">Given/When/Then</button>
+            <button id="ac-checklist" onclick="setAcMode('checklist')">Checklist</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="section-sub">Quick add — common scenarios</div>
+          <div class="pattern-chips" id="patternChips"></div>
+          <div id="acContainer"></div>
+          <button class="btn btn-ghost btn-small" id="addAcBtn" onclick="addAc()" style="margin-top:6px">+ Add scenario</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>🗒️ Notes / Open Questions</h2></div>
+        <div class="card-body">
+          <textarea class="freeform" id="notes" placeholder="Assumptions, dependencies, questions to raise in refinement…" oninput="onInput()"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: readiness -->
+    <div class="sticky-side">
+      <div class="card">
+        <div class="card-head"><h2>📊 Readiness</h2></div>
+        <div class="card-body">
+          <div class="score-ring">
+            <div class="ring-num" id="scoreNum">—</div>
+            <div class="ring-label">Readiness score</div>
+            <div class="ring-verdict" id="verdict">Start writing</div>
+          </div>
+          <div class="disclaimer">A coaching aid, not a gate. It checks structure and common pitfalls — it can't judge whether the story delivers real value. Use it to start conversations, not end them.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>🔍 Suggestions</h2></div>
+        <div class="card-body"><div class="flags" id="flags"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>💎 INVEST</h2></div>
+        <div class="card-body"><div class="invest-grid" id="investGrid"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📋 Definition of Ready</h2></div>
+        <div class="card-body"><div class="check-list" id="dorList"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mini-toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.js"></script>
+<script>
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+const VAGUE_WORDS = ['fast','quick','quickly','slow','easy','easily','simple','simply','nice','good','better','best','intuitive','user-friendly','seamless','robust','flexible','scalable','efficient','optimal','appropriate','etc','and so on','various','several','some','many','few','handle','support','manage','process','stuff','things','as needed','if needed','where applicable','tbd','tbc'];
+const PATTERNS = {
+  gherkin: [
+    {label:'Happy path', name:'Successful outcome', given:'a valid precondition', when:'the user performs the action', then:'the expected result occurs'},
+    {label:'Validation', name:'Invalid input is rejected', given:'the user provides invalid input', when:'they submit', then:'a clear validation message is shown'},
+    {label:'Empty state', name:'No data available', given:'there is no data yet', when:'the user opens the view', then:'a helpful empty state is shown'},
+    {label:'Permissions', name:'Unauthorised access blocked', given:'a user without permission', when:'they attempt the action', then:'access is denied with a clear message'},
+    {label:'Error handling', name:'System error is handled', given:'a downstream service fails', when:'the user performs the action', then:'the error is handled gracefully and the user is informed'},
+  ],
+  checklist: [
+    {label:'Happy path', text:'The primary success path works as described'},
+    {label:'Validation', text:'Invalid input is rejected with a clear message'},
+    {label:'Empty state', text:'A helpful empty state is shown when there is no data'},
+    {label:'Permissions', text:'Users without permission cannot perform the action'},
+    {label:'Error handling', text:'Errors from dependencies are handled gracefully'},
+    {label:'Accessibility', text:'Meets basic accessibility (keyboard, labels, contrast)'},
+  ]
+};
+const DOR_ITEMS = [
+  {id:'format', label:'Story follows the user-story format', hint:'As a … I want … so that …', auto:'hasFormat'},
+  {id:'benefit', label:'The value / "so that" is clear', hint:'Why does the user want this?', auto:'hasBenefit'},
+  {id:'ac', label:'Has acceptance criteria', hint:'At least one testable scenario', auto:'hasAc'},
+  {id:'small', label:'Small enough for one sprint', hint:'Can be done within a single sprint', auto:null},
+  {id:'deps', label:'No blocking dependencies', hint:'Or they are identified and tracked', auto:null},
+  {id:'understood', label:'Understood by the whole team', hint:'Dev, QA and PO share the same picture', auto:null},
+  {id:'estimable', label:'Estimable', hint:'Team has enough info to size it', auto:null},
+];
+const INVEST_ITEMS = [
+  {k:'I',name:'Independent',desc:'Can be delivered without depending on other stories'},
+  {k:'N',name:'Negotiable',desc:'Leaves room for conversation, not a rigid contract'},
+  {k:'V',name:'Valuable',desc:'Delivers clear value to a user or the business'},
+  {k:'E',name:'Estimable',desc:'Team can reasonably size it'},
+  {k:'S',name:'Small',desc:'Fits comfortably within a sprint'},
+  {k:'T',name:'Testable',desc:'Has criteria you can verify'},
+];
+
+let state = {
+  storyMode:'template', acMode:'gherkin',
+  ref:'', title:'', role:'', want:'', benefit:'', freeText:'',
+  acGherkin:[], acChecklist:[], notes:'',
+  dorManual:{}, // id -> bool for non-auto items
+};
+let saveTimer=null;
+
+// ════════════════════════════════════════
+// PERSISTENCE
+// ════════════════════════════════════════
+function save(){
+  showLz('saving'); clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{ try{ localStorage.setItem('pbiRefinement', JSON.stringify(state)); showLz('saved'); }catch{ showLz('err'); } },500);
+}
+function load(){
+  try{ const s=localStorage.getItem('pbiRefinement'); if(s) state=Object.assign(state,JSON.parse(s)); }catch{}
+}
+function showLz(s){ const el=document.getElementById('saveLz');
+  if(s==='saving'){el.textContent='Saving…';el.className='save-lz';}
+  else if(s==='saved'){el.textContent='✓ Saved';el.className='save-lz saved';setTimeout(()=>{el.textContent='Auto-saved';el.className='save-lz';},1600);}
+  else{el.textContent='Error';el.className='save-lz';}
+}
+
+// ════════════════════════════════════════
+// INPUT HANDLERS
+// ════════════════════════════════════════
+function setStoryMode(m){
+  state.storyMode=m;
+  document.getElementById('mode-template').classList.toggle('on',m==='template');
+  document.getElementById('mode-free').classList.toggle('on',m==='free');
+  document.getElementById('templateMode').style.display = m==='template'?'flex':'none';
+  document.getElementById('freeMode').style.display = m==='free'?'block':'none';
+  save(); evaluate();
+}
+function onInput(){
+  state.ref=val('storyRef'); state.title=val('storyTitle');
+  state.role=val('t-role'); state.want=val('t-want'); state.benefit=val('t-benefit');
+  state.freeText=val('freeText'); state.notes=val('notes');
+  save(); evaluate();
+}
+function val(id){ const e=document.getElementById(id); return e?e.value:''; }
+
+// ════════════════════════════════════════
+// STORY TEXT ASSEMBLY
+// ════════════════════════════════════════
+function storyText(){
+  if(state.storyMode==='free') return (state.freeText||'').trim();
+  const r=state.role.trim(), w=state.want.trim(), b=state.benefit.trim();
+  if(!r&&!w&&!b) return '';
+  return `As a ${r||'…'}, I want ${w||'…'}, so that ${b||'…'}`;
+}
+function hasFormat(){
+  const t=storyText().toLowerCase();
+  if(state.storyMode==='template') return !!(state.role.trim()&&state.want.trim());
+  return /as a.+i want/i.test(t);
+}
+function hasBenefit(){
+  if(state.storyMode==='template') return !!state.benefit.trim();
+  return /so that\s+\S+/i.test(state.freeText||'');
+}
+function acCount(){ return state.acMode==='gherkin' ? state.acGherkin.length : state.acChecklist.filter(c=>c.text&&c.text.trim()).length; }
+function hasAc(){ return acCount()>0; }
+
+// ════════════════════════════════════════
+// ACCEPTANCE CRITERIA
+// ════════════════════════════════════════
+function setAcMode(m){
+  state.acMode=m;
+  document.getElementById('ac-gherkin').classList.toggle('on',m==='gherkin');
+  document.getElementById('ac-checklist').classList.toggle('on',m==='checklist');
+  renderPatterns(); renderAc(); save(); evaluate();
+}
+function renderPatterns(){
+  const box=document.getElementById('patternChips');
+  box.innerHTML = PATTERNS[state.acMode].map((p,i)=>`<button class="pattern-chip" onclick="addPattern(${i})">+ ${p.label}</button>`).join('');
+}
+function addPattern(i){
+  const p=PATTERNS[state.acMode][i];
+  if(state.acMode==='gherkin') state.acGherkin.push({name:p.name,given:p.given,when:p.when,then:p.then,and:[]});
+  else state.acChecklist.push({done:false,text:p.text});
+  save(); renderAc(); evaluate();
+}
+function addAc(){
+  if(state.acMode==='gherkin') state.acGherkin.push({name:'',given:'',when:'',then:'',and:[]});
+  else state.acChecklist.push({done:false,text:''});
+  save(); renderAc(); evaluate();
+}
+function removeAc(i){ if(state.acMode==='gherkin') state.acGherkin.splice(i,1); else state.acChecklist.splice(i,1); save(); renderAc(); evaluate(); }
+function updGherkin(i,field,v){ state.acGherkin[i][field]=v; save(); evaluate(); }
+function updChecklistText(i,v){ state.acChecklist[i].text=v; save(); evaluate(); }
+function toggleChecklist(i){ state.acChecklist[i].done=!state.acChecklist[i].done; save(); renderAc(); }
+function renderAc(){
+  const box=document.getElementById('acContainer');
+  if(state.acMode==='gherkin'){
+    if(!state.acGherkin.length){ box.innerHTML='<div class="empty-hint">No scenarios yet. Add one, or use a quick-add above.</div>'; return; }
+    box.innerHTML=state.acGherkin.map((a,i)=>`
+      <div class="ac-item">
+        <input class="ac-scenario-name" placeholder="Scenario name (optional)" value="${esc(a.name)}" oninput="updGherkin(${i},'name',this.value)">
+        <div class="ac-gherkin">
+          <div class="gherkin-line"><span class="gherkin-kw kw-given">Given</span><input class="gherkin-input" placeholder="initial context" value="${esc(a.given)}" oninput="updGherkin(${i},'given',this.value)"></div>
+          <div class="gherkin-line"><span class="gherkin-kw kw-when">When</span><input class="gherkin-input" placeholder="the action" value="${esc(a.when)}" oninput="updGherkin(${i},'when',this.value)"></div>
+          <div class="gherkin-line"><span class="gherkin-kw kw-then">Then</span><input class="gherkin-input" placeholder="expected outcome" value="${esc(a.then)}" oninput="updGherkin(${i},'then',this.value)"></div>
+        </div>
+        <div class="ac-actions"><button class="btn btn-danger btn-small" onclick="removeAc(${i})">Remove</button></div>
+      </div>`).join('');
+  } else {
+    if(!state.acChecklist.length){ box.innerHTML='<div class="empty-hint">No checklist items yet. Add one, or use a quick-add above.</div>'; return; }
+    box.innerHTML=state.acChecklist.map((a,i)=>`
+      <div class="ac-item">
+        <div class="ac-checklist-input">
+          <div class="check-box ${a.done?'done':''}" onclick="toggleChecklist(${i})" style="cursor:pointer">${a.done?'✓':''}</div>
+          <input type="text" placeholder="A condition that must be true" value="${esc(a.text)}" oninput="updChecklistText(${i},this.value)">
+          <button class="btn btn-danger btn-small" onclick="removeAc(${i})">✕</button>
+        </div>
+      </div>`).join('');
+  }
+}
+
+// ════════════════════════════════════════
+// EVALUATION (heuristics + score)
+// ════════════════════════════════════════
+function findVagueWords(text){
+  const low=' '+text.toLowerCase()+' ';
+  return VAGUE_WORDS.filter(w=> low.includes(' '+w+' ') || low.includes(' '+w+',') || low.includes(' '+w+'.'));
+}
+function evaluate(){
+  const text=storyText();
+  const flags=[];
+
+  // checks
+  const fmt=hasFormat(), ben=hasBenefit(), ac=hasAc();
+  const vague=findVagueWords(text+' '+state.notes);
+  const wordCount=text.split(/\s+/).filter(Boolean).length;
+
+  // DoR auto items
+  const autoResults={ hasFormat:fmt, hasBenefit:ben, hasAc:ac };
+
+  // SCORE — weighted
+  let score=0;
+  if(fmt) score+=22;
+  if(ben) score+=18;
+  if(ac) score+=25;
+  if(acCount()>=2) score+=8;
+  if(vague.length===0 && text) score+=12;
+  // manual DoR contributes
+  const manualItems=DOR_ITEMS.filter(d=>!d.auto);
+  const manualDone=manualItems.filter(d=>state.dorManual[d.id]).length;
+  score += Math.round((manualDone/manualItems.length)*15);
+  if(!text) score=0;
+  score=Math.min(100,score);
+
+  // verdict
+  const v=document.getElementById('verdict'), n=document.getElementById('scoreNum');
+  n.textContent = text? score : '—';
+  n.className='ring-num '+(score>=80?'sc-green':score>=50?'sc-amber':'sc-red');
+  if(!text){ v.textContent='Start writing'; v.className='ring-verdict'; }
+  else if(score>=80){ v.textContent='Looks ready'; v.className='ring-verdict v-ready'; }
+  else if(score>=50){ v.textContent='Almost there'; v.className='ring-verdict v-close'; }
+  else { v.textContent='Needs work'; v.className='ring-verdict v-notready'; }
+
+  // FLAGS
+  if(!text){ flags.push(['info','✍️','Write your story to get suggestions.']); }
+  else {
+    if(!fmt) flags.push(['warn','⚠️','Story doesn\'t clearly follow "As a … I want …". A clear subject and action help everyone align.']);
+    if(!ben) flags.push(['warn','⚠️','Missing the "so that" benefit — without the why, it\'s hard to judge value or negotiate scope.']);
+    if(!ac) flags.push(['warn','⚠️','No acceptance criteria yet. These turn a vague ask into testable, pass/fail conditions.']);
+    else if(acCount()<2) flags.push(['info','💡','Only one acceptance scenario — consider edge cases (validation, empty state, errors).']);
+    if(vague.length) flags.push(['warn','🔍','Vague wording: '+vague.slice(0,6).map(w=>'"'+w+'"').join(', ')+'. Replace with specific, measurable terms.']);
+    if(wordCount>60) flags.push(['info','✂️','This story is quite long ('+wordCount+' words) — it may be too big. Consider splitting it.']);
+    if(fmt&&ben&&ac&&!vague.length) flags.push(['good','✅','Solid structure: clear role, action, benefit and testable criteria.']);
+  }
+  const fb=document.getElementById('flags');
+  fb.innerHTML = flags.map(([t,ic,msg])=>`<div class="flag flag-${t}"><span class="flag-icon">${ic}</span><span>${esc(msg)}</span></div>`).join('');
+
+  // INVEST (heuristic hints, not auto-ticked except Testable/Valuable signals)
+  renderInvest({fmt,ben,ac,vague,wordCount,text});
+  // DoR
+  renderDor(autoResults);
+}
+
+function renderInvest(ctx){
+  const hints={
+    I: null, N: null,
+    V: ctx.ben? 'good' : (ctx.text?'warn':null),
+    E: (ctx.text && ctx.fmt)? 'good' : null,
+    S: ctx.text? (ctx.wordCount>60?'warn':'good') : null,
+    T: ctx.ac? 'good' : (ctx.text?'warn':null),
+  };
+  document.getElementById('investGrid').innerHTML = INVEST_ITEMS.map(it=>{
+    const h=hints[it.k];
+    const dot = h==='good'?'✓':h==='warn'?'!':'';
+    const cls = h==='good'?'done':'';
+    const box = h==='good'?'<div class="check-box done" style="background:var(--green);border-color:var(--green)">✓</div>'
+              : h==='warn'?'<div class="check-box" style="background:var(--amber);border-color:var(--amber);color:#0D1829">!</div>'
+              : '<div class="check-box"></div>';
+    return `<div class="check-row ${cls}" style="cursor:default">
+      ${box}
+      <div><div class="check-text"><strong>${it.k}</strong> · ${it.name}</div><div class="check-hint">${it.desc}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDor(id){ state.dorManual[id]=!state.dorManual[id]; save(); evaluate(); }
+function renderDor(autoResults){
+  document.getElementById('dorList').innerHTML = DOR_ITEMS.map(d=>{
+    if(d.auto){
+      const done=autoResults[d.auto];
+      return `<div class="check-row ${done?'auto':''}" style="cursor:default">
+        <div class="check-box ${done?'auto':''}">${done?'✓':''}</div>
+        <div><div class="check-text">${d.label}<span class="check-auto-tag">auto</span></div><div class="check-hint">${d.hint}</div></div>
+      </div>`;
+    }
+    const done=!!state.dorManual[d.id];
+    return `<div class="check-row ${done?'done':''}" onclick="toggleDor('${d.id}')">
+      <div class="check-box ${done?'done':''}">${done?'✓':''}</div>
+      <div><div class="check-text">${d.label}</div><div class="check-hint">${d.hint}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+// OUTPUT (markdown / pdf / word)
+// ════════════════════════════════════════
+function buildMarkdown(){
+  const L=[];
+  const head=[state.ref,state.title].filter(Boolean).join(' — ');
+  L.push('# '+(head||'User Story'));
+  L.push('');
+  L.push('## Story'); L.push(storyText()||'_(empty)_'); L.push('');
+  L.push('## Acceptance Criteria');
+  if(state.acMode==='gherkin'){
+    if(!state.acGherkin.length) L.push('_None_');
+    state.acGherkin.forEach((a,i)=>{
+      L.push(`**Scenario ${i+1}${a.name?': '+a.name:''}**`);
+      if(a.given) L.push('- Given '+a.given);
+      if(a.when) L.push('- When '+a.when);
+      if(a.then) L.push('- Then '+a.then);
+      L.push('');
+    });
+  } else {
+    if(!state.acChecklist.length) L.push('_None_');
+    state.acChecklist.forEach(a=>{ if(a.text&&a.text.trim()) L.push(`- [${a.done?'x':' '}] ${a.text}`); });
+    L.push('');
+  }
+  if(state.notes && state.notes.trim()){ L.push('## Notes / Open Questions'); L.push(state.notes.trim()); L.push(''); }
+  return L.join('\n');
+}
+function copyOut(){
+  const md=buildMarkdown();
+  navigator.clipboard?.writeText(md).then(()=>toast('✓ Copied as Markdown'),()=>fallbackCopy(md));
+}
+function fallbackCopy(t){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');toast('✓ Copied');}catch{alert(t);} document.body.removeChild(ta); }
+function toast(m){ const el=document.getElementById('toast'); el.textContent=m; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none',2400); }
+
+function exportPDF(){
+  const md=buildMarkdown(); const w=window.open('','_blank');
+  w.document.write(`<html><head><title>${esc(state.ref||state.title||'User Story')}</title>
+  <style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:740px;margin:40px auto;padding:0 24px;color:#1a1a1a;line-height:1.55}
+  h1{font-size:1.5rem;border-bottom:2px solid #FF6A1A;padding-bottom:8px}h2{font-size:1.1rem;margin-top:24px;color:#132038}
+  ul{margin:8px 0}li{margin:3px 0}strong{color:#132038}em{color:#777}</style></head><body>${mdToHtml(md)}</body></html>`);
+  w.document.close(); w.focus(); setTimeout(()=>w.print(),300);
+}
+function mdToHtml(md){
+  const lines=md.split('\n'); let h=''; let inUl=false;
+  const closeUl=()=>{ if(inUl){h+='</ul>';inUl=false;} };
+  lines.forEach(ln=>{
+    if(/^# /.test(ln)){closeUl();h+=`<h1>${esc(ln.slice(2))}</h1>`;}
+    else if(/^## /.test(ln)){closeUl();h+=`<h2>${esc(ln.slice(3))}</h2>`;}
+    else if(/^- /.test(ln)){ if(!inUl){h+='<ul>';inUl=true;} h+=`<li>${fmtInline(ln.slice(2))}</li>`; }
+    else if(/^\*\*/.test(ln)){closeUl();h+=`<p>${fmtInline(ln)}</p>`;}
+    else if(/^_.*_$/.test(ln)){closeUl();h+=`<p><em>${esc(ln.slice(1,-1))}</em></p>`;}
+    else if(ln.trim()===''){closeUl();}
+    else {closeUl();h+=`<p>${fmtInline(ln)}</p>`;}
+  });
+  closeUl(); return h;
+}
+function fmtInline(s){ return esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\[x\]/g,'☑').replace(/\[ \]/g,'☐'); }
+
+function exportWord(){
+  if(typeof docx==='undefined'){ toast('Word export needs internet — copying Markdown instead'); copyOut(); return; }
+  try{
+    const {Document,Packer,Paragraph,TextRun,HeadingLevel}=docx;
+    const kids=[];
+    const head=[state.ref,state.title].filter(Boolean).join(' — ')||'User Story';
+    kids.push(new Paragraph({heading:HeadingLevel.HEADING_1,children:[new TextRun(head)]}));
+    kids.push(new Paragraph({heading:HeadingLevel.HEADING_2,children:[new TextRun('Story')]}));
+    kids.push(new Paragraph({children:[new TextRun(storyText()||'(empty)')]}));
+    kids.push(new Paragraph({heading:HeadingLevel.HEADING_2,children:[new TextRun('Acceptance Criteria')]}));
+    if(state.acMode==='gherkin'){
+      if(!state.acGherkin.length) kids.push(new Paragraph({children:[new TextRun('None')]}));
+      state.acGherkin.forEach((a,i)=>{
+        kids.push(new Paragraph({children:[new TextRun({text:`Scenario ${i+1}${a.name?': '+a.name:''}`,bold:true})]}));
+        if(a.given) kids.push(new Paragraph({children:[new TextRun({text:'Given ',bold:true}),new TextRun(a.given)]}));
+        if(a.when) kids.push(new Paragraph({children:[new TextRun({text:'When ',bold:true}),new TextRun(a.when)]}));
+        if(a.then) kids.push(new Paragraph({children:[new TextRun({text:'Then ',bold:true}),new TextRun(a.then)]}));
+        kids.push(new Paragraph({children:[new TextRun('')]}));
+      });
+    } else {
+      if(!state.acChecklist.length) kids.push(new Paragraph({children:[new TextRun('None')]}));
+      state.acChecklist.forEach(a=>{ if(a.text&&a.text.trim()) kids.push(new Paragraph({children:[new TextRun((a.done?'☑ ':'☐ ')+a.text)]})); });
+    }
+    if(state.notes&&state.notes.trim()){
+      kids.push(new Paragraph({heading:HeadingLevel.HEADING_2,children:[new TextRun('Notes / Open Questions')]}));
+      state.notes.trim().split('\n').forEach(l=>kids.push(new Paragraph({children:[new TextRun(l)]})));
+    }
+    const doc=new Document({sections:[{properties:{page:{size:{width:12240,height:15840},margin:{top:1440,right:1440,bottom:1440,left:1440}}},children:kids}]});
+    Packer.toBlob(doc).then(blob=>{
+      const url=URL.createObjectURL(blob); const a=document.createElement('a');
+      a.href=url; a.download=`${(state.ref||state.title||'user-story').replace(/[^\w-]+/g,'-')}.docx`; a.click(); URL.revokeObjectURL(url);
+      toast('✓ Word document downloaded');
+    });
+  }catch(e){ toast('Word export failed — copying Markdown'); copyOut(); }
+}
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
+
+function resetAll(){
+  state={ storyMode:'template', acMode:'gherkin', ref:'',title:'',role:'',want:'',benefit:'',freeText:'',acGherkin:[],acChecklist:[],notes:'',dorManual:{} };
+  localStorage.removeItem('pbiRefinement'); hydrate(); evaluate();
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+function hydrate(){
+  document.getElementById('storyRef').value=state.ref||'';
+  document.getElementById('storyTitle').value=state.title||'';
+  document.getElementById('t-role').value=state.role||'';
+  document.getElementById('t-want').value=state.want||'';
+  document.getElementById('t-benefit').value=state.benefit||'';
+  document.getElementById('freeText').value=state.freeText||'';
+  document.getElementById('notes').value=state.notes||'';
+  setStoryMode(state.storyMode||'template');
+  document.getElementById('ac-gherkin').classList.toggle('on',state.acMode==='gherkin');
+  document.getElementById('ac-checklist').classList.toggle('on',state.acMode==='checklist');
+  renderPatterns(); renderAc();
+}
+load(); hydrate(); evaluate();
+</script>
+</body>
+</html>
