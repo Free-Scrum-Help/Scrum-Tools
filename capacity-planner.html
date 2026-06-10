@@ -479,6 +479,67 @@
   }
   .team-color-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; box-shadow:0 0 8px currentColor; }
   .team-toolbar-actions { margin-left:auto; display:flex; gap:6px; }
+
+  /* ── Backup toast (CAP-5) ── */
+  .backup-toast {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    z-index:300; display:flex; align-items:center; gap:14px;
+    background:rgba(15,31,56,0.97); backdrop-filter:blur(16px);
+    border:1px solid rgba(255,190,69,0.35); border-radius:14px;
+    padding:14px 18px; box-shadow:0 12px 40px rgba(0,0,0,0.5); max-width:560px;
+    animation:toastUp 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes toastUp { from{opacity:0;transform:translate(-50%,20px)} to{opacity:1;transform:translate(-50%,0)} }
+  .backup-toast-icon { font-size:1.4rem; }
+  .backup-toast-body { display:flex; flex-direction:column; gap:2px; }
+  .backup-toast-body strong { font-family:'Outfit',sans-serif; font-size:0.86rem; font-weight:700; }
+  .backup-toast-body span { font-size:0.76rem; color:var(--text-secondary); line-height:1.4; }
+  .backup-toast-actions { display:flex; gap:6px; margin-left:6px; flex-shrink:0; }
+
+  /* ── Mini toast (undo / confirmations) ── */
+  .mini-toast {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    z-index:310; background:rgba(15,31,56,0.97); backdrop-filter:blur(16px);
+    border:1px solid var(--border); border-radius:12px; padding:11px 16px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.5); display:flex; align-items:center; gap:12px;
+    font-size:0.82rem; animation:toastUp 0.3s ease both;
+  }
+  .mini-toast button { font-size:0.78rem; }
+
+  /* ── Region selector ── */
+  .field-select {
+    padding:8px 13px; background:rgba(255,255,255,0.05); border:1px solid var(--border);
+    border-radius:9px; font-family:'IBM Plex Sans',sans-serif; font-size:0.85rem;
+    font-weight:600; outline:none; color:var(--text); transition:all 0.2s; cursor:pointer;
+  }
+  .field-select:focus { border-color:var(--orange); }
+  .field-select option { background:var(--navy-800); color:var(--text); }
+  .bh-source-note { font-size:0.66rem; color:var(--text-muted); margin-top:6px; font-style:italic; }
+
+  /* ── FTE input (CAP-6) ── */
+  .fte-input {
+    width:58px; padding:6px 7px; background:rgba(255,255,255,0.05);
+    border:1px solid var(--border); border-radius:7px;
+    font-family:'Outfit',sans-serif; font-size:0.85rem; font-weight:700;
+    text-align:center; outline:none; color:var(--text); transition:all 0.2s;
+  }
+  .fte-input:focus { border-color:var(--orange); background:rgba(255,114,30,0.07); }
+
+  /* ── Overview (CAP-2) ── */
+  .overview-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:20px; }
+  .ov-card {
+    background:rgba(15,31,56,0.7); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:18px 20px; position:relative; overflow:hidden;
+  }
+  .ov-card .ov-label { font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:6px; }
+  .ov-card .ov-value { font-family:'Outfit',sans-serif; font-size:1.9rem; font-weight:800; line-height:1; letter-spacing:-0.03em; }
+  .ov-card .ov-sub { font-size:0.66rem; color:var(--text-muted); margin-top:4px; }
+  .ov-team-table { width:100%; border-collapse:collapse; background:rgba(15,31,56,0.7); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; }
+  .ov-team-table th { font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); text-align:left; padding:12px 18px; border-bottom:1px solid var(--border); }
+  .ov-team-table td { padding:12px 18px; border-bottom:1px solid var(--border); font-size:0.86rem; }
+  .ov-team-table tr:last-child td { border-bottom:none; }
+  .ov-team-name { display:flex; align-items:center; gap:9px; font-weight:600; }
+  .ov-team-table th:not(:first-child), .ov-team-table td:not(:first-child) { text-align:center; }
 </style>
 </head>
 <body>
@@ -498,6 +559,8 @@
     </div>
     <div class="header-actions">
       <span class="save-badge" id="saveStatus">Ready</span>
+      <button class="btn btn-glass btn-small" onclick="copySummary()">📋 Copy summary</button>
+      <button class="btn btn-glass btn-small" onclick="printSummary()">🖨 Print</button>
       <button class="btn btn-glass btn-small" onclick="saveManual()">💾 Save</button>
       <button class="btn btn-glass btn-small" onclick="exportJSON()">📤 Export</button>
       <button class="btn btn-glass btn-small" onclick="importJSON()">📥 Import</button>
@@ -505,6 +568,22 @@
     </div>
   </div>
 </div>
+
+<!-- Backup reminder toast (CAP-5) -->
+<div id="backupToast" class="backup-toast" style="display:none">
+  <span class="backup-toast-icon">💾</span>
+  <div class="backup-toast-body">
+    <strong>Back up your work?</strong>
+    <span>Your data lives only in this browser. Export a copy so you don't lose it — or keep going.</span>
+  </div>
+  <div class="backup-toast-actions">
+    <button class="btn btn-glass btn-small" onclick="dismissBackupToast()">Continue</button>
+    <button class="btn btn-primary btn-small" onclick="exportJSON();dismissBackupToast()">Export backup</button>
+  </div>
+</div>
+
+<!-- Undo toast (CAP-4 member delete is confirm; this covers generic) -->
+<div id="toast" class="mini-toast" style="display:none"></div>
 
 <!-- ══ TABS ══ -->
 <div class="tabs-area">
@@ -516,92 +595,100 @@
 
 <script>
 // ════════════════════════════════════════════════
-// ENGLAND BANK HOLIDAYS 2025–2030 (hardcoded)
+// BANK HOLIDAYS — loaded from bank-holidays.json (gov.uk),
+// with inline fallback (England & Wales 2025–2030) if the
+// file can't be fetched (e.g. opened from file://).
+// Regions: england-and-wales | scotland | northern-ireland
 // ════════════════════════════════════════════════
-const ENGLAND_BH = {
-  2025: [
-    { date:'2025-01-01', name:"New Year's Day" },
-    { date:'2025-04-18', name:'Good Friday' },
-    { date:'2025-04-21', name:'Easter Monday' },
-    { date:'2025-05-05', name:'Early May Bank Holiday' },
-    { date:'2025-05-26', name:'Spring Bank Holiday' },
-    { date:'2025-08-25', name:'Summer Bank Holiday' },
-    { date:'2025-12-25', name:'Christmas Day' },
-    { date:'2025-12-26', name:'Boxing Day' },
-  ],
-  2026: [
-    { date:'2026-01-01', name:"New Year's Day" },
-    { date:'2026-04-03', name:'Good Friday' },
-    { date:'2026-04-06', name:'Easter Monday' },
-    { date:'2026-05-04', name:'Early May Bank Holiday' },
-    { date:'2026-05-25', name:'Spring Bank Holiday' },
-    { date:'2026-08-31', name:'Summer Bank Holiday' },
-    { date:'2026-12-25', name:'Christmas Day' },
-    { date:'2026-12-28', name:'Boxing Day (substitute)' },
-  ],
-  2027: [
-    { date:'2027-01-01', name:"New Year's Day" },
-    { date:'2027-03-26', name:'Good Friday' },
-    { date:'2027-03-29', name:'Easter Monday' },
-    { date:'2027-05-03', name:'Early May Bank Holiday' },
-    { date:'2027-05-31', name:'Spring Bank Holiday' },
-    { date:'2027-08-30', name:'Summer Bank Holiday' },
-    { date:'2027-12-27', name:'Christmas Day (substitute)' },
-    { date:'2027-12-28', name:'Boxing Day (substitute)' },
-  ],
-  2028: [
-    { date:'2028-01-03', name:"New Year's Day (substitute)" },
-    { date:'2028-04-14', name:'Good Friday' },
-    { date:'2028-04-17', name:'Easter Monday' },
-    { date:'2028-05-01', name:'Early May Bank Holiday' },
-    { date:'2028-05-29', name:'Spring Bank Holiday' },
-    { date:'2028-08-28', name:'Summer Bank Holiday' },
-    { date:'2028-12-25', name:'Christmas Day' },
-    { date:'2028-12-26', name:'Boxing Day' },
-  ],
-  2029: [
-    { date:'2029-01-01', name:"New Year's Day" },
-    { date:'2029-03-30', name:'Good Friday' },
-    { date:'2029-04-02', name:'Easter Monday' },
-    { date:'2029-05-07', name:'Early May Bank Holiday' },
-    { date:'2029-05-28', name:'Spring Bank Holiday' },
-    { date:'2029-08-27', name:'Summer Bank Holiday' },
-    { date:'2029-12-25', name:'Christmas Day' },
-    { date:'2029-12-26', name:'Boxing Day' },
-  ],
-  2030: [
-    { date:'2030-01-01', name:"New Year's Day" },
-    { date:'2030-04-19', name:'Good Friday' },
-    { date:'2030-04-22', name:'Easter Monday' },
-    { date:'2030-05-06', name:'Early May Bank Holiday' },
-    { date:'2030-05-27', name:'Spring Bank Holiday' },
-    { date:'2030-08-26', name:'Summer Bank Holiday' },
-    { date:'2030-12-25', name:'Christmas Day' },
-    { date:'2030-12-26', name:'Boxing Day' },
+const BH_FALLBACK = {
+  "england-and-wales": [
+    {date:'2025-01-01',name:"New Year's Day"},{date:'2025-04-18',name:'Good Friday'},{date:'2025-04-21',name:'Easter Monday'},
+    {date:'2025-05-05',name:'Early May bank holiday'},{date:'2025-05-26',name:'Spring bank holiday'},{date:'2025-08-25',name:'Summer bank holiday'},
+    {date:'2025-12-25',name:'Christmas Day'},{date:'2025-12-26',name:'Boxing Day'},
+    {date:'2026-01-01',name:"New Year's Day"},{date:'2026-04-03',name:'Good Friday'},{date:'2026-04-06',name:'Easter Monday'},
+    {date:'2026-05-04',name:'Early May bank holiday'},{date:'2026-05-25',name:'Spring bank holiday'},{date:'2026-08-31',name:'Summer bank holiday'},
+    {date:'2026-12-25',name:'Christmas Day'},{date:'2026-12-28',name:'Boxing Day (substitute)'},
+    {date:'2027-01-01',name:"New Year's Day"},{date:'2027-03-26',name:'Good Friday'},{date:'2027-03-29',name:'Easter Monday'},
+    {date:'2027-05-03',name:'Early May bank holiday'},{date:'2027-05-31',name:'Spring bank holiday'},{date:'2027-08-30',name:'Summer bank holiday'},
+    {date:'2027-12-27',name:'Christmas Day (substitute)'},{date:'2027-12-28',name:'Boxing Day (substitute)'},
+    {date:'2028-01-03',name:"New Year's Day (substitute)"},{date:'2028-04-14',name:'Good Friday'},{date:'2028-04-17',name:'Easter Monday'},
+    {date:'2028-05-01',name:'Early May bank holiday'},{date:'2028-05-29',name:'Spring bank holiday'},{date:'2028-08-28',name:'Summer bank holiday'},
+    {date:'2028-12-25',name:'Christmas Day'},{date:'2028-12-26',name:'Boxing Day'},
+    {date:'2029-01-01',name:"New Year's Day"},{date:'2029-03-30',name:'Good Friday'},{date:'2029-04-02',name:'Easter Monday'},
+    {date:'2029-05-07',name:'Early May bank holiday'},{date:'2029-05-28',name:'Spring bank holiday'},{date:'2029-08-27',name:'Summer bank holiday'},
+    {date:'2029-12-25',name:'Christmas Day'},{date:'2029-12-26',name:'Boxing Day'},
+    {date:'2030-01-01',name:"New Year's Day"},{date:'2030-04-19',name:'Good Friday'},{date:'2030-04-22',name:'Easter Monday'},
+    {date:'2030-05-06',name:'Early May bank holiday'},{date:'2030-05-27',name:'Spring bank holiday'},{date:'2030-08-26',name:'Summer bank holiday'},
+    {date:'2030-12-25',name:'Christmas Day'},{date:'2030-12-26',name:'Boxing Day'},
   ],
 };
+const REGION_LABELS = {
+  'england-and-wales':'England & Wales',
+  'scotland':'Scotland',
+  'northern-ireland':'Northern Ireland',
+};
+const DEFAULT_REGION = 'england-and-wales';
 
-function getBankHolsInSprint(startDateStr, sprintWorkingDays) {
-  if (!startDateStr) return [];
-  const allBH = Object.values(ENGLAND_BH).flat();
-  const bhSet = {};
-  allBH.forEach(bh => { bhSet[bh.date] = bh.name; });
+// Loaded holiday data: { region: { 'YYYY-MM-DD': 'Name', ... } }
+let BH_DATA = null;
+let BH_SOURCE = 'fallback';
 
+async function loadBankHolidays() {
+  // Try the bundled/served JSON first
+  try {
+    const res = await fetch('bank-holidays.json', { cache:'no-store' });
+    if (res.ok) {
+      const json = await res.json();
+      const divisions = json.divisions || json; // support both shapes
+      BH_DATA = {};
+      for (const region of Object.keys(divisions)) {
+        const events = Array.isArray(divisions[region]) ? divisions[region] : (divisions[region].events || []);
+        BH_DATA[region] = {};
+        events.forEach(e => { BH_DATA[region][e.date] = e.title || e.name; });
+      }
+      BH_SOURCE = 'gov.uk file';
+      return;
+    }
+  } catch (e) { /* fall through to fallback */ }
+  // Fallback: England & Wales only
+  BH_DATA = {};
+  for (const region of Object.keys(BH_FALLBACK)) {
+    BH_DATA[region] = {};
+    BH_FALLBACK[region].forEach(e => { BH_DATA[region][e.date] = e.name; });
+  }
+  BH_SOURCE = 'built-in (England & Wales only)';
+}
+
+function regionAvailable(region) {
+  return BH_DATA && BH_DATA[region] && Object.keys(BH_DATA[region]).length > 0;
+}
+
+// Returns array of {date,name} bank holidays that fall on the team's
+// WORKING days within the sprint (region-aware).
+function getBankHolsInSprint(startDateStr, sprintWorkingDays, region) {
+  if (!startDateStr || !BH_DATA) return [];
+  const reg = regionAvailable(region) ? region : DEFAULT_REGION;
+  const bhSet = BH_DATA[reg] || {};
+  const dates = workingDatesInSprint(startDateStr, sprintWorkingDays);
+  const result = [];
+  dates.forEach(ds => { if (bhSet[ds]) result.push({ date: ds, name: bhSet[ds] }); });
+  return result;
+}
+
+// Walk forward counting working days (Mon–Fri), return the date strings.
+function workingDatesInSprint(startDateStr, sprintWorkingDays) {
   const start = parseDateLocal(startDateStr);
   if (!start) return [];
-
-  const sprintDates = [];
+  const out = [];
   let current = new Date(start);
-  let workingDaysCounted = 0;
-  while (workingDaysCounted < sprintWorkingDays) {
+  let counted = 0;
+  while (counted < sprintWorkingDays) {
     const dow = current.getDay();
-    if (dow !== 0 && dow !== 6) { sprintDates.push(toDateStr(current)); workingDaysCounted++; }
+    if (dow !== 0 && dow !== 6) { out.push(toDateStr(current)); counted++; }
     current.setDate(current.getDate() + 1);
-    if (workingDaysCounted > 100) break;
+    if (counted > 200) break;
   }
-  const result = [];
-  sprintDates.forEach(ds => { if (bhSet[ds]) result.push({ date: ds, name: bhSet[ds] }); });
-  return result;
+  return out;
 }
 
 function parseDateLocal(str) {
@@ -610,116 +697,106 @@ function parseDateLocal(str) {
   return new Date(y, m-1, d);
 }
 function toDateStr(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const dd = String(d.getDate()).padStart(2,'0');
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${dd}`;
 }
-function formatBHDate(str) {
-  const d = parseDateLocal(str);
-  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-}
+function formatBHDate(str) { return parseDateLocal(str).toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }
 
 // ════════════════════════════════════════════════
-// STATE  (teams is now an ordered array — user-created)
+// STATE
 // ════════════════════════════════════════════════
 const AVATAR_COLORS = ['#FF721E','#00C9A7','#5B9BF5','#A78BFA','#F59E0B','#34D399','#FB7185','#60A5FA','#FBBF24','#6EE7B7'];
 const TEAM_PALETTE  = ['#00C9A7','#5B9BF5','#FF721E','#F472B6','#A78BFA','#22D17B','#FFBE45','#FB7185','#60A5FA','#34D399'];
+const OVERVIEW_ID = '__overview__';
 
 let state = { sprintName:'', teams:[], activeTeamId:null };
 let autoSaveTimer = null;
 let editingTeamId = null;
+let lastReminderAt = 0;     // CAP-5 timestamps
+let lastExportAt = 0;
+let reminderTimer = null;
 
 function rgbaFromHex(hex, a) {
-  const h = hex.replace('#','');
-  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  const h=hex.replace('#',''); const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
   return `rgba(${r},${g},${b},${a})`;
 }
-function uid(prefix) { return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function uid(p){ return p+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 
-function buildMember(name) {
-  return { id: uid('m'), name, holidays:0, sprintDaysOverride:null };
-}
+function buildMember(name) { return { id:uid('m'), name, holidays:0, sprintDaysOverride:null, fte:1 }; }
 function buildTeam(name) {
-  const color = TEAM_PALETTE[state.teams.length % TEAM_PALETTE.length];
   return {
-    id: uid('t'), name: name || 'New Team', color,
+    id:uid('t'), name:name||'New Team', color:TEAM_PALETTE[state.teams.length % TEAM_PALETTE.length],
     sprintDays:10, velocity:'', goal:'', notes:'',
-    startDate:'', useBankHols:true, excludedBankHols:[],
+    startDate:'', useBankHols:true, region:DEFAULT_REGION, excludedBankHols:[],
     dev:[], qa:[],
   };
 }
 
-// Migrate any legacy object-shaped state (old S4 version) into the new array shape
 function migrateLegacy(loaded) {
   if (!loaded) return;
-  if (Array.isArray(loaded.teams)) { state = loaded; return; }
-  // old shape: teams was an object keyed by rota/mobile/payroll/infra
-  const LEGACY_NAMES = { rota:'Rota', mobile:'Mobile', payroll:'Payroll', infra:'Infrastructure' };
-  const LEGACY_COLORS = { rota:'#00C9A7', mobile:'#5B9BF5', payroll:'#FF721E', infra:'#F472B6' };
-  const arr = [];
-  Object.keys(loaded.teams || {}).forEach(k => {
-    const t = loaded.teams[k];
-    arr.push({
-      id: uid('t'), name: LEGACY_NAMES[k] || k, color: LEGACY_COLORS[k] || TEAM_PALETTE[arr.length % TEAM_PALETTE.length],
-      sprintDays: t.sprintDays || 10, velocity: t.velocity || '', goal: t.goal || '', notes: t.notes || '',
-      startDate: t.startDate || '', useBankHols: t.useBankHols !== false, excludedBankHols: t.excludedBankHols || [],
-      dev: (t.dev||[]).map(m => ({ id: m.id||uid('m'), name:m.name, holidays:m.holidays||0, sprintDaysOverride: m.sprintDaysOverride ?? null })),
-      qa:  (t.qa ||[]).map(m => ({ id: m.id||uid('m'), name:m.name, holidays:m.holidays||0, sprintDaysOverride: m.sprintDaysOverride ?? null })),
+  const fixMember = m => ({ id:m.id||uid('m'), name:m.name, holidays:m.holidays||0,
+    sprintDaysOverride: m.sprintDaysOverride ?? null, fte: (typeof m.fte==='number'&&m.fte>0)?m.fte:1 });
+  if (Array.isArray(loaded.teams)) {
+    state = loaded;
+    state.teams.forEach(t => {
+      if (t.region === undefined) t.region = DEFAULT_REGION;
+      if (t.excludedBankHols === undefined) t.excludedBankHols = [];
+      t.dev = (t.dev||[]).map(fixMember);
+      t.qa  = (t.qa ||[]).map(fixMember);
     });
+    return;
+  }
+  // very old object-keyed shape
+  const NAMES={rota:'Rota',mobile:'Mobile',payroll:'Payroll',infra:'Infrastructure'};
+  const COLORS={rota:'#00C9A7',mobile:'#5B9BF5',payroll:'#FF721E',infra:'#F472B6'};
+  const arr=[];
+  Object.keys(loaded.teams||{}).forEach(k=>{
+    const t=loaded.teams[k];
+    arr.push({ id:uid('t'), name:NAMES[k]||k, color:COLORS[k]||TEAM_PALETTE[arr.length%TEAM_PALETTE.length],
+      sprintDays:t.sprintDays||10, velocity:t.velocity||'', goal:t.goal||'', notes:t.notes||'',
+      startDate:t.startDate||'', useBankHols:t.useBankHols!==false, region:DEFAULT_REGION, excludedBankHols:t.excludedBankHols||[],
+      dev:(t.dev||[]).map(fixMember), qa:(t.qa||[]).map(fixMember) });
   });
-  state = { sprintName: loaded.sprintName || '', teams: arr, activeTeamId: arr[0]?.id || null };
+  state={ sprintName:loaded.sprintName||'', teams:arr, activeTeamId:arr[0]?.id||null };
 }
 
-function getTeam(id) { return state.teams.find(t => t.id === id); }
+function getTeam(id){ return state.teams.find(t=>t.id===id); }
 
 // ════════════════════════════════════════════════
 // SAVE / LOAD
 // ════════════════════════════════════════════════
-function saveState() {
-  try { localStorage.setItem('capacityPlannerV3', JSON.stringify(state)); showSaveStatus('saved'); }
-  catch(e) { showSaveStatus('error'); }
-}
-function loadState() {
-  let loaded = null;
-  try { const s=localStorage.getItem('capacityPlannerV3'); if(s) loaded=JSON.parse(s); } catch(e){}
-  if (!loaded) { // try migrating from the old key once
-    try { const old=localStorage.getItem('s4CapacityPlannerV2'); if(old) loaded=JSON.parse(old); } catch(e){}
-  }
+function saveState(){ try{ localStorage.setItem('capacityPlannerV3',JSON.stringify(state)); showSaveStatus('saved'); }catch(e){ showSaveStatus('error'); } }
+function loadState(){
+  let loaded=null;
+  try{ const s=localStorage.getItem('capacityPlannerV3'); if(s) loaded=JSON.parse(s); }catch(e){}
+  if(!loaded){ try{ const old=localStorage.getItem('s4CapacityPlannerV2'); if(old) loaded=JSON.parse(old); }catch(e){} }
   migrateLegacy(loaded);
-  if (!state.teams) state.teams = [];
-  if (!state.activeTeamId && state.teams.length) state.activeTeamId = state.teams[0].id;
+  if(!state.teams) state.teams=[];
+  if(state.activeTeamId!==OVERVIEW_ID && !getTeam(state.activeTeamId)) state.activeTeamId = state.teams[0]?.id || null;
 }
-function triggerAutoSave() {
-  showSaveStatus('saving');
-  clearTimeout(autoSaveTimer);
-  autoSaveTimer = setTimeout(saveState, 800);
+function triggerAutoSave(){ showSaveStatus('saving'); clearTimeout(autoSaveTimer); autoSaveTimer=setTimeout(saveState,800); }
+function saveManual(){ saveState(); }
+function showSaveStatus(s){
+  const el=document.getElementById('saveStatus');
+  if(s==='saving'){ el.textContent='Saving…'; el.className='save-badge saving'; }
+  else if(s==='saved'){ el.textContent='✓ Saved'; el.className='save-badge saved'; setTimeout(()=>{el.textContent='Auto-saved';el.className='save-badge';},2200); }
+  else { el.textContent='Error'; el.className='save-badge'; }
 }
-function saveManual() { saveState(); }
-function showSaveStatus(s) {
-  const el = document.getElementById('saveStatus');
-  if (s==='saving') { el.textContent='Saving…'; el.className='save-badge saving'; }
-  else if (s==='saved') {
-    el.textContent='✓ Saved'; el.className='save-badge saved';
-    setTimeout(()=>{ el.textContent='Auto-saved'; el.className='save-badge'; }, 2200);
-  } else { el.textContent='Error'; el.className='save-badge'; }
-}
-function exportJSON() {
+function exportJSON(){
+  lastExportAt=Date.now();
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
   a.href=url; a.download=`capacity-${state.sprintName||'sprint'}-${new Date().toISOString().slice(0,10)}.json`;
   a.click(); URL.revokeObjectURL(url);
 }
-function importJSON() {
+function importJSON(){
   document.getElementById('importFile').click();
   document.getElementById('importFile').onchange=(e)=>{
     const f=e.target.files[0]; if(!f) return;
     const r=new FileReader();
-    r.onload=(ev)=>{
-      try { migrateLegacy(JSON.parse(ev.target.result)); if(!state.activeTeamId && state.teams.length) state.activeTeamId=state.teams[0].id; saveState(); renderAll(); }
-      catch { alert('Invalid file format.'); }
-    };
+    r.onload=(ev)=>{ try{ migrateLegacy(JSON.parse(ev.target.result));
+      if(state.activeTeamId!==OVERVIEW_ID && !getTeam(state.activeTeamId)) state.activeTeamId=state.teams[0]?.id||null;
+      saveState(); renderAll(); }catch{ alert('Invalid file format.'); } };
     r.readAsText(f);
   };
 }
@@ -727,88 +804,111 @@ function importJSON() {
 // ════════════════════════════════════════════════
 // TEAM MANAGEMENT
 // ════════════════════════════════════════════════
-function addTeam(name) {
-  const clean = (name||'').trim();
-  if (!clean) return;
-  const t = buildTeam(clean);
-  state.teams.push(t);
-  state.activeTeamId = t.id;
+function addTeam(name){
+  const clean=(name||'').trim(); if(!clean) return;
+  const t=buildTeam(clean); state.teams.push(t); state.activeTeamId=t.id;
+  triggerAutoSave(); renderAll(); maybeRemindOnTeamAdd();
+}
+function promptAddTeamFromEmpty(){ const i=document.getElementById('emptyTeamInput'); if(i) addTeam(i.value); }
+function promptAddTeamFromTabs(){ const i=document.getElementById('tabTeamInput'); if(i) addTeam(i.value); }
+function removeTeam(id){
+  const t=getTeam(id); if(!t) return;
+  if(!confirm(`Delete team “${t.name}” and all its members?`)) return;
+  const idx=state.teams.findIndex(x=>x.id===id);
+  state.teams=state.teams.filter(x=>x.id!==id);
+  if(state.activeTeamId===id) state.activeTeamId = state.teams[Math.max(0,idx-1)]?.id || (state.teams.length?OVERVIEW_ID:null);
   triggerAutoSave(); renderAll();
 }
-function promptAddTeamFromEmpty() {
-  const input = document.getElementById('emptyTeamInput');
-  if (input) addTeam(input.value);
-}
-function promptAddTeamFromTabs() {
-  const input = document.getElementById('tabTeamInput');
-  if (input) { addTeam(input.value); }
-}
-function removeTeam(id) {
-  const t = getTeam(id); if (!t) return;
-  if (!confirm(`Delete team “${t.name}” and all its members?`)) return;
-  const idx = state.teams.findIndex(x => x.id === id);
-  state.teams = state.teams.filter(x => x.id !== id);
-  if (state.activeTeamId === id) {
-    state.activeTeamId = state.teams[Math.max(0, idx-1)]?.id || null;
-  }
-  triggerAutoSave(); renderAll();
-}
-function startRenameTeam(id) { editingTeamId = id; renderPanel(); }
-function commitRenameTeam(id, val) {
-  const t = getTeam(id); if (!t) return;
-  const clean = (val||'').trim();
-  if (clean) t.name = clean;
-  editingTeamId = null;
-  triggerAutoSave(); renderAll();
-}
-function switchTab(id) { state.activeTeamId = id; editingTeamId = null; triggerAutoSave(); renderAll(); }
+function startRenameTeam(id){ editingTeamId=id; renderPanel(); }
+function commitRenameTeam(id,val){ const t=getTeam(id); if(!t) return; const c=(val||'').trim(); if(c) t.name=c; editingTeamId=null; triggerAutoSave(); renderAll(); }
+function switchTab(id){ state.activeTeamId=id; editingTeamId=null; triggerAutoSave(); renderAll(); }
 
 // ════════════════════════════════════════════════
 // HELPERS
 // ════════════════════════════════════════════════
-function getInitials(n) { return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
-function getColor(i)    { return AVATAR_COLORS[i % AVATAR_COLORS.length]; }
-function pctClass(p)    { return p>=80?'hi':p>=50?'mid':'lo'; }
-function chipClass(p)   { return p>=80?'chip-hi':p>=50?'chip-mid':'chip-lo'; }
-function barClass(p)    { return p>=80?'bar-hi':p>=50?'bar-mid':'bar-lo'; }
-function esc(s)         { const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+function getInitials(n){ return n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+function getColor(i){ return AVATAR_COLORS[i%AVATAR_COLORS.length]; }
+function pctClass(p){ return p>=80?'hi':p>=50?'mid':'lo'; }
+function chipClass(p){ return p>=80?'chip-hi':p>=50?'chip-mid':'chip-lo'; }
+function barClass(p){ return p>=80?'bar-hi':p>=50?'bar-mid':'bar-lo'; }
+function esc(s){ const d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
 
-function getEffectiveDays(member, teamSprintDays, bhDays) {
-  if (member.sprintDaysOverride !== null && member.sprintDaysOverride !== undefined) {
-    return Math.max(1, member.sprintDaysOverride);
-  }
+function getActiveBHCount(team){
+  if(!team.useBankHols || !team.startDate) return 0;
+  const sprintDays=parseInt(team.sprintDays)||10;
+  const detected=getBankHolsInSprint(team.startDate,sprintDays,team.region);
+  const excluded=team.excludedBankHols||[];
+  return detected.filter(bh=>!excluded.includes(bh.date)).length;
+}
+// Raw working days available to a member (before FTE), BH baked in unless overridden
+function getEffectiveDays(member, teamSprintDays, bhDays){
+  if(member.sprintDaysOverride!==null && member.sprintDaysOverride!==undefined) return Math.max(1,member.sprintDaysOverride);
   return Math.max(1, teamSprintDays - bhDays);
 }
-function getActiveBHCount(team) {
-  if (!team.useBankHols || !team.startDate) return 0;
-  const sprintDays = parseInt(team.sprintDays) || 10;
-  const detected = getBankHolsInSprint(team.startDate, sprintDays);
-  const excluded = team.excludedBankHols || [];
-  return detected.filter(bh => !excluded.includes(bh.date)).length;
+// Member's available days after leave AND FTE (CAP-6)
+function memberAvailableDays(member, teamSprintDays, bhDays){
+  const eff = getEffectiveDays(member, teamSprintDays, bhDays);
+  const afterLeave = Math.max(0, eff - (member.holidays||0));
+  const fte = (typeof member.fte==='number' && member.fte>0) ? member.fte : 1;
+  return afterLeave * fte;
+}
+
+// Per-team capacity summary used by both the team view and the overview
+function teamSummary(team){
+  const bhDays=getActiveBHCount(team);
+  const teamSprintDays=parseInt(team.sprintDays)||10;
+  const all=[...team.dev,...team.qa];
+  const totalPossible = all.reduce((s,m)=>{ const fte=(m.fte>0?m.fte:1); return s + teamSprintDays*fte; },0);
+  const totalAvail = all.reduce((s,m)=> s + memberAvailableDays(m,teamSprintDays,bhDays), 0);
+  const pct = totalPossible>0 ? Math.round(totalAvail/totalPossible*100) : 0;
+  const velocity=parseFloat(team.velocity);
+  const estPts = (!isNaN(velocity)&&velocity>0) ? Math.round(velocity*(pct/100)) : null;
+  return { bhDays, teamSprintDays, members:all.length, totalPossible:Math.round(totalPossible*10)/10,
+           totalAvail:Math.round(totalAvail*10)/10, pct, velocity, estPts };
 }
 
 // ════════════════════════════════════════════════
-// RENDER — TABS
+// CAP-1: sprint window from working days
 // ════════════════════════════════════════════════
-function renderTabs() {
-  const bar = document.getElementById('tabsBar');
-  const tabs = state.teams.map(t => {
-    const active = t.id === state.activeTeamId;
-    const count = t.dev.length + t.qa.length;
+function sprintWindow(team){
+  if(!team.startDate) return null;
+  const sprintDays=parseInt(team.sprintDays)||10;
+  const dates=workingDatesInSprint(team.startDate, sprintDays);
+  if(!dates.length) return null;
+  const start=parseDateLocal(dates[0]);
+  const end=parseDateLocal(dates[dates.length-1]);
+  const calSpan = Math.round((end-start)/86400000)+1;
+  return { start, end, workingDays:sprintDays, calSpan };
+}
+
+// ════════════════════════════════════════════════
+// RENDER — TABS (Overview first)
+// ════════════════════════════════════════════════
+function renderTabs(){
+  const bar=document.getElementById('tabsBar');
+  if(!state.teams.length){ bar.innerHTML=''; return; }
+  let html='';
+  // Overview tab
+  const ovActive = state.activeTeamId===OVERVIEW_ID;
+  html += `<button class="tab-btn ${ovActive?'active':''}" style="${ovActive?'border-bottom-color:var(--orange)':''}" onclick="switchTab('${OVERVIEW_ID}')">
+      <span class="tab-dot" style="background:var(--orange);${ovActive?'box-shadow:0 0 8px var(--orange)':''}"></span>Overview
+    </button>`;
+  // Team tabs
+  html += state.teams.map(t=>{
+    const active=t.id===state.activeTeamId;
+    const count=t.dev.length+t.qa.length;
     return `<button class="tab-btn ${active?'active':''}" style="${active?`border-bottom-color:${t.color}`:''}" onclick="switchTab('${t.id}')">
-      <span class="tab-dot" style="background:${t.color};${active?`box-shadow:0 0 8px ${t.color}`:''}"></span>
-      ${esc(t.name)}
+      <span class="tab-dot" style="background:${t.color};${active?`box-shadow:0 0 8px ${t.color}`:''}"></span>${esc(t.name)}
       <span class="tab-count" style="background:${rgbaFromHex(t.color,0.12)};color:${t.color}">${count}</span>
       <button class="tab-close" title="Delete team" onclick="event.stopPropagation();removeTeam('${t.id}')">✕</button>
     </button>`;
   }).join('');
-  const addBtn = `<button class="add-team-btn" onclick="showTabAddForm()" id="tabAddBtn">＋ Add team</button>
-    <span id="tabAddFormSlot"></span>`;
-  bar.innerHTML = tabs + addBtn;
+  html += `<button class="add-team-btn" onclick="showTabAddForm()" id="tabAddBtn">＋ Add team</button><span id="tabAddFormSlot"></span>`;
+  bar.innerHTML=html;
 }
-function showTabAddForm() {
-  document.getElementById('tabAddBtn').style.display = 'none';
-  document.getElementById('tabAddFormSlot').innerHTML =
+function showTabAddForm(){
+  document.getElementById('tabAddBtn').style.display='none';
+  document.getElementById('tabAddFormSlot').innerHTML=
     `<span class="add-team-form">
       <input id="tabTeamInput" placeholder="Team name…" onkeydown="if(event.key==='Enter')promptAddTeamFromTabs();if(event.key==='Escape')renderTabs()" />
       <button class="btn btn-glass btn-small" onclick="promptAddTeamFromTabs()">Add</button>
@@ -817,39 +917,99 @@ function showTabAddForm() {
 }
 
 // ════════════════════════════════════════════════
-// RENDER — PANEL (config + capacity + members + notes)
+// RENDER — top level
 // ════════════════════════════════════════════════
-function renderPanel() {
-  const main = document.getElementById('mainArea');
+function renderAll(){ renderTabs(); renderPanel(); }
 
-  if (!state.teams.length) {
-    main.innerHTML = `
+function renderPanel(){
+  const main=document.getElementById('mainArea');
+
+  if(!state.teams.length){
+    main.innerHTML=`
       <div class="empty-state">
         <div class="empty-icon">📅</div>
         <h2>Plan your first sprint</h2>
-        <p>Add a team to get started. Each team tracks its own members, sprint dates, personal leave, and UK bank holidays — all saved automatically in your browser.</p>
+        <p>Add a team to get started. Each team tracks its own members, sprint dates, personal leave, part-time hours and UK bank holidays — all saved automatically in your browser.</p>
         <div class="add-team-form">
           <input id="emptyTeamInput" placeholder="e.g. Product, Infrastructure…" onkeydown="if(event.key==='Enter')promptAddTeamFromEmpty()" />
           <button class="btn btn-primary" onclick="promptAddTeamFromEmpty()">＋ Add team</button>
         </div>
       </div>`;
-    const inp = document.getElementById('emptyTeamInput'); if (inp) inp.focus();
+    const i=document.getElementById('emptyTeamInput'); if(i) i.focus();
     return;
   }
 
-  const t = getTeam(state.activeTeamId);
-  if (!t) { state.activeTeamId = state.teams[0].id; return renderPanel(); }
+  if(state.activeTeamId===OVERVIEW_ID || !getTeam(state.activeTeamId)){
+    if(state.activeTeamId!==OVERVIEW_ID) state.activeTeamId=OVERVIEW_ID;
+    return renderOverview();
+  }
+  renderTeamPanel(getTeam(state.activeTeamId));
+}
 
-  const accent = t.color;
-  const accentDim = rgbaFromHex(accent, 0.12);
+// ════════════════════════════════════════════════
+// CAP-2: OVERVIEW (cross-team roll-up)
+// ════════════════════════════════════════════════
+function renderOverview(){
+  const main=document.getElementById('mainArea');
+  const summaries=state.teams.map(t=>({t, s:teamSummary(t)}));
+  const totMembers=summaries.reduce((a,x)=>a+x.s.members,0);
+  const totPossible=Math.round(summaries.reduce((a,x)=>a+x.s.totalPossible,0)*10)/10;
+  const totAvail=Math.round(summaries.reduce((a,x)=>a+x.s.totalAvail,0)*10)/10;
+  const blendedPct = totPossible>0 ? Math.round(totAvail/totPossible*100) : 0;
+  const anyVelocity = summaries.some(x=>x.s.estPts!==null);
+  const totEst = anyVelocity ? summaries.reduce((a,x)=>a+(x.s.estPts||0),0) : null;
+  const pc=pctClass(blendedPct);
 
-  const titleHTML = (editingTeamId === t.id)
+  const rows = summaries.map(({t,s})=>{
+    const p=pctClass(s.pct);
+    return `<tr>
+      <td><div class="ov-team-name"><span class="team-color-dot" style="background:${t.color};color:${t.color}"></span>${esc(t.name)}</div></td>
+      <td>${s.members}</td>
+      <td>${s.bhDays||'—'}</td>
+      <td class="${p}">${s.totalAvail} / ${s.totalPossible}</td>
+      <td><span class="avail-chip ${chipClass(s.pct)}">${s.pct}%</span></td>
+      <td>${s.estPts!==null?s.estPts+' pts':'—'}</td>
+    </tr>`;
+  }).join('');
+
+  main.innerHTML=`
+    <div class="team-panel active">
+      <div class="team-toolbar"><span class="team-title-big"><span class="team-color-dot" style="background:var(--orange);color:var(--orange)"></span>Overview — all teams</span></div>
+      <div class="overview-grid">
+        <div class="ov-card"><div class="ov-label">Teams</div><div class="ov-value" style="color:var(--orange)">${state.teams.length}</div><div class="ov-sub">in this plan</div></div>
+        <div class="ov-card"><div class="ov-label">People</div><div class="ov-value">${totMembers}</div><div class="ov-sub">Dev + QA</div></div>
+        <div class="ov-card"><div class="ov-label">Available Days</div><div class="ov-value ${pc}">${totAvail}</div><div class="ov-sub">of ${totPossible}</div></div>
+        <div class="ov-card"><div class="ov-label">Blended Availability</div><div class="ov-value ${pc}">${blendedPct}%</div><div class="ov-sub">across all teams</div></div>
+        <div class="ov-card"><div class="ov-label">Est. Capacity</div><div class="ov-value ${totEst!==null?pc:''}" style="${totEst===null?'color:var(--text-muted)':''}">${totEst!==null?totEst:'—'}</div><div class="ov-sub">${totEst!==null?'story pts':'set velocity'}</div></div>
+      </div>
+      <table class="ov-team-table">
+        <thead><tr><th>Team</th><th>People</th><th>Bank Hols</th><th>Avail / Possible</th><th>Avail %</th><th>Est. pts</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="bh-source-note" style="margin-top:14px">Bank holiday data source: ${esc(BH_SOURCE)}. Availability includes personal leave and part-time (FTE) adjustments.</div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════
+// RENDER — TEAM PANEL
+// ════════════════════════════════════════════════
+function renderTeamPanel(t){
+  const main=document.getElementById('mainArea');
+  const accent=t.color, accentDim=rgbaFromHex(accent,0.12);
+
+  const titleHTML=(editingTeamId===t.id)
     ? `<input class="team-name-edit" id="teamNameEdit" value="${esc(t.name)}"
          onkeydown="if(event.key==='Enter')commitRenameTeam('${t.id}',this.value);if(event.key==='Escape'){editingTeamId=null;renderPanel();}"
          onblur="commitRenameTeam('${t.id}',this.value)" />`
     : `<span class="team-title-big"><span class="team-color-dot" style="background:${accent};color:${accent}"></span>${esc(t.name)}</span>`;
 
-  main.innerHTML = `
+  // region options
+  const regionOpts = Object.keys(REGION_LABELS).map(r=>{
+    const avail = regionAvailable(r);
+    return `<option value="${r}" ${t.region===r?'selected':''} ${avail?'':'disabled'}>${REGION_LABELS[r]}${avail?'':' (offline)'}</option>`;
+  }).join('');
+
+  main.innerHTML=`
     <div class="team-panel active">
       <div class="team-toolbar">
         ${titleHTML}
@@ -866,7 +1026,7 @@ function renderPanel() {
             <div class="field-group"><div class="field-label">Start Date</div>
               <input type="date" class="field-input date-w" id="cfg-startDate" oninput="onConfigChange()" /></div>
             <div class="field-group"><div class="field-label">Sprint Days</div>
-              <input type="number" class="field-input" id="cfg-sprintDays" value="10" min="1" max="30" oninput="onConfigChange()" /></div>
+              <input type="number" class="field-input" id="cfg-sprintDays" value="10" min="1" max="60" oninput="onConfigChange()" /></div>
             <div class="field-group"><div class="field-label">Avg Velocity</div>
               <input type="number" class="field-input" id="cfg-velocity" placeholder="pts" min="0" oninput="onConfigChange()" /></div>
             <div class="field-group"><div class="field-label">Sprint Goal</div>
@@ -875,9 +1035,11 @@ function renderPanel() {
               <div class="field-label">UK Bank Hols</div>
               <label class="toggle-label-row">
                 <label class="toggle"><input type="checkbox" id="cfg-useBH" checked onchange="onConfigChange()" /><span class="toggle-track"></span></label>
-                <span class="toggle-text" id="cfg-bhToggleLabel">England</span>
+                <span class="toggle-text" id="cfg-bhToggleLabel">On</span>
               </label>
             </div>
+            <div class="field-group" id="cfg-regionGroup"><div class="field-label">Region</div>
+              <select class="field-select" id="cfg-region" onchange="onConfigChange()">${regionOpts}</select></div>
           </div>
           <div class="sprint-period" id="cfg-period"><span class="sprint-period-empty">Set a start date to see the sprint window</span></div>
           <div class="bh-panel" id="cfg-bhPanel"></div>
@@ -892,341 +1054,350 @@ function renderPanel() {
         </div>
       </div>
 
-      <div class="members-card">
-        <div class="members-card-header">
-          <div class="members-card-header-left">
-            <span class="role-tag" style="color:${accent};border-color:${rgbaFromHex(accent,0.3)};background:${rgbaFromHex(accent,0.08)}">Dev</span>
-            <span class="role-tag-title">Developers</span>
-          </div>
-        </div>
-        <div class="table-header">
-          <div class="th">Member</div><div class="th">Sprint Days</div>
-          <div class="th">Leave Days</div><div class="th">Available</div>
-          <div class="th">Avail %</div><div class="th"></div>
-        </div>
-        <div id="dev-rows"></div>
-        <div class="add-member-row">
-          <input class="add-input" id="dev-addInput" placeholder="+ Add developer…" onkeydown="if(event.key==='Enter')addMember('dev')" />
-          <button class="btn btn-glass btn-small" onclick="addMember('dev')">Add</button>
-        </div>
-      </div>
-
-      <div class="members-card">
-        <div class="members-card-header">
-          <div class="members-card-header-left">
-            <span class="role-tag" style="color:${accent};border-color:${rgbaFromHex(accent,0.2)};background:${rgbaFromHex(accent,0.05)}">QA</span>
-            <span class="role-tag-title">QA Engineers</span>
-          </div>
-        </div>
-        <div class="table-header">
-          <div class="th">Member</div><div class="th">Sprint Days</div>
-          <div class="th">Leave Days</div><div class="th">Available</div>
-          <div class="th">Avail %</div><div class="th"></div>
-        </div>
-        <div id="qa-rows"></div>
-        <div class="add-member-row">
-          <input class="add-input" id="qa-addInput" placeholder="+ Add QA…" onkeydown="if(event.key==='Enter')addMember('qa')" />
-          <button class="btn btn-glass btn-small" onclick="addMember('qa')">Add</button>
-        </div>
-      </div>
+      ${memberCardHTML('dev','Dev','Developers',accent,0.3,0.08)}
+      ${memberCardHTML('qa','QA','QA Engineers',accent,0.2,0.05)}
 
       <div class="notes-card"><div class="notes-label">📝 Sprint Notes</div>
         <textarea class="notes-textarea" id="cfg-notes" placeholder="Risks, blockers, context…" oninput="onNotesChange()"></textarea></div>
     </div>`;
 
-  // hydrate config inputs
-  document.getElementById('cfg-sprintDays').value = t.sprintDays || 10;
-  document.getElementById('cfg-velocity').value   = t.velocity   || '';
-  document.getElementById('cfg-goal').value       = t.goal       || '';
-  document.getElementById('cfg-notes').value      = t.notes      || '';
-  document.getElementById('cfg-startDate').value  = t.startDate  || '';
-  document.getElementById('cfg-useBH').checked    = t.useBankHols !== false;
-  document.getElementById('cfg-bhToggleLabel').textContent = (t.useBankHols !== false) ? 'England' : 'Off';
+  document.getElementById('cfg-sprintDays').value=t.sprintDays||10;
+  document.getElementById('cfg-velocity').value=t.velocity||'';
+  document.getElementById('cfg-goal').value=t.goal||'';
+  document.getElementById('cfg-notes').value=t.notes||'';
+  document.getElementById('cfg-startDate').value=t.startDate||'';
+  document.getElementById('cfg-useBH').checked=t.useBankHols!==false;
+  document.getElementById('cfg-bhToggleLabel').textContent=(t.useBankHols!==false)?'On':'Off';
+  document.getElementById('cfg-regionGroup').style.display=(t.useBankHols!==false)?'flex':'none';
 
-  if (editingTeamId === t.id) { const e=document.getElementById('teamNameEdit'); if(e){e.focus();e.select();} }
+  if(editingTeamId===t.id){ const e=document.getElementById('teamNameEdit'); if(e){e.focus();e.select();} }
 
   updateSprintPeriod(t);
   renderBHPanel(t);
-  renderRows('dev');
-  renderRows('qa');
+  renderRows('dev'); renderRows('qa');
   updateCapacity(t);
 }
 
-// ════════════════════════════════════════════════
-// SPRINT PERIOD
-// ════════════════════════════════════════════════
-function updateSprintPeriod(team) {
-  const el = document.getElementById('cfg-period');
-  if (!el) return;
-  const startStr = team.startDate;
-  if (!startStr) {
-    el.className = 'sprint-period';
-    el.innerHTML = '<span class="sprint-period-empty">Set a start date to see the sprint window</span>';
-    return;
-  }
-  const start = parseDateLocal(startStr);
-  const end   = new Date(start); end.setDate(end.getDate() + 13);
-  const fmtOpts = { weekday:'short', day:'numeric', month:'short', year:'numeric' };
-  const startFmt = start.toLocaleDateString('en-GB', fmtOpts);
-  const endFmt   = end.toLocaleDateString('en-GB', fmtOpts);
-  el.className = 'sprint-period has-dates';
-  el.innerHTML = `
-    <span class="sprint-period-label">Sprint window</span>
-    <div class="sprint-period-dates">
-      <span class="sprint-date-chip">📅 ${startFmt}</span>
-      <span class="sprint-date-arrow">→</span>
-      <span class="sprint-date-chip">📅 ${endFmt}</span>
+function memberCardHTML(role,tag,title,accent,b1,b2){
+  return `<div class="members-card">
+    <div class="members-card-header"><div class="members-card-header-left">
+      <span class="role-tag" style="color:${accent};border-color:${rgbaFromHex(accent,b1)};background:${rgbaFromHex(accent,b2)}">${tag}</span>
+      <span class="role-tag-title">${title}</span></div></div>
+    <div class="table-header">
+      <div class="th">Member</div><div class="th">Sprint Days</div><div class="th">Leave</div>
+      <div class="th">FTE</div><div class="th">Available</div><div class="th"></div></div>
+    <div id="${role}-rows"></div>
+    <div class="add-member-row">
+      <input class="add-input" id="${role}-addInput" placeholder="+ Add ${role==='dev'?'developer':'QA'}…" onkeydown="if(event.key==='Enter')addMember('${role}')" />
+      <button class="btn btn-glass btn-small" onclick="addMember('${role}')">Add</button>
     </div>
-    <span class="sprint-duration-tag">14 days</span>`;
-}
-
-// ════════════════════════════════════════════════
-// BANK HOLIDAY PANEL
-// ════════════════════════════════════════════════
-function renderBHPanel(team) {
-  const panel = document.getElementById('cfg-bhPanel');
-  if (!panel) return;
-  const useBH = team.useBankHols;
-  const excluded = team.excludedBankHols || [];
-
-  if (!useBH || !team.startDate) { panel.innerHTML = ''; return; }
-
-  const sprintDays = parseInt(team.sprintDays) || 10;
-  const detected = getBankHolsInSprint(team.startDate, sprintDays);
-
-  if (detected.length === 0) {
-    panel.innerHTML = `<div class="bh-header"><div class="bh-title">🇬🇧 Bank Holidays in Sprint</div></div>
-      <div class="bh-none">No England bank holidays fall within this sprint window.</div>`;
-    return;
-  }
-
-  const active = detected.filter(bh => !excluded.includes(bh.date));
-  const chips = detected.map(bh => {
-    const isExcluded = excluded.includes(bh.date);
-    return `<span class="bh-chip ${isExcluded?'excluded':''}" title="${isExcluded?'Click to include':'Click to exclude'}">
-      <span class="bh-chip-toggle" onclick="toggleBH('${bh.date}')">${isExcluded?'':'✓'}</span>
-      ${formatBHDate(bh.date)} · ${esc(bh.name)}
-    </span>`;
-  }).join('');
-
-  panel.innerHTML = `<div class="bh-header">
-    <div class="bh-title">🇬🇧 Bank Holidays in Sprint
-      <span class="bh-count-badge">${active.length} active</span>
-    </div>
-  </div>
-  <div class="bh-chips">${chips}</div>
-  <div class="bh-summary">
-    Sprint days auto-reduced from <strong>${sprintDays}</strong> → <strong>${Math.max(1, sprintDays - active.length)}</strong> for members on the team default.
-    Click a holiday to exclude it (e.g. for members who don't observe it).
   </div>`;
 }
 
-function toggleBH(dateStr) {
-  const team = getTeam(state.activeTeamId); if (!team) return;
-  const ex = team.excludedBankHols || [];
-  const idx = ex.indexOf(dateStr);
-  if (idx === -1) ex.push(dateStr); else ex.splice(idx, 1);
-  team.excludedBankHols = ex;
-  triggerAutoSave();
-  renderBHPanel(team);
-  renderRows('dev'); renderRows('qa');
-  updateCapacity(team);
-  renderTabs();
+// ════════════════════════════════════════════════
+// CAP-1: SPRINT PERIOD
+// ════════════════════════════════════════════════
+function updateSprintPeriod(team){
+  const el=document.getElementById('cfg-period'); if(!el) return;
+  const win=sprintWindow(team);
+  if(!win){ el.className='sprint-period'; el.innerHTML='<span class="sprint-period-empty">Set a start date to see the sprint window</span>'; return; }
+  const fmt={weekday:'short',day:'numeric',month:'short',year:'numeric'};
+  el.className='sprint-period has-dates';
+  el.innerHTML=`
+    <span class="sprint-period-label">Sprint window</span>
+    <div class="sprint-period-dates">
+      <span class="sprint-date-chip">📅 ${win.start.toLocaleDateString('en-GB',fmt)}</span>
+      <span class="sprint-date-arrow">→</span>
+      <span class="sprint-date-chip">📅 ${win.end.toLocaleDateString('en-GB',fmt)}</span>
+    </div>
+    <span class="sprint-duration-tag">${win.workingDays} working days · ${win.calSpan} cal. days</span>`;
 }
 
 // ════════════════════════════════════════════════
-// RENDER MEMBER ROWS
+// BANK HOLIDAY PANEL (region-aware)
 // ════════════════════════════════════════════════
-function renderRows(role) {
-  const team = getTeam(state.activeTeamId); if (!team) return;
-  const members = team[role];
-  const teamSprintDays = parseInt(team.sprintDays) || 10;
-  const bhDays = getActiveBHCount(team);
-  const container = document.getElementById(`${role}-rows`);
-  if (!container) return;
+function renderBHPanel(team){
+  const panel=document.getElementById('cfg-bhPanel'); if(!panel) return;
+  if(!team.useBankHols || !team.startDate){ panel.innerHTML=''; return; }
+  const sprintDays=parseInt(team.sprintDays)||10;
+  const detected=getBankHolsInSprint(team.startDate,sprintDays,team.region);
+  const excluded=team.excludedBankHols||[];
+  const regName=REGION_LABELS[regionAvailable(team.region)?team.region:DEFAULT_REGION];
 
-  if (!members.length) {
-    container.innerHTML = '<div style="padding:14px 22px;color:var(--text-muted);font-size:0.84rem;">No members yet.</div>';
+  if(detected.length===0){
+    panel.innerHTML=`<div class="bh-header"><div class="bh-title">🇬🇧 Bank Holidays in Sprint</div></div>
+      <div class="bh-none">No ${esc(regName)} bank holidays fall within this sprint window.</div>
+      <div class="bh-source-note">Source: ${esc(BH_SOURCE)}</div>`;
     return;
   }
+  const active=detected.filter(bh=>!excluded.includes(bh.date));
+  const chips=detected.map(bh=>{
+    const ex=excluded.includes(bh.date);
+    return `<span class="bh-chip ${ex?'excluded':''}" title="${ex?'Click to include':'Click to exclude'}">
+      <span class="bh-chip-toggle" onclick="toggleBH('${bh.date}')">${ex?'':'✓'}</span>
+      ${formatBHDate(bh.date)} · ${esc(bh.name)}
+    </span>`;
+  }).join('');
+  panel.innerHTML=`<div class="bh-header"><div class="bh-title">🇬🇧 ${esc(regName)} Bank Holidays in Sprint
+      <span class="bh-count-badge">${active.length} active</span></div></div>
+    <div class="bh-chips">${chips}</div>
+    <div class="bh-summary">Sprint days auto-reduced from <strong>${sprintDays}</strong> → <strong>${Math.max(1,sprintDays-active.length)}</strong> for members on the team default.
+      Click a holiday to exclude it (e.g. for members who don't observe it).</div>
+    <div class="bh-source-note">Source: ${esc(BH_SOURCE)}</div>`;
+}
+function toggleBH(dateStr){
+  const team=getTeam(state.activeTeamId); if(!team) return;
+  const ex=team.excludedBankHols||[]; const i=ex.indexOf(dateStr);
+  if(i===-1) ex.push(dateStr); else ex.splice(i,1);
+  team.excludedBankHols=ex;
+  triggerAutoSave(); renderBHPanel(team); renderRows('dev'); renderRows('qa'); updateCapacity(team); renderTabs();
+}
 
-  container.innerHTML = members.map((m, i) => {
-    const isOverride  = (m.sprintDaysOverride !== null && m.sprintDaysOverride !== undefined);
-    const effectiveDays = getEffectiveDays(m, teamSprintDays, bhDays);
-    const leaveDays   = m.holidays || 0;
-    const avail = Math.max(0, effectiveDays - leaveDays);
-    const pct   = teamSprintDays > 0 ? Math.round(avail / teamSprintDays * 100) : 0;
-    const inputClass  = isOverride ? 'cell-input is-override' : (bhDays > 0 ? 'cell-input is-auto' : 'cell-input');
-    const inputTitle  = isOverride
-      ? `Manually set to ${effectiveDays}d — click ↺ to reset to auto (${Math.max(1,teamSprintDays - bhDays)}d)`
-      : (bhDays > 0 ? `Auto: ${teamSprintDays} sprint days − ${bhDays} bank holiday(s)` : '');
-    const resetBtn = isOverride
-      ? `<button class="reset-days-btn" onclick="resetMemberDays('${role}','${m.id}')" title="Reset to auto (${Math.max(1,teamSprintDays-bhDays)}d)">↺</button>`
-      : '';
+// ════════════════════════════════════════════════
+// MEMBER ROWS (with FTE column — CAP-6)
+// ════════════════════════════════════════════════
+function renderRows(role){
+  const team=getTeam(state.activeTeamId); if(!team) return;
+  const members=team[role];
+  const teamSprintDays=parseInt(team.sprintDays)||10;
+  const bhDays=getActiveBHCount(team);
+  const container=document.getElementById(`${role}-rows`); if(!container) return;
+
+  if(!members.length){ container.innerHTML='<div style="padding:14px 22px;color:var(--text-muted);font-size:0.84rem;">No members yet.</div>'; return; }
+
+  container.innerHTML=members.map((m,i)=>{
+    const isOverride=(m.sprintDaysOverride!==null && m.sprintDaysOverride!==undefined);
+    const effectiveDays=getEffectiveDays(m,teamSprintDays,bhDays);
+    const leaveDays=m.holidays||0;
+    const fte=(m.fte>0?m.fte:1);
+    const avail=memberAvailableDays(m,teamSprintDays,bhDays);
+    const availDisplay=Math.round(avail*10)/10;
+    const possible=teamSprintDays*fte;
+    const pct=possible>0?Math.round(avail/possible*100):0;
+    const inputClass=isOverride?'cell-input is-override':(bhDays>0?'cell-input is-auto':'cell-input');
+    const inputTitle=isOverride
+      ? `Manually set to ${effectiveDays}d — click ↺ to reset to auto (${Math.max(1,teamSprintDays-bhDays)}d)`
+      : (bhDays>0?`Auto: ${teamSprintDays} sprint days − ${bhDays} bank holiday(s)`:'');
+    const resetBtn=isOverride?`<button class="reset-days-btn" onclick="resetMemberDays('${role}','${m.id}')" title="Reset to auto">↺</button>`:'';
     return `<div class="member-row">
-      <div class="member-name-cell">
-        <div class="avatar" style="background:${getColor(i)}">${esc(getInitials(m.name))}</div>
-        ${esc(m.name)}
-      </div>
+      <div class="member-name-cell"><div class="avatar" style="background:${getColor(i)}">${esc(getInitials(m.name))}</div>${esc(m.name)}</div>
       <div class="cell-input-wrap">
-        <input type="number" class="${inputClass}" min="1" max="30" value="${effectiveDays}"
-          title="${inputTitle}"
-          oninput="setMemberDays('${role}','${m.id}',this.value)" />
+        <input type="number" class="${inputClass}" min="1" max="60" value="${effectiveDays}" title="${inputTitle}" oninput="setMemberDays('${role}','${m.id}',this.value)" />
         ${resetBtn}
       </div>
-      <div><input type="number" class="cell-input" min="0" max="${effectiveDays}" placeholder="0"
-        value="${leaveDays || ''}"
-        oninput="setMemberHols('${role}','${m.id}',this.value)" /></div>
-      <div class="avail-days ${pctClass(pct)}">${avail}d</div>
-      <div><span class="avail-chip ${chipClass(pct)}">${pct}%</span></div>
+      <div><input type="number" class="cell-input" min="0" max="${effectiveDays}" placeholder="0" value="${leaveDays||''}" oninput="setMemberHols('${role}','${m.id}',this.value)" /></div>
+      <div><input type="number" class="fte-input" min="0.1" max="1" step="0.1" value="${fte}" title="Full-time equivalent (1 = full time, 0.6 = 3 days/week)" oninput="setMemberFte('${role}','${m.id}',this.value)" /></div>
+      <div class="avail-days ${pctClass(pct)}">${availDisplay}d</div>
       <div><button class="btn btn-danger-soft" onclick="removeMember('${role}','${m.id}')">✕</button></div>
     </div>`;
   }).join('');
 }
 
 // ════════════════════════════════════════════════
-// CAPACITY CALCULATION
+// CAPACITY (single team view)
 // ════════════════════════════════════════════════
-function updateCapacity(team) {
-  if (!team) return;
-  const velocity   = parseFloat(team.velocity);
-  const bhDays     = getActiveBHCount(team);
-  const all        = [...team.dev, ...team.qa];
-  const teamSprintDays = parseInt(team.sprintDays) || 10;
-
-  const totalPossible = all.length * teamSprintDays;
-  const totalAvail = all.reduce((s, m) => {
-    const eff = getEffectiveDays(m, teamSprintDays, bhDays);
-    return s + Math.max(0, eff - (m.holidays || 0));
-  }, 0);
-
-  const pct    = totalPossible > 0 ? Math.round(totalAvail / totalPossible * 100) : 0;
-  const estPts = (!isNaN(velocity) && velocity > 0) ? Math.round(velocity * (pct / 100)) : null;
-  const color  = team.color;
-  const pc     = pctClass(pct);
-
-  document.getElementById('cfg-metrics').innerHTML = `
-    <div class="cap-metric">
-      <div class="cap-label">Members</div>
-      <div class="cap-value" style="color:${color}">${all.length}</div>
-      <div class="cap-sub">Dev + QA</div>
-    </div>
-    <div class="cap-metric">
-      <div class="cap-label">Avail Days</div>
-      <div class="cap-value ${pc}">${totalAvail}</div>
-      <div class="cap-sub">of ${totalPossible}</div>
-    </div>
-    <div class="cap-metric">
-      <div class="cap-label">Bank Hols</div>
-      <div class="cap-value" style="color:${bhDays>0?'var(--amber)':'var(--text-muted)'}">${bhDays}</div>
-      <div class="cap-sub">deducted</div>
-    </div>
-    <div class="cap-metric">
-      <div class="cap-label">Availability</div>
-      <div class="cap-value ${pc}">${pct}%</div>
-      <div class="cap-sub">&nbsp;</div>
-    </div>
-    <div class="cap-metric">
-      <div class="cap-label">Avg Velocity</div>
-      <div class="cap-value" style="color:var(--text-muted)">${(!isNaN(velocity)&&velocity>0)?velocity:'—'}</div>
-      <div class="cap-sub">pts</div>
-    </div>
-    <div class="cap-metric">
-      <div class="cap-label">Est. Capacity</div>
-      <div class="cap-value ${estPts!==null?pc:''}" style="${estPts===null?'color:var(--text-muted)':''}">
-        ${estPts !== null ? estPts : '—'}
-      </div>
-      <div class="cap-sub">${estPts!==null?'story pts':'enter velocity'}</div>
-    </div>`;
-
-  const bar = document.getElementById('cfg-bar');
-  bar.style.width = pct + '%';
-  bar.className   = 'progress-fill ' + barClass(pct);
-  document.getElementById('cfg-pct-label').textContent = pct + '%';
+function updateCapacity(team){
+  if(!team) return;
+  const s=teamSummary(team); const color=team.color; const pc=pctClass(s.pct);
+  document.getElementById('cfg-metrics').innerHTML=`
+    <div class="cap-metric"><div class="cap-label">Members</div><div class="cap-value" style="color:${color}">${s.members}</div><div class="cap-sub">Dev + QA</div></div>
+    <div class="cap-metric"><div class="cap-label">Avail Days</div><div class="cap-value ${pc}">${s.totalAvail}</div><div class="cap-sub">of ${s.totalPossible}</div></div>
+    <div class="cap-metric"><div class="cap-label">Bank Hols</div><div class="cap-value" style="color:${s.bhDays>0?'var(--amber)':'var(--text-muted)'}">${s.bhDays}</div><div class="cap-sub">deducted</div></div>
+    <div class="cap-metric"><div class="cap-label">Availability</div><div class="cap-value ${pc}">${s.pct}%</div><div class="cap-sub">&nbsp;</div></div>
+    <div class="cap-metric"><div class="cap-label">Avg Velocity</div><div class="cap-value" style="color:var(--text-muted)">${(!isNaN(s.velocity)&&s.velocity>0)?s.velocity:'—'}</div><div class="cap-sub">pts</div></div>
+    <div class="cap-metric"><div class="cap-label">Est. Capacity</div><div class="cap-value ${s.estPts!==null?pc:''}" style="${s.estPts===null?'color:var(--text-muted)':''}">${s.estPts!==null?s.estPts:'—'}</div><div class="cap-sub">${s.estPts!==null?'story pts':'enter velocity'}</div></div>`;
+  const bar=document.getElementById('cfg-bar'); bar.style.width=s.pct+'%'; bar.className='progress-fill '+barClass(s.pct);
+  document.getElementById('cfg-pct-label').textContent=s.pct+'%';
 }
 
 // ════════════════════════════════════════════════
 // MEMBER MUTATIONS
 // ════════════════════════════════════════════════
-function setMemberHols(role, mid, val) {
-  const team = getTeam(state.activeTeamId); if (!team) return;
-  const m = team[role].find(x=>x.id===mid); if (!m) return;
-  const teamDays = parseInt(team.sprintDays) || 10;
-  const bhDays   = getActiveBHCount(team);
-  const effDays  = getEffectiveDays(m, teamDays, bhDays);
-  let v = parseInt(val); if(isNaN(v)||v<0) v=0; if(v>effDays) v=effDays;
-  m.holidays = v;
+function setMemberHols(role,mid,val){
+  const team=getTeam(state.activeTeamId); if(!team) return;
+  const m=team[role].find(x=>x.id===mid); if(!m) return;
+  const teamDays=parseInt(team.sprintDays)||10, bhDays=getActiveBHCount(team), eff=getEffectiveDays(m,teamDays,bhDays);
+  let v=parseInt(val); if(isNaN(v)||v<0) v=0; if(v>eff) v=eff;
+  m.holidays=v; triggerAutoSave(); renderRows(role); updateCapacity(team);
+}
+function setMemberDays(role,mid,val){
+  const team=getTeam(state.activeTeamId); if(!team) return;
+  const m=team[role].find(x=>x.id===mid); if(!m) return;
+  let v=parseInt(val); if(isNaN(v)||v<1) v=1;
+  m.sprintDaysOverride=v; if((m.holidays||0)>v) m.holidays=v;
   triggerAutoSave(); renderRows(role); updateCapacity(team);
 }
-function setMemberDays(role, mid, val) {
-  const team = getTeam(state.activeTeamId); if (!team) return;
-  const m = team[role].find(x=>x.id===mid); if (!m) return;
-  let v = parseInt(val); if(isNaN(v)||v<1) v=1;
-  m.sprintDaysOverride = v;
-  if ((m.holidays||0) > v) m.holidays = v;
-  triggerAutoSave(); renderRows(role); updateCapacity(team);
+function setMemberFte(role,mid,val){
+  const team=getTeam(state.activeTeamId); if(!team) return;
+  const m=team[role].find(x=>x.id===mid); if(!m) return;
+  let v=parseFloat(val); if(isNaN(v)||v<=0) v=1; if(v>1) v=1;
+  m.fte=Math.round(v*10)/10; triggerAutoSave(); renderRows(role); updateCapacity(team);
 }
-function resetMemberDays(role, mid) {
-  const team = getTeam(state.activeTeamId); if (!team) return;
-  const m = team[role].find(x=>x.id===mid); if (!m) return;
-  m.sprintDaysOverride = null;
-  triggerAutoSave(); renderRows(role); updateCapacity(team);
+function resetMemberDays(role,mid){
+  const team=getTeam(state.activeTeamId); if(!team) return;
+  const m=team[role].find(x=>x.id===mid); if(!m) return;
+  m.sprintDaysOverride=null; triggerAutoSave(); renderRows(role); updateCapacity(team);
 }
-function addMember(role) {
-  const team = getTeam(state.activeTeamId); if (!team) return;
-  const input = document.getElementById(`${role}-addInput`);
-  const name  = input.value.trim(); if (!name) return;
-  // New members inherit the team's bank-holiday behaviour automatically:
-  // sprintDaysOverride is null, so getEffectiveDays applies (teamSprintDays − active BH).
-  team[role].push(buildMember(name));
-  input.value = '';
+function addMember(role){
+  const team=getTeam(state.activeTeamId); if(!team) return;
+  const input=document.getElementById(`${role}-addInput`); const name=input.value.trim(); if(!name) return;
+  team[role].push(buildMember(name)); input.value='';
   triggerAutoSave(); renderRows(role); updateCapacity(team); renderTabs();
   document.getElementById(`${role}-addInput`).focus();
 }
-function removeMember(role, mid) {
-  const team = getTeam(state.activeTeamId); if (!team) return;
-  team[role] = team[role].filter(m=>m.id!==mid);
+// CAP-4: confirm before removing a member
+function removeMember(role,mid){
+  const team=getTeam(state.activeTeamId); if(!team) return;
+  const m=team[role].find(x=>x.id===mid); if(!m) return;
+  if(!confirm(`Remove ${m.name} from ${team.name}? This can't be undone.`)) return;
+  team[role]=team[role].filter(x=>x.id!==mid);
   triggerAutoSave(); renderRows(role); updateCapacity(team); renderTabs();
 }
 
 // ════════════════════════════════════════════════
 // CONFIG CHANGE
 // ════════════════════════════════════════════════
-function onConfigChange() {
-  const team = getTeam(state.activeTeamId); if (!team) return;
-  team.sprintDays  = parseInt(document.getElementById('cfg-sprintDays').value) || 10;
-  team.velocity    = document.getElementById('cfg-velocity').value;
-  team.goal        = document.getElementById('cfg-goal').value;
-  team.startDate   = document.getElementById('cfg-startDate').value;
-  team.useBankHols = document.getElementById('cfg-useBH').checked;
-  if (!team.useBankHols) team.excludedBankHols = [];
-  document.getElementById('cfg-bhToggleLabel').textContent = team.useBankHols ? 'England' : 'Off';
-
-  triggerAutoSave();
-  updateSprintPeriod(team);
-  renderBHPanel(team);
-  renderRows('dev'); renderRows('qa');
-  updateCapacity(team);
-  renderTabs();
+function onConfigChange(){
+  const team=getTeam(state.activeTeamId); if(!team) return;
+  team.sprintDays=parseInt(document.getElementById('cfg-sprintDays').value)||10;
+  team.velocity=document.getElementById('cfg-velocity').value;
+  team.goal=document.getElementById('cfg-goal').value;
+  team.startDate=document.getElementById('cfg-startDate').value;
+  team.useBankHols=document.getElementById('cfg-useBH').checked;
+  const regionEl=document.getElementById('cfg-region'); if(regionEl) team.region=regionEl.value;
+  if(!team.useBankHols) team.excludedBankHols=[];
+  document.getElementById('cfg-bhToggleLabel').textContent=team.useBankHols?'On':'Off';
+  document.getElementById('cfg-regionGroup').style.display=team.useBankHols?'flex':'none';
+  triggerAutoSave(); updateSprintPeriod(team); renderBHPanel(team); renderRows('dev'); renderRows('qa'); updateCapacity(team); renderTabs();
 }
-function onNotesChange() {
-  const team = getTeam(state.activeTeamId); if (!team) return;
-  team.notes = document.getElementById('cfg-notes').value;
-  triggerAutoSave();
+function onNotesChange(){ const team=getTeam(state.activeTeamId); if(!team) return; team.notes=document.getElementById('cfg-notes').value; triggerAutoSave(); }
+
+// ════════════════════════════════════════════════
+// CAP-5: BACKUP REMINDER
+// ════════════════════════════════════════════════
+function hasMeaningfulData(){ return state.teams.some(t=>t.dev.length+t.qa.length>0); }
+function recentlyHandled(){ const now=Date.now(); return (now-lastReminderAt<120000)||(now-lastExportAt<120000); }
+function showBackupToast(){
+  if(!hasMeaningfulData()||recentlyHandled()) return;
+  lastReminderAt=Date.now();
+  document.getElementById('backupToast').style.display='flex';
+}
+function dismissBackupToast(){ document.getElementById('backupToast').style.display='none'; lastReminderAt=Date.now(); scheduleReminder(); }
+function scheduleReminder(){ clearTimeout(reminderTimer); reminderTimer=setTimeout(showBackupToast,600000); } // 10 min
+function maybeRemindOnTeamAdd(){ if(!recentlyHandled() && hasMeaningfulData()) showBackupToast(); }
+
+// ════════════════════════════════════════════════
+// CAP-7: SUMMARY (copy markdown + print)
+// ════════════════════════════════════════════════
+function buildSummaryMarkdown(){
+  const lines=[];
+  lines.push(`# Sprint Capacity — ${state.sprintName||'(unnamed sprint)'}`);
+  lines.push(`_Generated ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}_`);
+  lines.push('');
+  // overview
+  const summaries=state.teams.map(t=>({t,s:teamSummary(t)}));
+  const totMembers=summaries.reduce((a,x)=>a+x.s.members,0);
+  const totPossible=Math.round(summaries.reduce((a,x)=>a+x.s.totalPossible,0)*10)/10;
+  const totAvail=Math.round(summaries.reduce((a,x)=>a+x.s.totalAvail,0)*10)/10;
+  const blended=totPossible>0?Math.round(totAvail/totPossible*100):0;
+  const anyVel=summaries.some(x=>x.s.estPts!==null);
+  const totEst=anyVel?summaries.reduce((a,x)=>a+(x.s.estPts||0),0):null;
+  lines.push(`## Overview`);
+  lines.push(`- Teams: ${state.teams.length}`);
+  lines.push(`- People: ${totMembers}`);
+  lines.push(`- Available days: ${totAvail} of ${totPossible} (${blended}%)`);
+  if(totEst!==null) lines.push(`- Estimated capacity: ${totEst} story points`);
+  lines.push('');
+  summaries.forEach(({t,s})=>{
+    lines.push(`## ${t.name}`);
+    const win=sprintWindow(t);
+    if(win){ const f={day:'numeric',month:'short',year:'numeric'};
+      lines.push(`- Window: ${win.start.toLocaleDateString('en-GB',f)} → ${win.end.toLocaleDateString('en-GB',f)} (${win.workingDays} working days)`); }
+    if(t.goal) lines.push(`- Goal: ${t.goal}`);
+    lines.push(`- Region: ${REGION_LABELS[t.region]||t.region}${t.useBankHols?'':' (bank holidays off)'}`);
+    lines.push(`- People: ${s.members} · Bank holidays deducted: ${s.bhDays} · Availability: ${s.pct}% (${s.totalAvail}/${s.totalPossible} days)`);
+    if(s.estPts!==null) lines.push(`- Est. capacity: ${s.estPts} pts (velocity ${s.velocity})`);
+    const list=[...t.dev.map(m=>['Dev',m]),...t.qa.map(m=>['QA',m])];
+    if(list.length){
+      lines.push('');
+      lines.push(`| Member | Role | Avail days | Leave | FTE |`);
+      lines.push(`|---|---|---|---|---|`);
+      const bh=getActiveBHCount(t), td=parseInt(t.sprintDays)||10;
+      list.forEach(([r,m])=>{ lines.push(`| ${m.name} | ${r} | ${Math.round(memberAvailableDays(m,td,bh)*10)/10} | ${m.holidays||0} | ${m.fte||1} |`); });
+    }
+    if(t.notes){ lines.push(''); lines.push(`**Notes:** ${t.notes}`); }
+    lines.push('');
+  });
+  return lines.join('\n');
+}
+function copySummary(){
+  if(!state.teams.length){ alert('Add a team first.'); return; }
+  const md=buildSummaryMarkdown();
+  navigator.clipboard?.writeText(md).then(
+    ()=>miniToast('✓ Summary copied as Markdown'),
+    ()=>fallbackCopy(md)
+  );
+}
+function fallbackCopy(text){
+  const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); miniToast('✓ Summary copied'); }catch{ alert('Copy failed — here is the summary:\n\n'+text); }
+  document.body.removeChild(ta);
+}
+function miniToast(msg){
+  const el=document.getElementById('toast'); el.textContent=msg; el.style.display='flex';
+  clearTimeout(el._t); el._t=setTimeout(()=>{el.style.display='none';},2600);
+}
+function printSummary(){
+  if(!state.teams.length){ alert('Add a team first.'); return; }
+  const md=buildSummaryMarkdown();
+  const html=mdToHtml(md);
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>Sprint Capacity — ${esc(state.sprintName||'sprint')}</title>
+    <style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:800px;margin:40px auto;padding:0 24px;color:#1a1a1a;line-height:1.5}
+    h1{font-size:1.6rem;border-bottom:2px solid #FF721E;padding-bottom:8px}h2{font-size:1.15rem;margin-top:28px;color:#0F1F38}
+    table{border-collapse:collapse;width:100%;margin:10px 0}th,td{border:1px solid #ddd;padding:6px 10px;text-align:left;font-size:0.9rem}
+    th{background:#f5f5f5}em{color:#666}ul{margin:8px 0}code{background:#f0f0f0;padding:1px 4px;border-radius:3px}</style></head>
+    <body>${html}</body></html>`);
+  w.document.close(); w.focus(); setTimeout(()=>w.print(),300);
+}
+function mdToHtml(md){
+  // minimal markdown → html for the print view
+  const lines=md.split('\n'); let html=''; let inTable=false; let inList=false;
+  const closeList=()=>{ if(inList){html+='</ul>';inList=false;} };
+  const closeTable=()=>{ if(inTable){html+='</tbody></table>';inTable=false;} };
+  lines.forEach(ln=>{
+    if(/^\| *---/.test(ln)) return; // separator
+    if(/^\|/.test(ln)){
+      const cells=ln.split('|').slice(1,-1).map(c=>c.trim());
+      if(!inTable){ closeList(); html+='<table><thead><tr>'+cells.map(c=>`<th>${esc(c)}</th>`).join('')+'</tr></thead><tbody>'; inTable=true; }
+      else html+='<tr>'+cells.map(c=>`<td>${esc(c)}</td>`).join('')+'</tr>';
+      return;
+    }
+    closeTable();
+    if(/^# /.test(ln)){ closeList(); html+=`<h1>${esc(ln.slice(2))}</h1>`; }
+    else if(/^## /.test(ln)){ closeList(); html+=`<h2>${esc(ln.slice(3))}</h2>`; }
+    else if(/^_.*_$/.test(ln)){ closeList(); html+=`<p><em>${esc(ln.slice(1,-1))}</em></p>`; }
+    else if(/^- /.test(ln)){ if(!inList){html+='<ul>';inList=true;} html+=`<li>${esc(ln.slice(2)).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</li>`; }
+    else if(/^\*\*/.test(ln)){ closeList(); html+=`<p>${esc(ln).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</p>`; }
+    else if(ln.trim()===''){ closeList(); }
+    else { closeList(); html+=`<p>${esc(ln)}</p>`; }
+  });
+  closeList(); closeTable();
+  return html;
 }
 
 // ════════════════════════════════════════════════
-// TOP-LEVEL RENDER
+// INIT
 // ════════════════════════════════════════════════
-function renderAll() { renderTabs(); renderPanel(); }
+document.getElementById('sprintNameInput').addEventListener('input',e=>{ state.sprintName=e.target.value; triggerAutoSave(); });
 
-document.getElementById('sprintNameInput').addEventListener('input', e => {
-  state.sprintName = e.target.value; triggerAutoSave();
-});
-
-loadState();
-document.getElementById('sprintNameInput').value = state.sprintName || '';
-renderAll();
+(async function init(){
+  await loadBankHolidays();
+  loadState();
+  document.getElementById('sprintNameInput').value=state.sprintName||'';
+  renderAll();
+  scheduleReminder();
+})();
 </script>
 </body>
 </html>
