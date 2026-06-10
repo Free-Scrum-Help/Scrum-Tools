@@ -184,6 +184,8 @@ body {
 .card-capacity  { --card-accent: #00C9A7; --card-rgb: 0,201,167; }
 .card-estimator { --card-accent: #FF721E; --card-rgb: 255,114,30; }
 .card-rota-est  { --card-accent: #22D17B; --card-rgb: 34,209,123; }
+.card-pbi       { --card-accent: #FF6A1A; --card-rgb: 255,106,26; }
+.card-session   { --card-accent: #A78BFA; --card-rgb: 167,139,250; }
 
 .tool-card-top {
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -401,6 +403,46 @@ body {
       </div>
     </a>
 
+    <!-- PBI Refinement -->
+    <a class="tool-card card-pbi" href="pbi-refinement.html">
+      <div class="tool-card-top">
+        <div class="tool-icon" style="background:rgba(255,106,26,0.12);color:#FF6A1A;">📝</div>
+        <span class="tool-status status-live">Live</span>
+      </div>
+      <div class="tool-name">PBI Refinement</div>
+      <div class="tool-desc">Sharpen a single user story until it's truly ready. Check it against INVEST and a Definition of Ready, catch vague wording, and build acceptance criteria in Given/When/Then or checklist form.</div>
+      <div class="tool-tags">
+        <span class="tool-tag">INVEST</span>
+        <span class="tool-tag">Def. of Ready</span>
+        <span class="tool-tag">Acceptance criteria</span>
+        <span class="tool-tag">Copy/PDF/Word</span>
+      </div>
+      <div class="tool-cta">
+        <span class="tool-cta-label">Open refinement</span>
+        <div class="tool-cta-arrow">→</div>
+      </div>
+    </a>
+
+    <!-- Backlog Refinement Session -->
+    <a class="tool-card card-session" href="backlog-refinement-session.html">
+      <div class="tool-card-top">
+        <div class="tool-icon" style="background:rgba(167,139,250,0.12);color:#A78BFA;">🗂️</div>
+        <span class="tool-status status-live">Live</span>
+      </div>
+      <div class="tool-name">Backlog Refinement Session</div>
+      <div class="tool-desc">Run a focused refinement or discovery session across many stories. Timebox each item, capture questions, risks and assumptions, and mark each one Ready, Needs work, or Parked.</div>
+      <div class="tool-tags">
+        <span class="tool-tag">Timeboxing</span>
+        <span class="tool-tag">Triage</span>
+        <span class="tool-tag">Session notes</span>
+        <span class="tool-tag">Copy/PDF/Word</span>
+      </div>
+      <div class="tool-cta">
+        <span class="tool-cta-label">Open session</span>
+        <div class="tool-cta-arrow">→</div>
+      </div>
+    </a>
+
   </div>
 
   <!-- Info strip -->
@@ -408,7 +450,7 @@ body {
     <div class="info-icon">💡</div>
     <div class="info-text">
       <strong>All tools save locally in your browser</strong>
-      <p>Data is stored in localStorage — nothing leaves your device. Use the Export button in each tool to save a JSON file as a backup or to share with the team.</p>
+      <p>Data is stored in localStorage — nothing leaves your device. Most tools let you export your work (JSON, or Copy / PDF / Word) as a backup or to share with the team.</p>
     </div>
   </div>
 </div>
