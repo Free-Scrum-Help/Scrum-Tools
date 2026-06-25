@@ -1,0 +1,2074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jira Sprint Reporter</title>
+<style>
+:root{
+  --navy:#0D1B2A;--navy-mid:#172436;--navy-card:#1E2F42;--navy-hover:#25394F;
+  --blue:#0C7DE0;--blue-lt:#3E9FF5;--teal:#00C4B4;--teal-dim:rgba(0,196,180,.15);
+  --gold:#F5A623;--red:#E8445A;--green:#27C47A;--purple:#9B59B6;
+  --text:#E8EDF3;--muted:#7A93AA;
+  --border:rgba(255,255,255,.08);--border-md:rgba(255,255,255,.14);
+  --r:10px;--r-lg:16px;--tr:.17s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--navy);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* topbar */
+.topbar{background:var(--navy-mid);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:200}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:16px;letter-spacing:-.3px}
+.logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--teal));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.topbar-right{display:flex;gap:8px;align-items:center}
+
+/* tabs */
+.tabs{background:var(--navy-mid);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:2px}
+.tab{padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:var(--tr);user-select:none;white-space:nowrap}
+.tab:hover{color:var(--text)}.tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+
+/* layout */
+.layout{display:grid;grid-template-columns:270px 1fr;min-height:calc(100vh - 100px)}
+.sidebar{background:var(--navy-mid);border-right:1px solid var(--border);padding:16px;overflow-y:auto;position:sticky;top:100px;height:calc(100vh - 100px)}
+.s-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.s-section{margin-bottom:22px}
+.main{padding:20px;overflow-x:hidden}
+.panel{display:none}.panel.active{display:block}
+
+/* upload */
+.upload-zone{border:2px dashed var(--border-md);border-radius:var(--r-lg);padding:20px 12px;text-align:center;cursor:pointer;transition:var(--tr);background:rgba(12,125,224,.04)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--blue);background:rgba(12,125,224,.1)}
+.upload-zone input{display:none}
+.uz-icon{font-size:22px;margin-bottom:5px}.uz-title{font-size:12px;font-weight:600;margin-bottom:2px}.uz-sub{font-size:11px;color:var(--muted)}
+.uz-hint{margin-top:8px;font-size:10px;color:var(--muted);background:rgba(255,255,255,.04);border-radius:6px;padding:5px 8px;line-height:1.5}
+.loaded-name{margin-top:7px;font-size:11px;color:var(--teal);font-weight:600}
+
+/* presets */
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.preset-btn{padding:6px 4px;border-radius:7px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text);font-size:11px;font-weight:500;cursor:pointer;transition:var(--tr);text-align:center;line-height:1.3}
+.preset-btn:hover{background:rgba(12,125,224,.15);border-color:var(--blue);color:var(--blue-lt)}
+.p-icon{font-size:12px;display:block;margin-bottom:2px}
+
+/* fields */
+.field-search{width:100%;background:var(--navy-card);border:1px solid var(--border);border-radius:var(--r);padding:7px 10px;color:var(--text);font-size:12px;outline:none;transition:var(--tr);margin-bottom:7px}
+.field-search:focus{border-color:var(--blue)}.field-search::placeholder{color:var(--muted)}
+.bulk-row{display:flex;gap:4px;margin-bottom:7px}
+.bulk-btn{flex:1;padding:4px 0;border-radius:5px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:var(--tr)}
+.bulk-btn:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.fg{margin-bottom:10px}
+.fg-hdr{display:flex;align-items:center;justify-content:space-between;padding:5px 7px;border-radius:6px;cursor:pointer;user-select:none;transition:var(--tr)}
+.fg-hdr:hover{background:rgba(255,255,255,.04)}
+.fg-name{font-size:11px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:5px}
+.gdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.fg-items{display:flex;flex-direction:column;gap:1px}.fg-items.closed{display:none}
+.fi{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:5px;cursor:pointer;transition:var(--tr);user-select:none;font-size:11.5px}
+.fi:hover{background:rgba(255,255,255,.04)}.fi.on{background:var(--teal-dim)}
+.fcb{width:14px;height:14px;border:1.5px solid var(--border-md);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:var(--tr)}
+.fi.on .fcb{background:var(--teal);border-color:var(--teal)}
+.fcb::after{content:'';display:none;width:7px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px)}
+.fi.on .fcb::after{display:block}
+.fn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ftag{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;text-transform:uppercase;flex-shrink:0}
+.tc{background:rgba(12,125,224,.2);color:var(--blue-lt)}.tcu{background:rgba(245,166,35,.15);color:var(--gold)}.tt{background:rgba(39,196,122,.15);color:var(--green)}
+
+/* stats bar */
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:10px;margin-bottom:16px}
+.sc{background:var(--navy-card);border:1px solid var(--border);border-radius:var(--r);padding:12px 13px}
+.sv{font-size:20px;font-weight:700;line-height:1;margin-bottom:3px}
+.sl{font-size:11px;color:var(--muted);font-weight:500}
+.sc.blue .sv{color:var(--blue-lt)}.sc.green .sv{color:var(--green)}.sc.amber .sv{color:var(--gold)}.sc.teal .sv{color:var(--teal)}.sc.red .sv{color:var(--red)}.sc.purple .sv{color:var(--purple)}
+
+/* sprint cards */
+.sprint-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:20px}
+.sprint-card{background:var(--navy-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:15px;position:relative;overflow:hidden;cursor:pointer;transition:var(--tr)}
+.sprint-card:hover{border-color:var(--border-md);background:var(--navy-hover)}
+.sprint-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sprint-card.current::before{background:linear-gradient(90deg,var(--gold),var(--red))}
+.sc-name{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.sc-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:12px}
+.sc-row .lbl{color:var(--muted)}.sc-row .val{font-weight:700}
+.progress-track{height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin:8px 0 5px}
+.progress-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.sc-pct{font-size:22px;font-weight:700;margin-bottom:1px}
+.sc-sub{font-size:10px;color:var(--muted)}
+.carry-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3);color:var(--gold);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:5px}
+
+/* SP breakdown stacked bar */
+.sp-stack-wrap{margin:10px 0 5px}
+.sp-stack{height:10px;border-radius:5px;overflow:hidden;display:flex;gap:1px;background:rgba(255,255,255,.06)}
+.sp-seg{height:100%;transition:width .5s ease}
+.sp-legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.sp-leg-item{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--muted)}
+.sp-leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* charts */
+.charts-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.chart-card{background:var(--navy-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px}
+.cc-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:11px}
+.mb-row{display:flex;align-items:center;gap:6px;font-size:11.5px;margin-bottom:5px}
+.mb-lbl{width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;color:var(--muted)}
+.mb-track{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.mb-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.mb-cnt{font-size:11px;font-weight:600;color:var(--muted);width:24px;text-align:right;flex-shrink:0}
+
+/* burndown */
+.burndown-svg{width:100%;overflow:visible}
+
+/* sprint detail panel */
+.sprint-detail{background:var(--navy-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;margin-bottom:18px;display:none}
+.sprint-detail.open{display:block}
+.sd-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sd-title{font-size:15px;font-weight:700}
+.sd-close{width:26px;height:26px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:var(--tr)}
+.sd-close:hover{background:rgba(255,255,255,.07);color:var(--text)}
+.sd-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sd-chart{background:var(--navy-mid);border-radius:var(--r);padding:12px}
+.ai-summary{background:linear-gradient(135deg,rgba(12,125,224,.08),rgba(0,196,180,.08));border:1px solid rgba(0,196,180,.2);border-radius:var(--r);padding:14px;margin-top:12px}
+.ai-summary h4{font-size:12px;font-weight:700;color:var(--teal);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ai-summary p{font-size:12px;line-height:1.7;color:var(--text)}
+.ai-loading{color:var(--muted);font-size:12px;font-style:italic}
+
+/* carry items in sprint detail */
+.carry-list{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.carry-item-sm{background:var(--navy-mid);border:1px solid var(--border);border-radius:7px;padding:8px 11px;border-left:2px solid var(--gold);font-size:12px;display:flex;align-items:flex-start;gap:8px}
+.ci-key{font-family:monospace;font-size:11px;color:var(--blue-lt);font-weight:700;white-space:nowrap;flex-shrink:0}
+.ci-info{flex:1;min-width:0}
+.ci-sum{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ci-chips{display:flex;gap:5px;margin-top:3px;flex-wrap:wrap}
+.ci-chip{font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+
+/* problem badge */
+.problem-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+.pb-warn{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3);color:var(--gold)}
+.pb-danger{background:rgba(232,68,90,.15);border:1px solid rgba(232,68,90,.3);color:var(--red)}
+
+/* filters */
+.filter-row{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.f-select{background:var(--navy-card);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:12px;outline:none;cursor:pointer;transition:var(--tr)}
+.f-select:focus{border-color:var(--blue)}
+.f-search{flex:1;min-width:160px;background:var(--navy-card);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:12px;outline:none;transition:var(--tr)}
+.f-search:focus{border-color:var(--blue)}.f-search::placeholder{color:var(--muted)}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:7px;border:1px solid var(--border);background:var(--navy-card);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:var(--tr);white-space:nowrap}
+.btn:hover{background:var(--navy-hover);border-color:var(--border-md)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.btn.primary:hover{background:var(--blue-lt)}
+.btn.success{background:rgba(39,196,122,.15);border-color:rgba(39,196,122,.3);color:var(--green)}.btn.success:hover{background:rgba(39,196,122,.25)}
+.btn.danger{background:rgba(232,68,90,.15);border-color:rgba(232,68,90,.3);color:var(--red)}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.btn-row h2{font-size:17px;font-weight:700;flex:1}
+
+/* table */
+.tbl-wrap{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 320px);border-radius:var(--r-lg);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead{background:var(--navy-card);position:sticky;top:0;z-index:10}
+th{padding:9px 12px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;transition:var(--tr)}
+th:hover{color:var(--text);background:var(--navy-hover)}
+th.sa::after{content:' ↑';color:var(--teal)}th.sd::after{content:' ↓';color:var(--teal)}
+tbody tr{border-bottom:1px solid var(--border);transition:background var(--tr);cursor:pointer}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.03)}
+tbody tr.carried{border-left:3px solid var(--gold)}
+tbody tr.problem-1x{border-left:3px solid var(--amber,#F5A623)}
+tbody tr.problem-2x{border-left:3px solid #F97316}
+tbody tr.problem-3x{border-left:3px solid var(--red)}
+td{padding:9px 12px;vertical-align:middle;max-width:250px}
+.cw{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px}
+
+/* chips */
+.key{font-family:monospace;font-size:11px;font-weight:700;color:var(--blue-lt)}
+.status-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700;white-space:nowrap;letter-spacing:.3px;text-transform:uppercase}
+.type-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;background:rgba(255,255,255,.07)}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.pri-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600}
+.pdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sp-badge{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:20px;background:rgba(12,125,224,.15);border:1px solid rgba(12,125,224,.3);border-radius:4px;font-size:11px;font-weight:700;color:var(--blue-lt);padding:0 5px}
+.avatar{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+.asgn{display:inline-flex;align-items:center;gap:5px;font-size:12px}
+.date-c{font-size:11px;color:var(--muted);font-family:monospace}
+.date-c.ov{color:var(--red)}.date-c.soon{color:var(--gold)}
+.carry-flag{display:inline-flex;align-items:center;gap:3px;background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.25);color:var(--gold);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.attn-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.attn-warn{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3);color:var(--gold)}
+.attn-danger{background:rgba(232,68,90,.15);border:1px solid rgba(232,68,90,.3);color:var(--red)}
+.attn-blocked{background:rgba(155,89,182,.15);border:1px solid rgba(155,89,182,.3);color:var(--purple)}
+
+/* table footer row */
+.tbl-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--navy-card);border-top:1px solid var(--border);border-radius:0 0 var(--r-lg) var(--r-lg);font-size:12px;flex-wrap:wrap;gap:8px}
+.tbl-footer-stat{display:flex;align-items:center;gap:5px;color:var(--muted)}
+.tbl-footer-stat strong{color:var(--text)}
+
+/* pager */
+.pager{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:7px}
+.page-btns{display:flex;gap:3px}
+.pgb{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:5px;border:1px solid var(--border);background:var(--navy-card);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:var(--tr)}
+.pgb:hover{border-color:var(--blue);color:var(--blue-lt)}.pgb.on{background:var(--blue);border-color:var(--blue);color:#fff}.pgb:disabled{opacity:.3;pointer-events:none}
+
+/* velocity tab */
+.vel-section{margin-bottom:20px}
+.vel-section h3{font-size:13px;font-weight:700;margin-bottom:12px;color:var(--text)}
+.vel-charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.vel-bar-chart{display:flex;align-items:flex-end;gap:6px;height:90px}
+.vel-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.vel-bars{display:flex;gap:2px;align-items:flex-end;height:72px;width:100%}
+.vel-bar{flex:1;border-radius:2px 2px 0 0;transition:height .5s ease;min-height:2px;cursor:pointer;position:relative}
+.vel-bar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--navy-mid);border:1px solid var(--border-md);color:var(--text);font-size:10px;padding:3px 7px;border-radius:4px;white-space:nowrap;z-index:20;font-weight:600}
+.vel-sp-label{font-size:11px;font-weight:700;color:var(--muted)}
+.vel-sprint-label{font-size:10px;color:var(--muted);font-weight:600}
+
+/* sprint perf table */
+.sp-perf-table{width:100%;border-collapse:collapse;font-size:12px}
+.sp-perf-table th{padding:8px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);border-bottom:1px solid var(--border)}
+.sp-perf-table td{padding:8px 10px;border-bottom:1px solid var(--border)}
+.sp-perf-table tr:last-child td{border-bottom:none}
+.sp-perf-table tr:hover td{background:rgba(255,255,255,.02)}
+.trend-up{color:var(--green)}.trend-dn{color:var(--red)}.trend-eq{color:var(--muted)}
+
+/* carry tab */
+.carry-timeline{display:flex;flex-direction:column;gap:7px}
+.carry-item{background:var(--navy-card);border:1px solid var(--border);border-radius:var(--r);padding:9px 13px;border-left:3px solid var(--gold);font-size:12px}
+.carry-item.resolved{border-left-color:var(--green)}
+.carry-item.blocked{border-left-color:var(--red)}
+.ci-key2{font-family:monospace;font-size:11px;color:var(--blue-lt);font-weight:700}
+.ci-sum{color:var(--text);margin:2px 0}
+.ci-chain{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);flex-wrap:wrap}
+.ci-sprint{background:rgba(245,166,35,.12);color:var(--gold);padding:1px 6px;border-radius:10px;font-weight:700;font-size:10px}
+.ci-arrow{color:var(--muted)}
+.ci-done{background:rgba(39,196,122,.12);color:var(--green);padding:1px 6px;border-radius:10px;font-weight:700;font-size:10px}
+.ci-open{background:rgba(232,68,90,.12);color:var(--red);padding:1px 6px;border-radius:10px;font-weight:700;font-size:10px}
+.ci-cost{font-size:10px;background:rgba(155,89,182,.12);color:var(--purple);padding:1px 6px;border-radius:10px;font-weight:700}
+
+/* sprint toggle */
+.sprint-filter{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px}
+.sprint-tog{padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:var(--tr)}
+.sprint-tog:hover{border-color:var(--teal);color:var(--teal)}
+.sprint-tog.on{background:var(--teal-dim);border-color:var(--teal);color:var(--teal)}
+.sprint-tog.all.on{background:rgba(12,125,224,.15);border-color:var(--blue);color:var(--blue-lt)}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;font-size:11px}
+.leg-item{display:flex;align-items:center;gap:5px;color:var(--muted)}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.leg-line{width:14px;height:3px;background:var(--gold);border-radius:2px;flex-shrink:0}
+
+/* modal */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-ov.open{display:flex}
+.modal{background:var(--navy-mid);border:1px solid var(--border-md);border-radius:var(--r-lg);width:90%;max-width:660px;max-height:85vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.mhdr{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--navy-mid);z-index:1}
+.mhdr h2{font-size:15px;font-weight:700}
+.mclose{width:27px;height:27px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:var(--tr)}
+.mclose:hover{background:rgba(255,255,255,.07);color:var(--text)}
+.mbody{padding:18px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.df{background:var(--navy-card);border-radius:7px;padding:9px 11px}
+.df-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:3px}
+.df-val{font-size:12.5px;word-break:break-word}
+.df.full{grid-column:span 2}
+.carry-info-box{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.3);border-radius:8px;padding:11px 13px;margin-bottom:12px}
+.carry-info-box h4{color:var(--gold);font-size:12px;font-weight:700;margin-bottom:5px}
+.carry-info-box p{font-size:12px;color:var(--text);line-height:1.6}
+.attn-info-box{background:rgba(232,68,90,.08);border:1px solid rgba(232,68,90,.3);border-radius:8px;padding:11px 13px;margin-bottom:12px}
+.attn-info-box h4{color:var(--red);font-size:12px;font-weight:700;margin-bottom:5px}
+.attn-info-box p{font-size:12px;color:var(--text);line-height:1.6}
+
+/* toast */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--navy-card);border:1px solid var(--border-md);border-radius:9px;padding:10px 15px;font-size:13px;box-shadow:0 4px 24px rgba(0,0,0,.4);display:none;z-index:9999;animation:tIn .25s ease}
+.toast.show{display:block}.toast.ok{border-color:rgba(39,196,122,.4)}.toast.err{border-color:rgba(232,68,90,.4)}
+@keyframes tIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* shared URL bar */
+.url-bar{display:flex;gap:7px;align-items:center;background:var(--navy-card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-top:8px}
+.url-bar input{flex:1;background:transparent;border:none;color:var(--text);font-size:11px;font-family:monospace;outline:none}
+.url-copy{padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:rgba(255,255,255,.06);color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:var(--tr)}
+.url-copy:hover{background:rgba(255,255,255,.12);color:var(--text)}
+
+/* empty */
+.empty{text-align:center;padding:45px 20px;color:var(--muted)}
+.empty .ei{font-size:32px;margin-bottom:10px}
+.empty h3{font-size:14px;font-weight:600;margin-bottom:5px;color:var(--text)}
+
+/* sidebar context labels */
+.ctx-note{font-size:11px;color:var(--muted);line-height:1.5;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:7px;border:1px solid var(--border)}
+.ctx-note strong{color:var(--text);display:block;margin-bottom:3px}
+
+/* sprint detail tabbed layout */
+.sd-tab-bar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
+.sd-tab{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:var(--tr)}
+.sd-tab:hover{border-color:var(--teal);color:var(--teal)}
+.sd-tab.active{background:var(--teal-dim);border-color:var(--teal);color:var(--teal)}
+.sd-pane{display:none}.sd-pane.active{display:block}
+
+/* sprint detail card improvements */
+.sd-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:860px){.sd-cols{grid-template-columns:1fr}}
+.sd-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.sd-stat{background:var(--navy-card);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;text-align:center}
+.sd-stat-val{font-size:18px;font-weight:700;line-height:1;margin-bottom:2px}
+.sd-stat-lbl{font-size:10px;color:var(--muted)}
+
+/* multi-select filter */
+.ms-wrap{position:relative;flex-shrink:0}
+.ms-btn{display:flex;align-items:center;gap:6px;padding:6px 11px;background:var(--navy-card);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:var(--tr)}
+.ms-btn:hover{border-color:var(--border-md)}
+.ms-btn.active{border-color:var(--blue);color:var(--blue-lt)}
+.ms-arrow{font-size:10px;color:var(--muted)}
+.ms-drop{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:160px;background:var(--navy-mid);border:1px solid var(--border-md);border-radius:9px;padding:6px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.4);max-height:260px;overflow-y:auto}
+.ms-drop.open{display:block}
+.ms-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px;transition:var(--tr);user-select:none}
+.ms-item:hover{background:rgba(255,255,255,.06)}
+.ms-item.sel{background:var(--teal-dim)}
+.ms-cb{width:15px;height:15px;border:1.5px solid var(--border-md);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:var(--tr)}
+.ms-item.sel .ms-cb{background:var(--teal);border-color:var(--teal)}
+.ms-cb::after{content:'';display:none;width:8px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translateY(-1px)}
+.ms-item.sel .ms-cb::after{display:block}
+.ms-clear{width:100%;padding:5px 8px;margin-top:4px;border-top:1px solid var(--border);background:none;border-left:none;border-right:none;border-bottom:none;color:var(--muted);font-size:11px;cursor:pointer;text-align:left;transition:var(--tr)}
+.ms-clear:hover{color:var(--red)}
+.ms-count{display:inline-flex;align-items:center;justify-content:center;background:var(--blue);color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:0 5px;min-width:16px;height:16px}
+
+/* ── Issue age badge ── */
+.age-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px}
+.age-fresh{background:rgba(39,196,122,.12);color:var(--green)}
+.age-mid{background:rgba(245,166,35,.12);color:var(--gold)}
+.age-old{background:rgba(232,68,90,.12);color:var(--red)}
+
+/* ── Unplanned badge ── */
+.unplanned-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(155,89,182,.15);border:1px solid rgba(155,89,182,.3);color:var(--purple);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+
+/* ── Est vs Actual ── */
+.est-good{color:var(--green);font-weight:700;font-size:11px}
+.est-warn{color:var(--gold);font-weight:700;font-size:11px}
+.est-over{color:var(--red);font-weight:700;font-size:11px}
+
+/* ── Reset filters btn ── */
+.reset-filters-btn{padding:5px 11px;border-radius:7px;border:1px solid rgba(232,68,90,.3);background:rgba(232,68,90,.08);color:var(--red);font-size:11px;font-weight:700;cursor:pointer;transition:var(--tr);display:none}
+.reset-filters-btn:hover{background:rgba(232,68,90,.18)}
+.reset-filters-btn.visible{display:inline-flex;align-items:center;gap:5px}
+
+/* ── Last updated bar ── */
+.last-updated{font-size:11px;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.last-updated strong{color:var(--text)}
+
+/* ── CFD chart ── */
+.cfd-bar-row{display:flex;height:24px;border-radius:4px;overflow:hidden;margin-bottom:3px;gap:1px}
+.cfd-seg{height:100%;transition:width .4s ease;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:rgba(255,255,255,.8)}
+
+/* ── Workload table ── */
+.workload-table{width:100%;border-collapse:collapse;font-size:12px}
+.workload-table th{padding:7px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);border-bottom:1px solid var(--border);text-align:left}
+.workload-table td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.workload-table tr:last-child td{border-bottom:none}
+.workload-table tr:hover td{background:rgba(255,255,255,.02)}
+.wl-bar-wrap{width:90px;height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden;display:inline-block}
+.wl-bar{height:100%;border-radius:4px}
+
+@media print{
+  .sidebar,.topbar,.tabs,.filter-row,.btn-row,.pager,.modal-ov,.toast,.sprint-filter,.url-bar{display:none!important}
+  .layout{display:block!important}.main{padding:0!important}
+  body{background:#fff!important;color:#000!important}
+  table{font-size:9px!important}th,td{border:1px solid #ddd!important;padding:5px!important;color:#000!important}
+  thead{background:#f4f4f4!important}.charts-row{display:none!important}.stats-bar{display:none!important}
+  .sprint-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important}
+}
+@media(max-width:860px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}.charts-row{grid-template-columns:1fr}.vel-charts{grid-template-columns:1fr}}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><div class="logo-icon">📊</div>Jira Sprint Reporter</div>
+  <div class="topbar-right">
+    <span id="topBadge" style="display:none;background:var(--teal-dim);color:var(--teal);border:1px solid rgba(0,196,180,.3);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700"></span>
+    <button class="btn success" onclick="exportCSV()">⬇ CSV</button>
+    <button class="btn danger" onclick="exportPPTX()" id="btnPPTX" style="display:none">📊 Export PPT</button>
+    <button class="btn primary" onclick="window.print()">🖨 Print</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('overview')">📊 All Sprints</div>
+  <div class="tab" onclick="switchTab('sprint')">🏃 Sprint Detail</div>
+  <div class="tab" onclick="switchTab('table')">📋 Issue Table</div>
+  <div class="tab" onclick="switchTab('velocity')">📈 Velocity</div>
+  <div class="tab" onclick="switchTab('carryover')">🔄 Carryover</div>
+</div>
+
+<div class="layout">
+<div class="sidebar" id="sidebar">
+  <div class="s-section">
+    <div class="s-label">Data Source</div>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".csv,.txt">
+      <div class="uz-icon">📂</div><div class="uz-title">Upload Jira CSV</div>
+      <div class="uz-sub">or click to browse</div>
+      <div class="uz-hint">Jira → Export Excel CSV (All Fields)</div>
+    </div>
+    <div class="loaded-name" id="loadedName" style="display:none"></div>
+    <div style="margin-top:8px">
+      <button class="btn" style="width:100%;justify-content:center" onclick="loadSample()">🎯 Load Sample Data</button>
+    </div>
+  </div>
+
+  <!-- Overview context -->
+  <div class="s-section ctx-overview" style="display:none">
+    <div class="s-label">Overview Filters</div>
+    <div class="ctx-note"><strong>All Sprints View</strong>Click any sprint card to drill into its detail.</div>
+  </div>
+
+  <!-- Sprint detail context -->
+  <div class="s-section ctx-sprint" style="display:none">
+    <div class="s-label">Sprint</div>
+    <div id="sidebarSprintPicker"></div>
+    <div style="margin-top:10px">
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-… API key for AI"
+        style="width:100%;background:var(--navy-card);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;font-family:monospace;margin-bottom:6px"
+        oninput="this.style.borderColor=this.value?'var(--teal)':'var(--border)'">
+      <button class="btn" style="width:100%;justify-content:center" onclick="generateAISummary()">✨ Generate AI Summary</button>
+    </div>
+  </div>
+
+  <!-- Table context -->
+  <div class="s-section ctx-table" style="display:none">
+    <div class="s-label">Field Presets</div>
+    <div class="preset-grid">
+      <button class="preset-btn" onclick="applyPreset('pm')"><span class="p-icon">📋</span>PM View</button>
+      <button class="preset-btn" onclick="applyPreset('sprint')"><span class="p-icon">🏃</span>Sprint</button>
+      <button class="preset-btn" onclick="applyPreset('status')"><span class="p-icon">🚦</span>Status</button>
+      <button class="preset-btn" onclick="applyPreset('time')"><span class="p-icon">⏱</span>Time</button>
+      <button class="preset-btn" onclick="applyPreset('carry')"><span class="p-icon">🔄</span>Carryover</button>
+      <button class="preset-btn" onclick="applyPreset('all')"><span class="p-icon">🔍</span>All</button>
+    </div>
+  </div>
+  <div class="s-section ctx-table" id="sFields" style="display:none">
+    <div class="s-label">Visible Fields</div>
+    <input class="field-search" placeholder="Search fields…" oninput="filterFields(this.value)">
+    <div class="bulk-row">
+      <button class="bulk-btn" onclick="selAll()">All</button>
+      <button class="bulk-btn" onclick="selNone()">None</button>
+    </div>
+    <div id="fieldGroups"></div>
+  </div>
+
+  <!-- Velocity context -->
+  <div class="s-section ctx-velocity" style="display:none">
+    <div class="s-label">Velocity</div>
+    <div class="ctx-note"><strong>Sprint Velocity</strong>Story points committed vs completed, per-assignee breakdown, and forecast.</div>
+  </div>
+
+  <!-- Carryover context -->
+  <div class="s-section ctx-carryover" style="display:none">
+    <div class="s-label">Carryover</div>
+    <div class="ctx-note"><strong>Carryover Tracker</strong>Issues that moved between sprints, with SP cost and days slipped.</div>
+  </div>
+
+  <!-- Share (always visible after load) -->
+  <div class="s-section" id="sShare" style="display:none">
+    <div class="s-label">Share View</div>
+    <button class="btn" style="width:100%;justify-content:center" onclick="copyShareURL()">🔗 Copy Share Link</button>
+    <div class="url-bar" id="urlBar" style="display:none">
+      <input id="urlInput" readonly>
+      <button class="url-copy" onclick="navigator.clipboard.writeText(document.getElementById('urlInput').value);showToast('✅ Copied!','ok')">Copy</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ═══ TAB 1: ALL SPRINTS OVERVIEW ═══ -->
+<div class="panel active" id="panel-overview">
+  <div class="btn-row"><h2>All Sprints Overview</h2></div>
+  <div class="stats-bar" id="statsBar"></div>
+  <div class="sprint-grid" id="sprintCards"></div>
+  <!-- SP Done vs Carryover stacked bar chart across all sprints -->
+  <div class="charts-row" id="chartsRow"></div>
+</div>
+
+<!-- ═══ TAB 2: SPRINT DETAIL ═══ -->
+<div class="panel" id="panel-sprint">
+  <div class="btn-row"><h2>Sprint Detail</h2></div>
+  <div class="sd-tab-bar" id="sdTabBar"></div>
+  <div id="sprintDetailContent"></div>
+</div>
+
+<!-- ═══ TAB 3: ISSUE TABLE ═══ -->
+<div class="panel" id="panel-table">
+  <div id="lastUpdatedBar" class="last-updated" style="display:none"></div>
+  <div class="btn-row">
+    <h2 id="tableTitle">Issue Table</h2>
+    <button class="btn success" onclick="exportCSV()">⬇ CSV</button>
+    <button class="btn primary" onclick="window.print()">🖨 Print</button>
+  </div>
+  <div class="sprint-filter" id="sprintToggleTable"></div>
+  <div class="filter-row">
+    <input class="f-search" id="tableSearch" placeholder="🔍 Search issues…" oninput="applyFilter()">
+    <button class="reset-filters-btn" id="resetFiltersBtn" onclick="resetAllFilters()">✕ Reset all filters</button>
+    <div class="ms-wrap" id="msStatus"><button class="ms-btn" onclick="toggleMs('msStatus')">All Statuses <span class="ms-arrow">▾</span></button><div class="ms-drop" id="msStatusDrop"></div></div>
+    <div class="ms-wrap" id="msPriority"><button class="ms-btn" onclick="toggleMs('msPriority')">All Priorities <span class="ms-arrow">▾</span></button><div class="ms-drop" id="msPriorityDrop"></div></div>
+    <div class="ms-wrap" id="msAssignee"><button class="ms-btn" onclick="toggleMs('msAssignee')">All Assignees <span class="ms-arrow">▾</span></button><div class="ms-drop" id="msAssigneeDrop"></div></div>
+    <div class="ms-wrap" id="msType"><button class="ms-btn" onclick="toggleMs('msType')">All Types <span class="ms-arrow">▾</span></button><div class="ms-drop" id="msTypeDrop"></div></div>
+    <select class="f-select" id="fAttn" onchange="applyFilter()">
+      <option value="">All Issues</option>
+      <option value="bottle">🚨 Bottleneck (3+ carries)</option>
+      <option value="attn">⚠️ Attention (2 carries)</option>
+      <option value="carried">🔄 Carried once (1+ carries)</option>
+      <option value="any_carry">🔄 Any carryover</option>
+      <option value="blocked">🔴 Blocked</option>
+      <option value="unplanned">⚠️ Unplanned (added mid-sprint)</option>
+    </select>
+  </div>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-line" style="background:var(--red)"></div>🚨 Bottleneck (3+ carries)</div>
+    <div class="leg-item"><div class="leg-line" style="background:#F97316"></div>⚠️ Attention (2 carries)</div>
+    <div class="leg-item"><div class="leg-line" style="background:var(--gold)"></div>🔄 Carried once (1 carry)</div>
+  </div>
+  <div class="tbl-wrap">
+    <table><thead id="tHead"></thead><tbody id="tBody"></tbody></table>
+    <div class="tbl-footer" id="tblFooter"></div>
+  </div>
+  <div class="pager"><div id="pInfo"></div><div class="page-btns" id="pBtns"></div></div>
+</div>
+
+<!-- ═══ TAB 4: VELOCITY ═══ -->
+<div class="panel" id="panel-velocity">
+  <div class="btn-row"><h2>📈 Velocity & Performance</h2></div>
+  <div class="stats-bar" id="velStats"></div>
+
+  <div class="vel-section">
+    <h3>Sprint-by-Sprint Performance</h3>
+    <div class="chart-card" style="margin-bottom:14px">
+      <table class="sp-perf-table" id="spPerfTable"></table>
+    </div>
+  </div>
+
+  <div class="vel-section">
+    <h3>Story Points — Committed vs Completed</h3>
+    <div class="vel-charts">
+      <div class="chart-card">
+        <div class="cc-title">📐 SP Committed vs Done per Sprint</div>
+        <div id="velChart"></div>
+        <div style="display:flex;gap:10px;margin-top:8px;font-size:11px">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(12,125,224,.4);border-radius:2px;display:inline-block"></span>Committed</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block"></span>Done</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--gold);border-radius:2px;display:inline-block"></span>Carryover SP</span>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="cc-title">👤 SP Completed by Assignee</div>
+        <div id="assigneeChart"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="vel-section">
+    <h3>Completion Rate & Prediction</h3>
+    <div class="vel-charts">
+      <div class="chart-card">
+        <div class="cc-title">📊 Completion % per Sprint + Trend</div>
+        <div id="compChart"></div>
+        <div id="predBox" style="margin-top:10px"></div>
+      </div>
+      <div class="chart-card">
+        <div class="cc-title">🔄 Carryovers Carried In per Sprint</div>
+        <div id="carryChart"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB 5: CARRYOVER ═══ -->
+<div class="panel" id="panel-carryover">
+  <div class="btn-row"><h2>🔄 Carryover Tracker</h2></div>
+  <div class="stats-bar" id="carryStats"></div>
+  <div style="margin-bottom:12px">
+    <div class="s-label" style="margin-bottom:8px">Full carryover chain with SP cost & days slipped</div>
+    <div class="carry-timeline" id="carryTimeline"></div>
+  </div>
+</div>
+
+</div><!-- main -->
+</div><!-- layout -->
+
+<!-- Modal -->
+<div class="modal-ov" id="modalOv" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="mhdr"><h2 id="mTitle">Issue Detail</h2><button class="mclose" onclick="closeModal()">✕</button></div>
+    <div class="mbody"><div id="mCarryInfo"></div><div id="mAttnInfo"></div><div class="dgrid" id="mBody"></div></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SAMPLE_CSV = "Summary,Issue key,Issue id,Issue Type,Status,Project key,Project name,Project type,Project lead,Project lead id,Project description,Priority,Resolution,Assignee,Assignee Id,Reporter,Reporter Id,Creator,Creator Id,Created,Updated,Last Viewed,Resolved,Due date,Votes,Description,Environment,Watchers,Watchers Id,Original estimate,Remaining Estimate,Time Spent,Work Ratio,\u03a3 Original Estimate,\u03a3 Remaining Estimate,\u03a3 Time Spent,Security Level,Custom field (Development),Custom field (Issue color),Custom field (Rank),Custom field (Start date),Custom field (Story point estimate),Custom field (Team),Custom field (Vulnerability),Custom field (Sprint),Custom field (Epic Link),Custom field (Epic Name),Custom field (Carried Over),Custom field (Original Sprint),Status Category,Status Category Changed\nUser Authentication,SCRUM-1,10001,Epic,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Aug/25 12:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,0,Epic covering all work for User Authentication.,,0,,0,0,0,0,0,0,0,,,,0|rank10001:,1/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-1,User Authentication,,Sprint 1,Done,29/Aug/25 12:00 AM\nDashboard Redesign,SCRUM-2,10002,Epic,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,12/Sep/25 12:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,0,Epic covering all work for Dashboard Redesign.,,0,,0,0,0,0,0,0,0,,,,0|rank10002:,15/Sep/25 12:00 AM,,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-2,Dashboard Redesign,,Sprint 2,Done,12/Sep/25 12:00 AM\nAPI Integration,SCRUM-3,10003,Epic,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,26/Sep/25 12:00 AM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,0,Epic covering all work for API Integration.,,0,,0,0,0,0,0,0,0,,,,0|rank10003:,29/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-3,API Integration,,Sprint 3,Done,26/Sep/25 12:00 AM\nPerformance Optimisation,SCRUM-4,10004,Epic,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,10/Oct/25 12:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,0,Epic covering all work for Performance Optimisation.,,0,,0,0,0,0,0,0,0,,,,0|rank10004:,13/Oct/25 12:00 AM,,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-4,Performance Optimisation,,Sprint 4,Done,10/Oct/25 12:00 AM\nMobile Responsive Layout,SCRUM-5,10005,Epic,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,24/Oct/25 12:00 AM,3/Nov/25 12:00 AM,3/Nov/25 12:00 AM,,9/Nov/25 12:00 AM,0,Epic covering all work for Mobile Responsive Layout.,,0,,0,0,0,0,0,0,0,,,,0|rank10005:,27/Oct/25 12:00 AM,,Gamma,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-5,Mobile Responsive Layout,,Sprint 5,In Progress,24/Oct/25 12:00 AM\n\"As a user, I can connect third-party integrations\",SCRUM-11,10006,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 4:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 12:00 AM,14/Sep/25 12:00 AM,0,\"As a user, I can connect third-party integrations. Auto-generated for sprint 1.\",,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10006:,1/Sep/25 12:00 AM,3,Beta,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-1,User Authentication,,Sprint 1,Done,2/Sep/25 4:00 PM\n\"As a user, I can reset my password via email\",SCRUM-12,10007,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 7:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 5:00 PM,13/Sep/25 12:00 AM,0,\"As a user, I can reset my password via email. Auto-generated for sprint 1.\",,0,,18000,0,18000,100,18000,0,18000,,,,0|rank10007:,1/Sep/25 12:00 AM,5,Beta,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 1,Done,2/Sep/25 7:00 PM\n\"As a PM, I can generate sprint burndown charts\",SCRUM-13,10008,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 8:00 AM,10/Sep/25 12:00 AM,10/Sep/25 12:00 AM,,11/Sep/25 12:00 AM,0,\"As a PM, I can generate sprint burndown charts. Auto-generated for sprint 1.\",,0,,7200,3042,4158,57,7200,3042,4158,,,,0|rank10008:,1/Sep/25 12:00 AM,2,Alpha,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 1,In Progress,2/Sep/25 8:00 AM\n\"As a user, I can log in with SSO\",SCRUM-14,10009,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 2:00 PM,4/Sep/25 12:00 AM,4/Sep/25 12:00 AM,,11/Sep/25 12:00 AM,0,\"As a user, I can log in with SSO. Auto-generated for sprint 1.\",,0,,72000,25539,46461,64,72000,25539,46461,,,,0|rank10009:,1/Sep/25 12:00 AM,21,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-4,Performance Optimisation,,Sprint 1,In Progress,1/Sep/25 2:00 PM\n\"As a user, I can configure notification preferences\",SCRUM-15,10010,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 9:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 11:00 AM,14/Sep/25 12:00 AM,0,\"As a user, I can configure notification preferences. Auto-generated for sprint 1.\",,0,,72000,0,72000,100,72000,0,72000,,,,0|rank10010:,1/Sep/25 12:00 AM,21,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-3,API Integration,,Sprint 1,Done,1/Sep/25 9:00 PM\n\"As a user, I can reset my password via email\",SCRUM-16,10011,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 10:00 PM,10/Sep/25 12:00 AM,10/Sep/25 12:00 AM,,14/Sep/25 12:00 AM,0,\"As a user, I can reset my password via email. Auto-generated for sprint 1.\",,0,,72000,32731,39269,54,72000,32731,39269,,,,0|rank10011:,1/Sep/25 12:00 AM,21,Alpha,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-3,API Integration,,Sprint 1,In Progress,1/Sep/25 10:00 PM\nDate picker shows wrong timezone offset,SCRUM-17,10012,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 12:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 12:00 PM,13/Sep/25 12:00 AM,0,Date picker shows wrong timezone offset. Auto-generated for sprint 1.,,0,,72000,0,72000,100,72000,0,72000,,,,0|rank10012:,1/Sep/25 12:00 AM,21,Alpha,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-1,User Authentication,,Sprint 1,Done,2/Sep/25 12:00 AM\nPagination breaks when filtering by assignee,SCRUM-18,10013,Bug,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 2:00 AM,8/Sep/25 12:00 AM,8/Sep/25 12:00 AM,,12/Sep/25 12:00 AM,0,Pagination breaks when filtering by assignee. Auto-generated for sprint 1.,Development,0,,72000,39808,32192,44,72000,39808,32192,,,,0|rank10013:,1/Sep/25 12:00 AM,21,Beta,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-2,Dashboard Redesign,,Sprint 1,In Progress,1/Sep/25 2:00 AM\nPagination breaks when filtering by assignee,SCRUM-19,10014,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 4:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 1:00 AM,14/Sep/25 12:00 AM,0,Pagination breaks when filtering by assignee. Auto-generated for sprint 1.,Production,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10014:,1/Sep/25 12:00 AM,3,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-3,API Integration,,Sprint 1,Done,2/Sep/25 4:00 PM\nPassword reset email not sent for SSO accounts,SCRUM-20,10015,Bug,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 10:00 AM,12/Sep/25 12:00 AM,12/Sep/25 12:00 AM,,13/Sep/25 12:00 AM,0,Password reset email not sent for SSO accounts. Auto-generated for sprint 1.,Staging,0,,18000,10411,7589,42,18000,10411,7589,,,,0|rank10015:,1/Sep/25 12:00 AM,5,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-2,Dashboard Redesign,,Sprint 1,In Progress,2/Sep/25 10:00 AM\nPerformance audit on dashboard load time,SCRUM-21,10016,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 3:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 9:00 PM,13/Sep/25 12:00 AM,0,Performance audit on dashboard load time. Auto-generated for sprint 1.,,0,,0,0,0,0,0,0,0,,,,0|rank10016:,1/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-2,Dashboard Redesign,,Sprint 1,Done,1/Sep/25 3:00 AM\nMigrate legacy jQuery components to React,SCRUM-22,10017,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 12:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 3:00 AM,11/Sep/25 12:00 AM,0,Migrate legacy jQuery components to React. Auto-generated for sprint 1.,,0,,0,0,0,0,0,0,0,,,,0|rank10017:,1/Sep/25 12:00 AM,,Beta,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-3,API Integration,,Sprint 1,Done,2/Sep/25 12:00 PM\nWrite integration tests for OAuth2 flow,SCRUM-23,10018,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 9:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 3:00 PM,11/Sep/25 12:00 AM,0,Write integration tests for OAuth2 flow. Auto-generated for sprint 1.,,0,,0,0,0,0,0,0,0,,,,0|rank10018:,1/Sep/25 12:00 AM,,Beta,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-3,API Integration,,Sprint 1,Done,1/Sep/25 9:00 AM\nSet up CI/CD pipeline for staging environment,SCRUM-24,10019,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 1:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 9:00 PM,14/Sep/25 12:00 AM,0,Set up CI/CD pipeline for staging environment. Auto-generated for sprint 1.,,0,,0,0,0,0,0,0,0,,,,0|rank10019:,1/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-4,Performance Optimisation,,Sprint 1,Done,2/Sep/25 1:00 PM\nImplement rate limiting on login endpoint,SCRUM-25,10020,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 7:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 9:00 PM,11/Sep/25 12:00 AM,0,Implement rate limiting on login endpoint. Auto-generated for sprint 1.,,0,,0,0,0,0,0,0,0,,,,0|rank10020:,1/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-2,Dashboard Redesign,,Sprint 1,Done,1/Sep/25 7:00 AM\nDeploy hotfix to staging,SCRUM-26,10021,Sub-task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 12:00 AM,2/Sep/25 12:00 AM,2/Sep/25 12:00 AM,,14/Sep/25 12:00 AM,0,Deploy hotfix to staging. Auto-generated for sprint 1.,,0,,10800,5704,5096,47,10800,5704,5096,,,,0|rank10021:,1/Sep/25 12:00 AM,3,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 1,In Progress,2/Sep/25 12:00 AM\nHandle error states in OAuth2 flow,SCRUM-27,10022,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 7:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 10:00 AM,13/Sep/25 12:00 AM,0,Handle error states in OAuth2 flow. Auto-generated for sprint 1.,,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10022:,1/Sep/25 12:00 AM,13,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 1,Done,2/Sep/25 7:00 PM\nDesign mockup for dashboard header,SCRUM-28,10023,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 5:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 8:00 PM,12/Sep/25 12:00 AM,0,Design mockup for dashboard header. Auto-generated for sprint 1.,,0,,72000,0,72000,100,72000,0,72000,,,,0|rank10023:,1/Sep/25 12:00 AM,21,Beta,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-1,User Authentication,,Sprint 1,Done,2/Sep/25 5:00 AM\nDeploy hotfix to staging,SCRUM-29,10024,Sub-task,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 12:00 AM,25/Sep/25 12:00 AM,25/Sep/25 12:00 AM,,26/Sep/25 12:00 AM,0,[CARRIED OVER] Deploy hotfix to staging. Auto-generated for sprint 2.,,0,,10800,5661,5139,47,10800,5661,5139,,,,0|rank10024:,15/Sep/25 12:00 AM,3,Beta,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,Sprint 1,Sprint 1,In Progress,2/Sep/25 12:00 AM\nPassword reset email not sent for SSO accounts,SCRUM-30,10025,Bug,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 10:00 AM,20/Sep/25 12:00 AM,20/Sep/25 12:00 AM,,27/Sep/25 12:00 AM,0,[CARRIED OVER] Password reset email not sent for SSO accounts. Auto-generated for sprint 2.,,0,,18000,10162,7838,43,18000,10162,7838,,,,0|rank10025:,15/Sep/25 12:00 AM,5,Beta,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-2,Dashboard Redesign,Sprint 1,Sprint 1,In Progress,2/Sep/25 10:00 AM\n\"As a user, I can log in with SSO\",SCRUM-31,10026,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 2:00 PM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 9:00 PM,27/Sep/25 12:00 AM,0,\"[CARRIED OVER] As a user, I can log in with SSO. Auto-generated for sprint 2.\",,0,,72000,0,72000,100,72000,0,72000,,,,0|rank10026:,15/Sep/25 12:00 AM,21,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-4,Performance Optimisation,Sprint 1,Sprint 1,Done,1/Sep/25 2:00 PM\n\"As a PM, I can generate sprint burndown charts\",SCRUM-32,10027,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 8:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 4:00 AM,25/Sep/25 12:00 AM,0,\"[CARRIED OVER] As a PM, I can generate sprint burndown charts. Auto-generated for sprint 2.\",,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10027:,15/Sep/25 12:00 AM,2,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,Sprint 1,Sprint 1,Done,2/Sep/25 8:00 AM\n\"As a user, I can search issues using JQL\",SCRUM-33,10028,Story,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 1:00 PM,26/Sep/25 12:00 AM,26/Sep/25 12:00 AM,,26/Sep/25 12:00 AM,0,\"As a user, I can search issues using JQL. Auto-generated for sprint 2.\",,0,,10800,3666,7134,66,10800,3666,7134,,,,0|rank10028:,15/Sep/25 12:00 AM,3,Beta,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 2,In Progress,15/Sep/25 1:00 PM\n\"As a user, I can connect third-party integrations\",SCRUM-34,10029,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 4:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 11:00 PM,27/Sep/25 12:00 AM,0,\"As a user, I can connect third-party integrations. Auto-generated for sprint 2.\",,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10029:,15/Sep/25 12:00 AM,2,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 2,Done,16/Sep/25 4:00 AM\n\"As a user, I can view issue history and changelog\",SCRUM-35,10030,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 1:00 PM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 9:00 PM,28/Sep/25 12:00 AM,0,\"As a user, I can view issue history and changelog. Auto-generated for sprint 2.\",,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10030:,15/Sep/25 12:00 AM,13,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-2,Dashboard Redesign,,Sprint 2,Done,16/Sep/25 1:00 PM\n\"As a user, I can create sub-tasks from a story\",SCRUM-36,10031,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 9:00 PM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 6:00 AM,27/Sep/25 12:00 AM,0,\"As a user, I can create sub-tasks from a story. Auto-generated for sprint 2.\",,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10031:,15/Sep/25 12:00 AM,3,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-1,User Authentication,,Sprint 2,Done,15/Sep/25 9:00 PM\n\"As a mobile user, I can access all core features\",SCRUM-37,10032,Story,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 10:00 PM,19/Sep/25 12:00 AM,19/Sep/25 12:00 AM,,28/Sep/25 12:00 AM,0,\"As a mobile user, I can access all core features. Auto-generated for sprint 2.\",,0,,7200,1617,5583,77,7200,1617,5583,,,,0|rank10032:,15/Sep/25 12:00 AM,2,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 2,In Progress,16/Sep/25 10:00 PM\nNotification bell shows incorrect count,SCRUM-38,10033,Bug,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 6:00 AM,16/Sep/25 12:00 AM,16/Sep/25 12:00 AM,,28/Sep/25 12:00 AM,0,Notification bell shows incorrect count. Auto-generated for sprint 2.,,0,,18000,10934,7066,39,18000,10934,7066,,,,0|rank10033:,15/Sep/25 12:00 AM,5,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-4,Performance Optimisation,,Sprint 2,In Progress,15/Sep/25 6:00 AM\nPagination breaks when filtering by assignee,SCRUM-39,10034,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 1:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 7:00 PM,25/Sep/25 12:00 AM,0,Pagination breaks when filtering by assignee. Auto-generated for sprint 2.,Production,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10034:,15/Sep/25 12:00 AM,2,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-3,API Integration,,Sprint 2,Done,16/Sep/25 1:00 AM\nNotification bell shows incorrect count,SCRUM-40,10035,Bug,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 5:00 PM,24/Sep/25 12:00 AM,24/Sep/25 12:00 AM,,28/Sep/25 12:00 AM,0,Notification bell shows incorrect count. Auto-generated for sprint 2.,,0,,3600,1649,1951,54,3600,1649,1951,,,,0|rank10035:,15/Sep/25 12:00 AM,1,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-4,Performance Optimisation,,Sprint 2,In Progress,15/Sep/25 5:00 PM\nSet up feature flags for mobile rollout,SCRUM-41,10036,Task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 5:00 PM,19/Sep/25 12:00 AM,19/Sep/25 12:00 AM,,27/Sep/25 12:00 AM,0,Set up feature flags for mobile rollout. Auto-generated for sprint 2.,,0,,0,0,0,0,0,0,0,,,,0|rank10036:,15/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 2,In Progress,16/Sep/25 5:00 PM\nDatabase index optimisation for issue search,SCRUM-42,10037,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 2:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 10:00 PM,27/Sep/25 12:00 AM,0,Database index optimisation for issue search. Auto-generated for sprint 2.,,0,,0,0,0,0,0,0,0,,,,0|rank10037:,15/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-4,Performance Optimisation,,Sprint 2,Done,16/Sep/25 2:00 AM\nSet up feature flags for mobile rollout,SCRUM-43,10038,Task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 12:00 AM,23/Sep/25 12:00 AM,23/Sep/25 12:00 AM,,26/Sep/25 12:00 AM,0,Set up feature flags for mobile rollout. Auto-generated for sprint 2.,,0,,0,0,0,0,0,0,0,,,,0|rank10038:,15/Sep/25 12:00 AM,,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-1,User Authentication,,Sprint 2,In Progress,16/Sep/25 12:00 AM\nRefactor API client to use async/await,SCRUM-44,10039,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 3:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 10:00 PM,28/Sep/25 12:00 AM,0,Refactor API client to use async/await. Auto-generated for sprint 2.,,0,,0,0,0,0,0,0,0,,,,0|rank10039:,15/Sep/25 12:00 AM,,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 2,Done,16/Sep/25 3:00 AM\nQA: regression test after dependency upgrade,SCRUM-45,10040,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 11:00 PM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 7:00 AM,27/Sep/25 12:00 AM,0,QA: regression test after dependency upgrade. Auto-generated for sprint 2.,,0,,28800,0,28800,100,28800,0,28800,,,,0|rank10040:,15/Sep/25 12:00 AM,8,Beta,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-3,API Integration,,Sprint 2,Done,16/Sep/25 11:00 PM\nUpdate API schema for role management,SCRUM-46,10041,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 3:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 2:00 AM,27/Sep/25 12:00 AM,0,Update API schema for role management. Auto-generated for sprint 2.,,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10041:,15/Sep/25 12:00 AM,2,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 2,Done,15/Sep/25 3:00 AM\nNotification bell shows incorrect count,SCRUM-47,10042,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 5:00 PM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 5:00 AM,10/Oct/25 12:00 AM,0,[CARRIED OVER] Notification bell shows incorrect count. Auto-generated for sprint 3.,Staging,0,,3600,0,3600,100,3600,0,3600,,,,0|rank10042:,29/Sep/25 12:00 AM,1,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-4,Performance Optimisation,Sprint 2,Sprint 2,Done,15/Sep/25 5:00 PM\n\"As a user, I can search issues using JQL\",SCRUM-48,10043,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 1:00 PM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 3:00 AM,10/Oct/25 12:00 AM,0,\"[CARRIED OVER] As a user, I can search issues using JQL. Auto-generated for sprint 3.\",,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10043:,29/Sep/25 12:00 AM,3,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-5,Mobile Responsive Layout,Sprint 2,Sprint 2,Done,15/Sep/25 1:00 PM\n\"As a mobile user, I can access all core features\",SCRUM-49,10044,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 10:00 PM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 5:00 AM,12/Oct/25 12:00 AM,0,\"[CARRIED OVER] As a mobile user, I can access all core features. Auto-generated for sprint 3.\",,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10044:,29/Sep/25 12:00 AM,2,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-5,Mobile Responsive Layout,Sprint 2,Sprint 2,Done,16/Sep/25 10:00 PM\n\"As a user, I can filter dashboard widgets by date\",SCRUM-50,10045,Story,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 4:00 AM,1/Oct/25 12:00 AM,1/Oct/25 12:00 AM,,11/Oct/25 12:00 AM,0,\"As a user, I can filter dashboard widgets by date. Auto-generated for sprint 3.\",,0,,10800,7484,3316,30,10800,7484,3316,,,,0|rank10045:,29/Sep/25 12:00 AM,3,Gamma,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 3,In Progress,29/Sep/25 4:00 AM\n\"As a team lead, I can assign tasks to team members\",SCRUM-51,10046,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 11:00 PM,9/Oct/25 12:00 AM,9/Oct/25 12:00 AM,,12/Oct/25 12:00 AM,0,\"As a team lead, I can assign tasks to team members. Auto-generated for sprint 3.\",,0,,72000,45844,26156,36,72000,45844,26156,,,,0|rank10046:,29/Sep/25 12:00 AM,21,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-3,API Integration,,Sprint 3,In Progress,29/Sep/25 11:00 PM\n\"As a user, I can filter dashboard widgets by date\",SCRUM-52,10047,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 6:00 PM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 8:00 PM,11/Oct/25 12:00 AM,0,\"As a user, I can filter dashboard widgets by date. Auto-generated for sprint 3.\",,0,,3600,0,3600,100,3600,0,3600,,,,0|rank10047:,29/Sep/25 12:00 AM,1,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 3,Done,30/Sep/25 6:00 PM\n\"As a user, I can configure notification preferences\",SCRUM-53,10048,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 5:00 PM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 3:00 AM,10/Oct/25 12:00 AM,0,\"As a user, I can configure notification preferences. Auto-generated for sprint 3.\",,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10048:,29/Sep/25 12:00 AM,13,Gamma,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-3,API Integration,,Sprint 3,Done,29/Sep/25 5:00 PM\n\"As an admin, I can manage user roles\",SCRUM-54,10049,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 8:00 AM,4/Oct/25 12:00 AM,4/Oct/25 12:00 AM,,12/Oct/25 12:00 AM,0,\"As an admin, I can manage user roles. Auto-generated for sprint 3.\",,0,,3600,1995,1605,44,3600,1995,1605,,,,0|rank10049:,29/Sep/25 12:00 AM,1,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-4,Performance Optimisation,,Sprint 3,In Progress,30/Sep/25 8:00 AM\n\"As a user, I can export dashboard data to CSV\",SCRUM-55,10050,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 12:00 AM,8/Oct/25 12:00 AM,8/Oct/25 12:00 AM,,9/Oct/25 12:00 AM,0,\"As a user, I can export dashboard data to CSV. Auto-generated for sprint 3.\",,0,,10800,4116,6684,61,10800,4116,6684,,,,0|rank10050:,29/Sep/25 12:00 AM,3,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-3,API Integration,,Sprint 3,In Progress,29/Sep/25 12:00 AM\nKanban board flickers on column re-order,SCRUM-56,10051,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 11:00 AM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 10:00 PM,10/Oct/25 12:00 AM,0,Kanban board flickers on column re-order. Auto-generated for sprint 3.,Production,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10051:,29/Sep/25 12:00 AM,13,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-1,User Authentication,,Sprint 3,Done,30/Sep/25 11:00 AM\nKanban board flickers on column re-order,SCRUM-57,10052,Bug,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 3:00 AM,30/Sep/25 12:00 AM,30/Sep/25 12:00 AM,,10/Oct/25 12:00 AM,0,Kanban board flickers on column re-order. Auto-generated for sprint 3.,Production,0,,10800,2848,7952,73,10800,2848,7952,,,,0|rank10052:,29/Sep/25 12:00 AM,3,Gamma,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 3,In Progress,30/Sep/25 3:00 AM\nSprint report does not count carried-over stories,SCRUM-58,10053,Bug,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 7:00 PM,6/Oct/25 12:00 AM,6/Oct/25 12:00 AM,,11/Oct/25 12:00 AM,0,Sprint report does not count carried-over stories. Auto-generated for sprint 3.,Production,0,,72000,40164,31836,44,72000,40164,31836,,,,0|rank10053:,29/Sep/25 12:00 AM,21,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 3,In Progress,30/Sep/25 7:00 PM\nSet up CI/CD pipeline for staging environment,SCRUM-59,10054,Task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 10:00 AM,5/Oct/25 12:00 AM,5/Oct/25 12:00 AM,,9/Oct/25 12:00 AM,0,Set up CI/CD pipeline for staging environment. Auto-generated for sprint 3.,,0,,0,0,0,0,0,0,0,,,,0|rank10054:,29/Sep/25 12:00 AM,,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 3,In Progress,29/Sep/25 10:00 AM\nCode review: sprint 3 auth PRs,SCRUM-60,10055,Task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 6:00 PM,6/Oct/25 12:00 AM,6/Oct/25 12:00 AM,,12/Oct/25 12:00 AM,0,Code review: sprint 3 auth PRs. Auto-generated for sprint 3.,,0,,0,0,0,0,0,0,0,,,,0|rank10055:,29/Sep/25 12:00 AM,,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 3,In Progress,30/Sep/25 6:00 PM\nSet up feature flags for mobile rollout,SCRUM-61,10056,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 6:00 AM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 2:00 PM,11/Oct/25 12:00 AM,0,Set up feature flags for mobile rollout. Auto-generated for sprint 3.,,0,,0,0,0,0,0,0,0,,,,0|rank10056:,29/Sep/25 12:00 AM,,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 3,Done,30/Sep/25 6:00 AM\nAdd loading skeleton to widget component,SCRUM-62,10057,Sub-task,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 2:00 PM,4/Oct/25 12:00 AM,4/Oct/25 12:00 AM,,10/Oct/25 12:00 AM,0,Add loading skeleton to widget component. Auto-generated for sprint 3.,,0,,10800,6944,3856,35,10800,6944,3856,,,,0|rank10057:,29/Sep/25 12:00 AM,3,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-1,User Authentication,,Sprint 3,In Progress,29/Sep/25 2:00 PM\nDeploy hotfix to staging,SCRUM-63,10058,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 5:00 PM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 11:00 PM,12/Oct/25 12:00 AM,0,Deploy hotfix to staging. Auto-generated for sprint 3.,,0,,72000,0,72000,100,72000,0,72000,,,,0|rank10058:,29/Sep/25 12:00 AM,21,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 3,Done,30/Sep/25 5:00 PM\nKanban board flickers on column re-order,SCRUM-64,10059,Bug,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 3:00 AM,19/Oct/25 12:00 AM,19/Oct/25 12:00 AM,,23/Oct/25 12:00 AM,0,[CARRIED OVER] Kanban board flickers on column re-order. Auto-generated for sprint 4.,,0,,10800,4905,5895,54,10800,4905,5895,,,,0|rank10059:,13/Oct/25 12:00 AM,3,Gamma,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-2,Dashboard Redesign,Sprint 3,Sprint 3,In Progress,30/Sep/25 3:00 AM\n\"As an admin, I can manage user roles\",SCRUM-65,10060,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 8:00 AM,14/Oct/25 12:00 AM,14/Oct/25 12:00 AM,,25/Oct/25 12:00 AM,0,\"[CARRIED OVER] As an admin, I can manage user roles. Auto-generated for sprint 4.\",,0,,3600,1387,2213,61,3600,1387,2213,,,,0|rank10060:,13/Oct/25 12:00 AM,1,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-4,Performance Optimisation,Sprint 3,Sprint 3,In Progress,30/Sep/25 8:00 AM\nAdd loading skeleton to widget component,SCRUM-66,10061,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 2:00 PM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 2:00 AM,26/Oct/25 12:00 AM,0,[CARRIED OVER] Add loading skeleton to widget component. Auto-generated for sprint 4.,,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10061:,13/Oct/25 12:00 AM,3,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-1,User Authentication,Sprint 3,Sprint 3,Done,29/Sep/25 2:00 PM\nCode review: sprint 3 auth PRs,SCRUM-67,10062,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 6:00 PM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 11:00 AM,24/Oct/25 12:00 AM,0,[CARRIED OVER] Code review: sprint 3 auth PRs. Auto-generated for sprint 4.,,0,,0,0,0,0,0,0,0,,,,0|rank10062:,13/Oct/25 12:00 AM,,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-2,Dashboard Redesign,Sprint 3,Sprint 3,Done,30/Sep/25 6:00 PM\n\"As a user, I can search issues using JQL\",SCRUM-68,10063,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 11:00 AM,16/Oct/25 12:00 AM,16/Oct/25 12:00 AM,,24/Oct/25 12:00 AM,0,\"As a user, I can search issues using JQL. Auto-generated for sprint 4.\",,0,,43200,12720,30480,70,43200,12720,30480,,,,0|rank10063:,13/Oct/25 12:00 AM,13,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 4,In Progress,14/Oct/25 11:00 AM\n\"As a developer, I can authenticate via OAuth2\",SCRUM-69,10064,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 1:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 5:00 AM,24/Oct/25 12:00 AM,0,\"As a developer, I can authenticate via OAuth2. Auto-generated for sprint 4.\",,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10064:,13/Oct/25 12:00 AM,3,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 4,Done,14/Oct/25 1:00 AM\n\"As a user, I can set due dates on tasks\",SCRUM-70,10065,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 5:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 12:00 AM,25/Oct/25 12:00 AM,0,\"As a user, I can set due dates on tasks. Auto-generated for sprint 4.\",,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10065:,13/Oct/25 12:00 AM,2,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-4,Performance Optimisation,,Sprint 4,Done,14/Oct/25 5:00 AM\n\"As a user, I can view issue history and changelog\",SCRUM-71,10066,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 6:00 PM,15/Oct/25 12:00 AM,15/Oct/25 12:00 AM,,25/Oct/25 12:00 AM,0,\"As a user, I can view issue history and changelog. Auto-generated for sprint 4.\",,0,,43200,27682,15518,35,43200,27682,15518,,,,0|rank10066:,13/Oct/25 12:00 AM,13,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-1,User Authentication,,Sprint 4,In Progress,14/Oct/25 6:00 PM\n\"As a user, I can filter dashboard widgets by date\",SCRUM-72,10067,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 7:00 PM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 4:00 PM,23/Oct/25 12:00 AM,0,\"As a user, I can filter dashboard widgets by date. Auto-generated for sprint 4.\",,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10067:,13/Oct/25 12:00 AM,2,Gamma,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-3,API Integration,,Sprint 4,Done,14/Oct/25 7:00 PM\nDrag-and-drop fails on Firefox 118,SCRUM-73,10068,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 3:00 PM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 1:00 AM,23/Oct/25 12:00 AM,0,Drag-and-drop fails on Firefox 118. Auto-generated for sprint 4.,Development,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10068:,13/Oct/25 12:00 AM,13,Gamma,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-1,User Authentication,,Sprint 4,Done,14/Oct/25 3:00 PM\nLogin page throws 500 error on Safari,SCRUM-74,10069,Bug,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 1:00 AM,15/Oct/25 12:00 AM,15/Oct/25 12:00 AM,,23/Oct/25 12:00 AM,0,Login page throws 500 error on Safari. Auto-generated for sprint 4.,Production,0,,43200,13160,30040,69,43200,13160,30040,,,,0|rank10069:,13/Oct/25 12:00 AM,13,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 4,In Progress,14/Oct/25 1:00 AM\nPagination breaks when filtering by assignee,SCRUM-75,10070,Bug,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,13/Oct/25 11:00 AM,15/Oct/25 12:00 AM,15/Oct/25 12:00 AM,,23/Oct/25 12:00 AM,0,Pagination breaks when filtering by assignee. Auto-generated for sprint 4.,Production,0,,28800,8991,19809,68,28800,8991,19809,,,,0|rank10070:,13/Oct/25 12:00 AM,8,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 4,In Progress,13/Oct/25 11:00 AM\nAttachment upload silently fails for files > 5MB,SCRUM-76,10071,Bug,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 5:00 AM,23/Oct/25 12:00 AM,23/Oct/25 12:00 AM,,23/Oct/25 12:00 AM,0,Attachment upload silently fails for files > 5MB. Auto-generated for sprint 4.,Development,0,,10800,5128,5672,52,10800,5128,5672,,,,0|rank10071:,13/Oct/25 12:00 AM,3,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 4,In Progress,14/Oct/25 5:00 AM\nCode review: sprint 3 auth PRs,SCRUM-77,10072,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,13/Oct/25 10:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 3:00 AM,24/Oct/25 12:00 AM,0,Code review: sprint 3 auth PRs. Auto-generated for sprint 4.,,0,,0,0,0,0,0,0,0,,,,0|rank10072:,13/Oct/25 12:00 AM,,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-4,Performance Optimisation,,Sprint 4,Done,13/Oct/25 10:00 AM\nMigrate legacy jQuery components to React,SCRUM-78,10073,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 9:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 2:00 PM,25/Oct/25 12:00 AM,0,Migrate legacy jQuery components to React. Auto-generated for sprint 4.,,0,,0,0,0,0,0,0,0,,,,0|rank10073:,13/Oct/25 12:00 AM,,Gamma,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-4,Performance Optimisation,,Sprint 4,Done,14/Oct/25 9:00 AM\nWrite unit tests for authentication module,SCRUM-79,10074,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,13/Oct/25 5:00 PM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 4:00 PM,23/Oct/25 12:00 AM,0,Write unit tests for authentication module. Auto-generated for sprint 4.,,0,,0,0,0,0,0,0,0,,,,0|rank10074:,13/Oct/25 12:00 AM,,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-3,API Integration,,Sprint 4,Done,13/Oct/25 5:00 PM\nCreate design tokens for new colour system,SCRUM-80,10075,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 8:00 PM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 6:00 AM,23/Oct/25 12:00 AM,0,Create design tokens for new colour system. Auto-generated for sprint 4.,,0,,0,0,0,0,0,0,0,,,,0|rank10075:,13/Oct/25 12:00 AM,,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 4,Done,14/Oct/25 8:00 PM\nWrite documentation for new API endpoints,SCRUM-81,10076,Sub-task,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 2:00 AM,23/Oct/25 12:00 AM,23/Oct/25 12:00 AM,,26/Oct/25 12:00 AM,0,Write documentation for new API endpoints. Auto-generated for sprint 4.,,0,,18000,7483,10517,58,18000,7483,10517,,,,0|rank10076:,13/Oct/25 12:00 AM,5,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-1,User Authentication,,Sprint 4,In Progress,14/Oct/25 2:00 AM\nHandle error states in OAuth2 flow,SCRUM-82,10077,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Oct/25 12:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 11:00 AM,23/Oct/25 12:00 AM,0,Handle error states in OAuth2 flow. Auto-generated for sprint 4.,,0,,3600,0,3600,100,3600,0,3600,,,,0|rank10077:,13/Oct/25 12:00 AM,1,Gamma,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 4,Done,15/Oct/25 12:00 AM\nAttachment upload silently fails for files > 5MB,SCRUM-83,10078,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 5:00 AM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 1:00 PM,6/Nov/25 12:00 AM,0,[CARRIED OVER] Attachment upload silently fails for files > 5MB. Auto-generated for sprint 5.,Production,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10078:,27/Oct/25 12:00 AM,3,Gamma,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-5,Mobile Responsive Layout,Sprint 4,Sprint 4,Done,14/Oct/25 5:00 AM\nWrite documentation for new API endpoints,SCRUM-84,10079,Sub-task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 2:00 AM,6/Nov/25 12:00 AM,6/Nov/25 12:00 AM,,9/Nov/25 12:00 AM,0,[CARRIED OVER] Write documentation for new API endpoints. Auto-generated for sprint 5.,,0,,18000,11707,6293,34,18000,11707,6293,,,,0|rank10079:,27/Oct/25 12:00 AM,5,Alpha,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-1,User Authentication,Sprint 4,Sprint 4,In Progress,14/Oct/25 2:00 AM\n\"As a user, I can view issue history and changelog\",SCRUM-85,10080,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 6:00 PM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 3:00 PM,6/Nov/25 12:00 AM,0,\"[CARRIED OVER] As a user, I can view issue history and changelog. Auto-generated for sprint 5.\",,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10080:,27/Oct/25 12:00 AM,13,Gamma,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-1,User Authentication,Sprint 4,Sprint 4,Done,14/Oct/25 6:00 PM\n\"As a user, I can view all open blockers in one place\",SCRUM-86,10081,Story,To Do,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 8:00 PM,1/Nov/25 12:00 AM,1/Nov/25 12:00 AM,,6/Nov/25 12:00 AM,0,\"As a user, I can view all open blockers in one place. Auto-generated for sprint 5.\",,0,,10800,6421,4379,40,10800,6421,4379,,,,0|rank10081:,27/Oct/25 12:00 AM,3,Gamma,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-2,Dashboard Redesign,,Sprint 5,To Do,27/Oct/25 8:00 PM\n\"As a team lead, I can assign tasks to team members\",SCRUM-87,10082,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 4:00 PM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 12:00 PM,8/Nov/25 12:00 AM,0,\"As a team lead, I can assign tasks to team members. Auto-generated for sprint 5.\",,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10082:,27/Oct/25 12:00 AM,13,Alpha,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-1,User Authentication,,Sprint 5,Done,27/Oct/25 4:00 PM\n\"As a user, I can connect third-party integrations\",SCRUM-88,10083,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,28/Oct/25 5:00 PM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 11:00 PM,8/Nov/25 12:00 AM,0,\"As a user, I can connect third-party integrations. Auto-generated for sprint 5.\",,0,,3600,0,3600,100,3600,0,3600,,,,0|rank10083:,27/Oct/25 12:00 AM,1,Alpha,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-1,User Authentication,,Sprint 5,Done,28/Oct/25 5:00 PM\n\"As a user, I can add attachments to issues\",SCRUM-89,10084,Story,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 3:00 PM,4/Nov/25 12:00 AM,4/Nov/25 12:00 AM,,7/Nov/25 12:00 AM,0,\"As a user, I can add attachments to issues. Auto-generated for sprint 5.\",,0,,3600,2089,1511,41,3600,2089,1511,,,,0|rank10084:,27/Oct/25 12:00 AM,1,Gamma,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-2,Dashboard Redesign,,Sprint 5,In Progress,27/Oct/25 3:00 PM\n\"As a PM, I can generate sprint burndown charts\",SCRUM-90,10085,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 11:00 PM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 6:00 PM,7/Nov/25 12:00 AM,0,\"As a PM, I can generate sprint burndown charts. Auto-generated for sprint 5.\",,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10085:,27/Oct/25 12:00 AM,13,Alpha,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-2,Dashboard Redesign,,Sprint 5,Done,27/Oct/25 11:00 PM\nDate picker shows wrong timezone offset,SCRUM-91,10086,Bug,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 6:00 AM,3/Nov/25 12:00 AM,3/Nov/25 12:00 AM,,6/Nov/25 12:00 AM,0,Date picker shows wrong timezone offset. Auto-generated for sprint 5.,Production,0,,28800,17906,10894,37,28800,17906,10894,,,,0|rank10086:,27/Oct/25 12:00 AM,8,Beta,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-5,Mobile Responsive Layout,,Sprint 5,In Progress,27/Oct/25 6:00 AM\nAttachment upload silently fails for files > 5MB,SCRUM-92,10087,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 4:00 AM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 2:00 AM,9/Nov/25 12:00 AM,0,Attachment upload silently fails for files > 5MB. Auto-generated for sprint 5.,,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10087:,27/Oct/25 12:00 AM,13,Beta,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-5,Mobile Responsive Layout,,Sprint 5,Done,27/Oct/25 4:00 AM\nDashboard widgets do not load for new users,SCRUM-93,10088,Bug,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 10:00 PM,2/Nov/25 12:00 AM,2/Nov/25 12:00 AM,,9/Nov/25 12:00 AM,0,Dashboard widgets do not load for new users. Auto-generated for sprint 5.,Development,0,,10800,3838,6962,64,10800,3838,6962,,,,0|rank10088:,27/Oct/25 12:00 AM,3,Beta,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-5,Mobile Responsive Layout,,Sprint 5,In Progress,27/Oct/25 10:00 PM\nImplement rate limiting on login endpoint,SCRUM-94,10089,Task,To Do,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,28/Oct/25 7:00 AM,4/Nov/25 12:00 AM,4/Nov/25 12:00 AM,,8/Nov/25 12:00 AM,0,Implement rate limiting on login endpoint. Auto-generated for sprint 5.,,0,,0,0,0,0,0,0,0,,,,0|rank10089:,27/Oct/25 12:00 AM,,Alpha,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-1,User Authentication,,Sprint 5,To Do,28/Oct/25 7:00 AM\nDocument REST API endpoints in Swagger,SCRUM-95,10090,Task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,28/Oct/25 3:00 AM,5/Nov/25 12:00 AM,5/Nov/25 12:00 AM,,6/Nov/25 12:00 AM,0,Document REST API endpoints in Swagger. Auto-generated for sprint 5.,,0,,0,0,0,0,0,0,0,,,,0|rank10090:,27/Oct/25 12:00 AM,,Beta,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-2,Dashboard Redesign,,Sprint 5,In Progress,28/Oct/25 3:00 AM\nPerformance audit on dashboard load time,SCRUM-96,10091,Task,To Do,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,28/Oct/25 5:00 AM,29/Oct/25 12:00 AM,29/Oct/25 12:00 AM,,7/Nov/25 12:00 AM,0,Performance audit on dashboard load time. Auto-generated for sprint 5.,,0,,0,0,0,0,0,0,0,,,,0|rank10091:,27/Oct/25 12:00 AM,,Beta,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-4,Performance Optimisation,,Sprint 5,To Do,28/Oct/25 5:00 AM\nWrite documentation for new API endpoints,SCRUM-97,10092,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,28/Oct/25 4:00 AM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 8:00 AM,7/Nov/25 12:00 AM,0,Write documentation for new API endpoints. Auto-generated for sprint 5.,,0,,28800,0,28800,100,28800,0,28800,,,,0|rank10092:,27/Oct/25 12:00 AM,8,Alpha,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-2,Dashboard Redesign,,Sprint 5,Done,28/Oct/25 4:00 AM\nAdd loading skeleton to widget component,SCRUM-98,10093,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 11:00 AM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 4:00 AM,7/Nov/25 12:00 AM,0,Add loading skeleton to widget component. Auto-generated for sprint 5.,,0,,72000,0,72000,100,72000,0,72000,,,,0|rank10093:,27/Oct/25 12:00 AM,21,Gamma,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-4,Performance Optimisation,,Sprint 5,Done,27/Oct/25 11:00 AM\n";
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let allRows=[],headers=[],selectedFields=[],filteredRows=[];
+let sortCol=-1,sortDir=1,curPage=1;
+const PAGE=50;
+let fieldMeta={};
+let activeSprints=new Set(['all']);
+let currentTab='overview';
+let activeSprintDetail=null;  // which sprint is open in sprint detail tab
+
+const FGROUPS={
+  'Summary':{g:'Identity',t:'core',i:'📝'},'Issue key':{g:'Identity',t:'core',i:'🔑'},
+  'Issue id':{g:'Identity',t:'core',i:'#'},'Issue Type':{g:'Identity',t:'core',i:'🔷'},
+  'Status':{g:'Status',t:'core',i:'🚦'},'Priority':{g:'Status',t:'core',i:'🎯'},
+  'Resolution':{g:'Status',t:'core',i:'✅'},'Status Category':{g:'Status',t:'core',i:'📊'},
+  'Assignee':{g:'People',t:'core',i:'👤'},'Reporter':{g:'People',t:'core',i:'📣'},
+  'Creator':{g:'People',t:'core',i:'✍️'},
+  'Created':{g:'Dates',t:'core',i:'📅'},'Updated':{g:'Dates',t:'core',i:'🔄'},
+  'Due date':{g:'Dates',t:'core',i:'⏰'},'Resolved':{g:'Dates',t:'core',i:'✔️'},
+  'Project key':{g:'Project',t:'core',i:'📁'},'Project name':{g:'Project',t:'core',i:'📁'},
+  'Original estimate':{g:'Time',t:'time',i:'⏳'},'Remaining Estimate':{g:'Time',t:'time',i:'⏱'},
+  'Time Spent':{g:'Time',t:'time',i:'⌚'},'Work Ratio':{g:'Time',t:'time',i:'📊'},
+};
+const GCOLS={'Identity':'#3E9FF5','Status':'#27C47A','People':'#F5A623','Dates':'#00C4B4','Project':'#E8445A','Time':'#F78B50','Custom Fields':'#9B59B6','Other':'#7A93AA'};
+
+// ═══ HELPERS ═══
+function statusStyle(v){
+  const s=(v||'').toLowerCase();
+  if(/done|closed|resolved|complete/.test(s)) return{bg:'rgba(39,196,122,.15)',c:'var(--green)'};
+  if(/progress|dev|review|testing/.test(s))   return{bg:'rgba(12,125,224,.15)',c:'var(--blue-lt)'};
+  if(/blocked/.test(s))                        return{bg:'rgba(232,68,90,.15)',c:'var(--red)'};
+  return{bg:'rgba(122,147,170,.15)',c:'var(--muted)'};
+}
+function priStyle(v){
+  const s=(v||'').toLowerCase();
+  if(/critical|highest/.test(s)) return{c:'var(--red)'};
+  if(/high/.test(s))             return{c:'var(--gold)'};
+  if(/medium/.test(s))           return{c:'var(--blue-lt)'};
+  if(/low/.test(s))              return{c:'var(--green)'};
+  return{c:'var(--muted)'};
+}
+function typeCol(v){
+  const s=(v||'').toLowerCase();
+  if(s.includes('story')) return'#27C47A';if(s.includes('bug')) return'#E8445A';
+  if(s.includes('epic'))  return'#9B59B6';if(s.includes('task')) return'#0C7DE0';
+  return'#7A93AA';
+}
+function avatarCol(n){
+  const cols=['#0C7DE0','#27C47A','#F5A623','#9B59B6','#00C4B4','#E8445A','#3E9FF5','#F78B50'];
+  let h=0;for(const c of(n||'')){h=(h*31+c.charCodeAt(0))&0xFFFFFF}
+  return cols[Math.abs(h)%cols.length];
+}
+function getFieldH(names){return headers.find(h=>names.some(n=>h===n||h.toLowerCase()===n.toLowerCase()))}
+function getSprintH(){return headers.find(h=>h==='Custom field (Sprint)')}
+function sprintNum(s){const m=(s||'').match(/Sprint\s*(\d+)/i);return m?parseInt(m[1]):0}
+
+// carry count per issue key (how many times carried across sprints)
+function buildCarryCounts(){
+  const cyH=getFieldH(['Custom field (Carried Over)']);
+  const keyH=getFieldH(['Issue key']);
+  const sumH=getFieldH(['Summary']);
+  const counts={};
+  if(!cyH||!keyH) return counts;
+  allRows.forEach(r=>{
+    if(r[cyH]){
+      // group by summary to track the same issue across sprints
+      const k=r[sumH]||r[keyH];
+      counts[k]=(counts[k]||0)+1;
+    }
+  });
+  return counts;
+}
+let carryCounts={};
+
+// ═══ LOAD ═══
+function loadSample(){parseCSV(SAMPLE_CSV,'SCRUM_Sprint_Data.csv');showToast('✅ Sample data loaded','ok')}
+
+const uz=document.getElementById('uploadZone'),fi=document.getElementById('fileInput');
+uz.addEventListener('click',()=>fi.click());
+fi.addEventListener('change',e=>e.target.files[0]&&readFile(e.target.files[0]));
+uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag')});
+uz.addEventListener('dragleave',()=>uz.classList.remove('drag'));
+uz.addEventListener('drop',e=>{e.preventDefault();uz.classList.remove('drag');e.dataTransfer.files[0]&&readFile(e.dataTransfer.files[0])});
+function readFile(f){const r=new FileReader();r.onload=e=>parseCSV(e.target.result,f.name);r.readAsText(f)}
+
+function parseCSV(text,fname){
+  const rows=[];let cur='',inQ=false,cells=[];
+  for(let i=0;i<text.length;i++){
+    const ch=text[i],nx=text[i+1];
+    if(inQ){if(ch==='"'&&nx==='"'){cur+='"';i++}else if(ch==='"'){inQ=false}else cur+=ch}
+    else{if(ch==='"'){inQ=true}else if(ch===','){cells.push(cur.trim());cur=''}
+    else if(ch==='\n'||(ch==='\r'&&nx==='\n')){if(ch==='\r')i++;cells.push(cur.trim());cur='';if(cells.some(c=>c!==''))rows.push(cells);cells=[]}else cur+=ch}
+  }
+  if(cur||cells.length){cells.push(cur.trim());if(cells.some(c=>c!==''))rows.push(cells)}
+  if(rows.length<2){showToast('❌ Invalid CSV','err');return}
+  headers=rows[0];
+  allRows=rows.slice(1).map(r=>{const o={};headers.forEach((h,i)=>o[h]=r[i]||'');return o});
+  carryCounts=buildCarryCounts();
+  buildFieldMeta();
+  // Reset multi-select filter state
+  Object.keys(msState).forEach(k=>msState[k].clear());
+  applyPreset('pm');
+  buildFieldSelector();
+  populateFilters();
+  buildSprintToggles();
+  filteredRows=[...allRows];
+  refreshAll();
+  const ln=document.getElementById('loadedName');
+  ln.textContent='📄 '+fname;ln.style.display='';
+  document.getElementById('sShare').style.display='';
+  document.getElementById('topBadge').textContent=allRows.length+' issues';
+  document.getElementById('topBadge').style.display='';
+  document.getElementById('btnPPTX').style.display='';
+  // Build sidebar sprint picker
+  buildSidebarSprintPicker();
+  // Last updated bar
+  const lastUp=getLastUpdated();
+  const luBar=document.getElementById('lastUpdatedBar');
+  if(luBar&&lastUp){
+    luBar.style.display='flex';
+    luBar.innerHTML=`📅 Data exported from Jira &nbsp;·&nbsp; Last updated: <strong>${lastUp.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</strong> &nbsp;·&nbsp; <span>${allRows.length} issues</span>`;
+  }
+  // Trigger correct sidebar context for current tab
+  switchTab(currentTab);
+  // restore URL state if any
+  restoreURLState();
+}
+
+function buildFieldMeta(){
+  fieldMeta={};
+  headers.forEach(h=>{
+    const k=FGROUPS[h];
+    const isCust=h.toLowerCase().startsWith('custom field');
+    const clean=h.replace(/^Custom field \(|\)$/gi,'');
+    fieldMeta[h]={g:k?k.g:isCust?'Custom Fields':'Other',t:k?k.t:isCust?'custom':'core',i:k?k.i:isCust?'⚙️':'📌',name:clean};
+  });
+}
+
+// ═══ SPRINTS ═══
+function detectSprints(){
+  const sh=getSprintH();
+  if(!sh) return[];
+  return[...new Set(allRows.map(r=>r[sh]).filter(Boolean))].sort((a,b)=>sprintNum(a)-sprintNum(b));
+}
+
+function buildSprintToggles(){
+  const sprints=detectSprints();
+  ['sprintToggleTable','sprintToggleSprint'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    let h='<button class="sprint-tog all on" onclick="setSprint(\'all\')">All Sprints</button>';
+    sprints.forEach(s=>{
+      const n=sprintNum(s);
+      h+=`<button class="sprint-tog" onclick="setSprint('${s.replace(/'/g,"\'")}')">Sprint ${n}</button>`;
+    });
+    el.innerHTML=h;
+  });
+}
+
+function setSprint(val){
+  if(val==='all'){activeSprints=new Set(['all'])}
+  else{
+    activeSprints.delete('all');
+    if(activeSprints.has(val))activeSprints.delete(val);
+    else activeSprints.add(val);
+    if(activeSprints.size===0)activeSprints=new Set(['all']);
+  }
+  document.querySelectorAll('.sprint-tog').forEach(btn=>{
+    const txt=btn.textContent.trim();
+    if(txt==='All Sprints'){btn.classList.toggle('on',activeSprints.has('all'));btn.classList.toggle('all',true)}
+    else{const sp=detectSprints().find(s=>'Sprint '+sprintNum(s)===txt);btn.classList.toggle('on',sp&&activeSprints.has(sp));btn.classList.remove('all')}
+  });
+  applyFilter();
+  refreshAll();
+}
+
+// set active sprint for detail tab
+function openSprintDetail(sp){
+  activeSprintDetail=sp;
+  switchTab('sprint');
+  // select that sprint in the toggle
+  activeSprints=new Set([sp]);
+  document.querySelectorAll('.sprint-tog').forEach(btn=>{
+    const txt=btn.textContent.trim();
+    btn.classList.remove('on','all');
+    if(txt==='Sprint '+sprintNum(sp))btn.classList.add('on');
+  });
+  buildSprintDetail();
+}
+
+function getActiveRows(){
+  if(activeSprints.has('all'))return allRows;
+  const spH=getSprintH();
+  if(!spH)return allRows;
+  return allRows.filter(r=>[...activeSprints].some(s=>r[spH]===s));
+}
+
+// ═══ FILTER ═══
+// ═══ MULTI-SELECT FILTER STATE ═══
+const msState={msStatus:new Set(),msPriority:new Set(),msAssignee:new Set(),msType:new Set()};
+const msFields={msStatus:'Status',msPriority:'Priority',msAssignee:'Assignee',msType:'Issue Type'};
+const msLabels={msStatus:'Statuses',msPriority:'Priorities',msAssignee:'Assignees',msType:'Types'};
+
+function populateFilters(){
+  const sh=getFieldH(['Status']),ph=getFieldH(['Priority']),ah=getFieldH(['Assignee']),th=getFieldH(['Issue Type']);
+  buildMsDrop('msStatus',sh,'All Statuses');
+  buildMsDrop('msPriority',ph,'All Priorities');
+  buildMsDrop('msAssignee',ah,'All Assignees');
+  buildMsDrop('msType',th,'All Types');
+}
+
+function buildMsDrop(id,h,label){
+  const drop=document.getElementById(id+'Drop');
+  if(!drop)return;
+  const vals=h?[...new Set(allRows.map(r=>r[h]).filter(Boolean))].sort():[];
+  drop.innerHTML=vals.map(v=>`<div class="ms-item${msState[id].has(v)?' sel':''}" data-val="${v.replace(/"/g,'&quot;')}" onclick="toggleMsItem('${id}',this.dataset.val)">
+    <span class="ms-cb"></span><span>${v}</span>
+  </div>`).join('')
+  + `<button class="ms-clear" onclick="clearMs('${id}')">✕ Clear all</button>`;
+  updateMsBtn(id,label);
+}
+
+function toggleMs(id){
+  // Close all others first
+  Object.keys(msState).forEach(k=>{
+    if(k!==id){
+      const d=document.getElementById(k+'Drop');
+      if(d)d.classList.remove('open');
+    }
+  });
+  const drop=document.getElementById(id+'Drop');
+  if(drop)drop.classList.toggle('open');
+}
+
+function toggleMsItem(id,val){
+  if(msState[id].has(val))msState[id].delete(val);
+  else msState[id].add(val);
+  // Update visual
+  const drop=document.getElementById(id+'Drop');
+  if(drop){
+    drop.querySelectorAll('.ms-item').forEach(el=>{
+      el.classList.toggle('sel',msState[id].has(el.dataset.val));
+    });
+  }
+  updateMsBtn(id,msLabels[id]?'All '+msLabels[id]:'All');
+  applyFilter();
+}
+
+function clearMs(id){
+  msState[id].clear();
+  const drop=document.getElementById(id+'Drop');
+  if(drop)drop.querySelectorAll('.ms-item').forEach(el=>el.classList.remove('sel'));
+  updateMsBtn(id,'All '+(msLabels[id]||''));
+  applyFilter();
+}
+
+function updateMsBtn(id,defaultLabel){
+  const btn=document.querySelector(`#${id} .ms-btn`);
+  if(!btn)return;
+  const count=msState[id].size;
+  if(count===0){
+    btn.innerHTML=`${defaultLabel} <span class="ms-arrow">▾</span>`;
+    btn.classList.remove('active');
+  } else if(count===1){
+    const val=[...msState[id]][0];
+    const short=val.length>14?val.slice(0,14)+'…':val;
+    btn.innerHTML=`${short} <span class="ms-arrow">▾</span>`;
+    btn.classList.add('active');
+  } else {
+    btn.innerHTML=`${count} selected <span class="ms-count">${count}</span> <span class="ms-arrow">▾</span>`;
+    btn.classList.add('active');
+  }
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.ms-wrap')){
+    document.querySelectorAll('.ms-drop').forEach(d=>d.classList.remove('open'));
+  }
+});
+
+function applyFilter(){
+  const q=document.getElementById('tableSearch').value.toLowerCase();
+  const at=document.getElementById('fAttn').value;
+  const sh=getFieldH(['Status']),ph=getFieldH(['Priority']),ah=getFieldH(['Assignee']),th=getFieldH(['Issue Type']);
+  const spH=getSprintH(),cyH=getFieldH(['Custom field (Carried Over)']);
+  const sumH=getFieldH(['Summary']),keyH=getFieldH(['Issue key']);
+
+  filteredRows=allRows.filter(row=>{
+    if(!activeSprints.has('all')&&spH&&![...activeSprints].some(s=>row[spH]===s))return false;
+    if(q&&!Object.values(row).some(v=>v.toLowerCase().includes(q)))return false;
+    if(msState.msStatus.size>0&&sh&&!msState.msStatus.has(row[sh]))return false;
+    if(msState.msPriority.size>0&&ph&&!msState.msPriority.has(row[ph]))return false;
+    if(msState.msAssignee.size>0&&ah&&!msState.msAssignee.has(row[ah]))return false;
+    if(msState.msType.size>0&&th&&!msState.msType.has(row[th]))return false;
+    const k=row[sumH]||row[keyH];
+    const cc=carryCounts[k]||0;
+    const isCarriedRow=cyH&&!!row[cyH];
+    if(at==='bottle'&&!(isCarriedRow&&cc>=3))return false;
+    if(at==='attn'&&!(isCarriedRow&&cc>=2))return false;
+    if(at==='carried'&&!(isCarriedRow&&cc>=1))return false;
+    if(at==='any_carry'&&!isCarriedRow)return false;
+    if(at==='blocked'&&sh&&!/blocked/i.test(row[sh]))return false;
+    if(at==='unplanned'){const sp2=spH?row[spH]:'';if(!isUnplanned(row,sp2))return false;}
+    return true;
+  });
+  curPage=1;renderTable();buildStats();updateResetBtn();
+}
+
+// ═══ PRESETS ═══
+const PRESETS={
+  pm:   ['Issue key','Summary','Issue Type','Status','Priority','Assignee','Due date','Custom field (Sprint)','Custom field (Story point estimate)','Custom field (Epic Name)','Custom field (Carried Over)','Custom field (Original Sprint)'],
+  sprint:['Issue key','Summary','Issue Type','Status','Assignee','Custom field (Story point estimate)','Custom field (Sprint)','Priority','Custom field (Epic Name)','Custom field (Carried Over)'],
+  status:['Issue key','Summary','Status','Priority','Assignee','Issue Type','Updated','Resolution','Custom field (Carried Over)'],
+  time:  ['Issue key','Summary','Assignee','Status','Original estimate','Remaining Estimate','Time Spent','Work Ratio','Custom field (Story point estimate)'],
+  carry: ['Issue key','Summary','Issue Type','Status','Assignee','Custom field (Sprint)','Custom field (Original Sprint)','Custom field (Carried Over)','Priority','Custom field (Story point estimate)'],
+  all:   null
+};
+function applyPreset(name){
+  const p=PRESETS[name];
+  if(p===null)selectedFields=[...headers];
+  else{selectedFields=p.filter(n=>headers.includes(n));if(!selectedFields.length)selectedFields=headers.slice(0,10);}
+  document.querySelectorAll('.fi').forEach(el=>{
+    const idx=parseInt(el.dataset.fidx);
+    const h=(!isNaN(idx)&&idx>=0&&idx<headers.length)?headers[idx]:null;
+    el.classList.toggle('on',!!(h&&selectedFields.includes(h)));
+  });
+  renderTable();
+}
+
+// ═══ FIELD SELECTOR ═══
+function buildFieldSelector(){
+  const groups={};
+  headers.forEach(h=>{const g=fieldMeta[h].g;if(!groups[g])groups[g]=[];groups[g].push(h)});
+  let html='';
+  for(const[g,fields] of Object.entries(groups)){
+    const c=GCOLS[g]||'#7A93AA',gid='g_'+g.replace(/\W/g,'_');
+    html+=`<div class="fg">
+      <div class="fg-hdr" data-gid="${gid}">
+        <span class="fg-name"><span class="gdot" style="background:${c}"></span>${g}<span style="color:${c};font-size:10px"> (${fields.length})</span></span>
+        <span id="${gid}_a">▾</span>
+      </div>
+      <div class="fg-items" id="${gid}">`;
+    fields.forEach((h,fi)=>{
+      const m=fieldMeta[h],on=selectedFields.includes(h)?'on':'';
+      html+=`<div class="fi ${on}" data-fidx="${headers.indexOf(h)}">
+        <span class="fcb"></span><span class="fn">${m.i} ${m.name}</span>
+        <span class="ftag ${m.t==='custom'?'tcu':m.t==='time'?'tt':'tc'}">${m.t}</span>
+      </div>`;
+    });
+    html+='</div></div>';
+  }
+  const container=document.getElementById('fieldGroups');
+  container.innerHTML=html;
+
+  // Single delegated listener on the container — most reliable pattern
+  container.onclick=function(e){
+    const fi=e.target.closest('.fi');
+    const fhdr=e.target.closest('.fg-hdr');
+    if(fi){
+      const idx=parseInt(fi.dataset.fidx);
+      if(isNaN(idx)||idx<0||idx>=headers.length)return;
+      const h=headers[idx];
+      const i=selectedFields.indexOf(h);
+      if(i>=0){
+        selectedFields.splice(i,1);
+      } else {
+        // Insert at natural header order position, not at end
+        const naturalPos=headers.indexOf(h);
+        const insertAt=selectedFields.findIndex(f=>headers.indexOf(f)>naturalPos);
+        if(insertAt===-1)selectedFields.push(h);
+        else selectedFields.splice(insertAt,0,h);
+      }
+      fi.classList.toggle('on',selectedFields.includes(h));
+      renderTable();
+    } else if(fhdr){
+      togG(fhdr.dataset.gid);
+    }
+  };
+}
+function togG(id){const el=document.getElementById(id),a=document.getElementById(id+'_a');el.classList.toggle('closed');a.textContent=el.classList.contains('closed')?'▸':'▾'}
+function togField(h){
+  const i=selectedFields.indexOf(h);
+  if(i>=0)selectedFields.splice(i,1);else selectedFields.push(h);
+  const on=selectedFields.includes(h);
+  const idx=headers.indexOf(h);
+  const el=document.querySelector(`.fi[data-fidx="${idx}"]`);
+  if(el)el.classList.toggle('on',on);
+  renderTable();
+}
+function filterFields(q){
+  const lq=q.toLowerCase();
+  document.querySelectorAll('.fi').forEach(el=>{
+    el.style.display=el.textContent.toLowerCase().includes(lq)?'':'none';
+  });
+}
+
+function selAll(){
+  selectedFields=[...headers];
+  document.querySelectorAll('.fi').forEach(el=>el.classList.add('on'));
+  renderTable();
+}
+function selNone(){
+  selectedFields=[];
+  document.querySelectorAll('.fi').forEach(el=>el.classList.remove('on'));
+  renderTable();
+}
+function applyPreset(name){
+  const p=PRESETS[name];
+  if(p===null)selectedFields=[...headers];
+  else{selectedFields=p.filter(n=>headers.includes(n));if(!selectedFields.length)selectedFields=headers.slice(0,10);}
+  document.querySelectorAll('.fi').forEach(el=>{
+    const idx=parseInt(el.dataset.fidx);
+    const h=(!isNaN(idx)&&idx>=0&&idx<headers.length)?headers[idx]:null;
+    el.classList.toggle('on',h&&selectedFields.includes(h));
+  });
+  renderTable();
+}
+
+// ═══ HELPER UTILITIES ═══
+
+// Issue age in days from Created date
+function issueAgeDays(row){
+  const cH=getFieldH(['Created']);
+  if(!cH||!row[cH])return null;
+  const d=new Date(row[cH]);
+  if(isNaN(d))return null;
+  return Math.floor((Date.now()-d)/86400000);
+}
+
+// Is an issue unplanned? Created AFTER sprint start date
+function isUnplanned(row,sprintStr){
+  const cH=getFieldH(['Created']);
+  if(!cH||!row[cH]||!sprintStr)return false;
+  const m=sprintStr.match(/\(([^-]+)-/);
+  if(!m)return false;
+  const sprintStart=new Date(m[1].trim());
+  const created=new Date(row[cH]);
+  if(isNaN(sprintStart)||isNaN(created))return false;
+  return created>sprintStart;
+}
+
+// Est vs Actual ratio
+function estVsActual(row){
+  const oeH=getFieldH(['Original estimate']);
+  const tsH=getFieldH(['Time Spent']);
+  if(!oeH||!tsH)return null;
+  const est=parseFloat(row[oeH]);
+  const act=parseFloat(row[tsH]);
+  if(!est||!act||isNaN(est)||isNaN(act))return null;
+  return Math.round(act/est*100);
+}
+
+// Most recent Updated date across all rows
+function getLastUpdated(){
+  const uH=getFieldH(['Updated']);
+  if(!uH)return null;
+  let latest=null;
+  allRows.forEach(r=>{
+    if(!r[uH])return;
+    const d=new Date(r[uH]);
+    if(!isNaN(d)&&(!latest||d>latest))latest=d;
+  });
+  return latest;
+}
+
+// Reset all filters
+function resetAllFilters(){
+  document.getElementById('tableSearch').value='';
+  document.getElementById('fAttn').value='';
+  Object.keys(msState).forEach(k=>{
+    msState[k].clear();
+    const drop=document.getElementById(k+'Drop');
+    if(drop)drop.querySelectorAll('.ms-item').forEach(el=>el.classList.remove('sel'));
+    updateMsBtn(k,'All '+(msLabels[k]||''));
+  });
+  activeSprints=new Set(['all']);
+  buildSprintToggles();
+  applyFilter();
+  document.getElementById('resetFiltersBtn')?.classList.remove('visible');
+}
+
+// Check if any filter is active and toggle reset button
+function updateResetBtn(){
+  const active=
+    document.getElementById('tableSearch')?.value||
+    document.getElementById('fAttn')?.value||
+    Object.values(msState).some(s=>s.size>0)||
+    !activeSprints.has('all');
+  document.getElementById('resetFiltersBtn')?.classList.toggle('visible',!!active);
+}
+
+
+// ═══ REFRESH ALL ═══
+function refreshAll(){
+  buildStats();
+  buildOverviewCharts();
+  buildSprintCards();
+  if(currentTab==='sprint') buildSprintDetail();
+  renderTable();
+  buildVelocity();
+  buildCarryover();
+}
+
+// ═══ STATS BAR ═══
+function buildStats(){
+  const rows=getActiveRows();
+  const sh=getFieldH(['Status']),spE=getFieldH(['Custom field (Story point estimate)']),cyH=getFieldH(['Custom field (Carried Over)']);
+  const total=rows.length;
+  const spH2=getSprintH();
+  const unplanned=rows.filter(r=>{
+    const sp=spH2?r[spH2]:'';
+    return isUnplanned(r,sp);
+  }).length;
+  const done=sh?rows.filter(r=>/done/i.test(r[sh])).length:'-';
+  const spDone=spE&&sh?rows.filter(r=>/done/i.test(r[sh])).reduce((s,r)=>s+(parseFloat(r[spE])||0),0):'-';
+  const spCarry=spE&&cyH?rows.filter(r=>r[cyH]).reduce((s,r)=>s+(parseFloat(r[spE])||0),0):'-';
+  const blocked=sh?rows.filter(r=>/blocked/i.test(r[sh])).length:0;
+  const carried=cyH?rows.filter(r=>r[cyH]).length:'-';
+  const pct=total>0&&done!=='-'?Math.round(done/total*100):'-';
+  document.getElementById('statsBar').innerHTML=`
+    <div class="sc blue"><div class="sv">${total}</div><div class="sl">Total Issues</div></div>
+    <div class="sc green"><div class="sv">${done==='-'?'—':done}</div><div class="sl">Done</div></div>
+    <div class="sc teal"><div class="sv">${pct==='-'?'—':pct+'%'}</div><div class="sl">Completion</div></div>
+    <div class="sc amber"><div class="sv">${spDone==='-'?'—':spDone}</div><div class="sl">SP Done</div></div>
+    <div class="sc purple"><div class="sv">${spCarry==='-'?'—':spCarry}</div><div class="sl">SP in Carryover</div></div>
+    <div class="sc red"><div class="sv">${blocked}</div><div class="sl">Blocked</div></div>
+    <div class="sc"><div class="sv" style="color:var(--gold)">${carried==='-'?'—':carried}</div><div class="sl">Carried Over</div></div>
+    ${unplanned>0?`<div class="sc purple"><div class="sv">${unplanned}</div><div class="sl">⚠️ Unplanned</div></div>`:''}
+  `;
+}
+
+// ═══ SPRINT CARDS (Tab 1) ═══
+function buildSprintCards(){
+  const sh=getFieldH(['Status']),spH=getSprintH(),spE=getFieldH(['Custom field (Story point estimate)']),cyH=getFieldH(['Custom field (Carried Over)']);
+  const sprints=detectSprints();
+  if(!sprints.length){document.getElementById('sprintCards').innerHTML='';return}
+  const isCurrent=sprints[sprints.length-1];
+  let html='';
+  sprints.forEach(sp=>{
+    const isLast=sp===isCurrent;
+    const spRows=allRows.filter(r=>r[spH]===sp);
+    const total=spRows.length;
+    const doneRows=sh?spRows.filter(r=>/done/i.test(r[sh])):[];
+    const done=doneRows.length;
+    const inProg=sh?spRows.filter(r=>/progress|review/i.test(r[sh])).length:0;
+    const blocked=sh?spRows.filter(r=>/blocked/i.test(r[sh])).length:0;
+    const carriedRows=cyH?spRows.filter(r=>r[cyH]):[];
+    const carried=carriedRows.length;
+    const carriedDone=cyH&&sh?spRows.filter(r=>r[cyH]&&/done/i.test(r[sh])).length:0;
+    // SP breakdown
+    const spDone=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    const spCarry=spE?carriedRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    const spTotal=spE?spRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    const spOrigDone=spDone-carriedRows.filter(r=>/done/i.test(r[sh]||'')).reduce((s,r)=>s+(parseFloat(r[spE])||0),0);
+    const pct=total>0?Math.round(done/total*100):0;
+    const n=sprintNum(sp);
+    const unplanned=spRows.filter(r=>isUnplanned(r,sp)).length;
+    const dateMatch=sp.match(/\((.*?)\)/);
+    const dateStr=dateMatch?dateMatch[1]:'';
+    const fillCol=pct>=70?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
+    // pct of carryover SP in total SP
+    const carryPct=spTotal>0?Math.round(spCarry/spTotal*100):0;
+    html+=`<div class="sprint-card ${isLast?'current':''}" style="border-top-color:${fillCol}" onclick="openSprintDetail('${sp.replace(/'/g,"\'")}')">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${fillCol}"></div>
+      <div class="sc-name">Sprint ${n} ${isLast?'🔴 Active':'✅ Done'}</div>
+      ${dateStr?`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">${dateStr}</div>`:''}
+      <div class="sc-pct" style="color:${fillCol}">${pct}%</div>
+      <div class="sc-sub">Issue completion rate</div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${fillCol}"></div></div>
+      <div class="sc-row"><span class="lbl">Total</span><span class="val">${total}</span></div>
+      <div class="sc-row"><span class="lbl">✅ Done</span><span class="val" style="color:var(--green)">${done}</span></div>
+      <div class="sc-row"><span class="lbl">🔵 In Progress</span><span class="val" style="color:var(--blue-lt)">${inProg}</span></div>
+      ${blocked?`<div class="sc-row"><span class="lbl">🔴 Blocked</span><span class="val" style="color:var(--red)">${blocked}</span></div>`:''}
+      ${spTotal>0?`
+      <div class="sp-stack-wrap">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SP: ${spDone} done / ${spTotal} total (${carryPct}% carryover SP)</div>
+        <div class="sp-stack">
+          <div class="sp-seg" style="width:${spTotal>0?Math.round(spOrigDone/spTotal*100):0}%;background:var(--green)" title="${spOrigDone} SP — original done"></div>
+          <div class="sp-seg" style="width:${spTotal>0?Math.round(carriedRows.filter(r=>/done/i.test(r[sh]||'')).reduce((s,r)=>s+(parseFloat(r[spE])||0),0)/spTotal*100):0}%;background:var(--teal)" title="Carryover SP resolved"></div>
+          <div class="sp-seg" style="width:${spTotal>0?Math.round(spCarry/spTotal*100):0}%;background:rgba(245,166,35,.6)" title="${spCarry} SP in carryover"></div>
+        </div>
+        <div class="sp-legend">
+          <div class="sp-leg-item"><div class="sp-leg-dot" style="background:var(--green)"></div>Done (original)</div>
+          <div class="sp-leg-item"><div class="sp-leg-dot" style="background:var(--teal)"></div>Done (carryover)</div>
+          <div class="sp-leg-item"><div class="sp-leg-dot" style="background:rgba(245,166,35,.6)"></div>Carryover SP</div>
+        </div>
+      </div>`:''}
+      ${carried>0?`<div class="carry-badge">🔄 ${carried} carried in · ${carriedDone} resolved</div>`:''}
+      ${unplanned>0?`<div class="carry-badge" style="background:rgba(155,89,182,.15);border-color:rgba(155,89,182,.3);color:var(--purple)">⚠️ ${unplanned} unplanned added</div>`:''}
+      <div style="margin-top:8px;font-size:10px;color:var(--teal)">Click for detail →</div>
+    </div>`;
+  });
+  document.getElementById('sprintCards').innerHTML=html;
+}
+
+// ═══ OVERVIEW CHARTS (Tab 1) ═══
+function buildOverviewCharts(){
+  const sprints=detectSprints();
+  const sh=getFieldH(['Status']),spH=getSprintH(),spE=getFieldH(['Custom field (Story point estimate)']),cyH=getFieldH(['Custom field (Carried Over)']);
+  if(!sprints.length){document.getElementById('chartsRow').innerHTML='';return}
+
+  // SP done vs carryover SP per sprint
+  let spChartHtml=`<div class="chart-card" style="grid-column:span 2"><div class="cc-title">📐 SP Done vs Carryover SP per Sprint</div>`;
+  const sprintData=sprints.map(sp=>{
+    const rows=allRows.filter(r=>r[spH]===sp);
+    const doneRows=sh?rows.filter(r=>/done/i.test(r[sh])):[];
+    const carryRows=cyH?rows.filter(r=>r[cyH]):[];
+    const carryDoneRows=cyH&&sh?rows.filter(r=>r[cyH]&&/done/i.test(r[sh])):[];
+    const spDone=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    const spCarry=spE?carryRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    const spCarryDone=spE?carryDoneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    const spTotal=spE?rows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    return{n:sprintNum(sp),spDone,spCarry,spCarryDone,spTotal,total:rows.length,done:doneRows.length};
+  });
+  const maxSP=Math.max(...sprintData.map(d=>d.spTotal),1);
+  spChartHtml+=`<div style="display:flex;align-items:flex-end;gap:10px;height:100px;padding-top:8px">`;
+  sprintData.forEach(d=>{
+    const hTotal=Math.round(d.spTotal/maxSP*80);
+    const hCarry=Math.round(d.spCarry/maxSP*80);
+    const hDone=Math.round(d.spDone/maxSP*80);
+    spChartHtml+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="display:flex;gap:2px;align-items:flex-end;height:80px;width:100%">
+        <div style="flex:1;background:rgba(12,125,224,.35);height:${hTotal}px;border-radius:2px 2px 0 0" title="Total SP: ${d.spTotal}"></div>
+        <div style="flex:1;background:var(--green);height:${hDone}px;border-radius:2px 2px 0 0" title="SP Done: ${d.spDone}"></div>
+        <div style="flex:1;background:rgba(245,166,35,.7);height:${hCarry}px;border-radius:2px 2px 0 0" title="Carryover SP: ${d.spCarry}"></div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);font-weight:600">S${d.n}</div>
+    </div>`;
+  });
+  spChartHtml+=`</div>
+  <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;flex-wrap:wrap">
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(12,125,224,.35);border-radius:2px;display:inline-block"></span>Total SP</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block"></span>SP Done</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(245,166,35,.7);border-radius:2px;display:inline-block"></span>Carryover SP</span>
+  </div></div>`;
+
+  // Previous sprint carryovers resolved in next sprint
+  let resolveChartHtml=`<div class="chart-card"><div class="cc-title">✅ Previous Sprint Carryovers Resolved in Next Sprint</div>`;
+  for(let i=1;i<sprints.length;i++){
+    const prevSp=sprints[i-1],curSp=sprints[i];
+    const cyH2=getFieldH(['Custom field (Carried Over)']);
+    const prevNum=sprintNum(prevSp);
+    const carriedFromPrev=allRows.filter(r=>r[spH]===curSp&&cyH2&&r[cyH2]==='Sprint '+prevNum);
+    const resolvedFromPrev=sh?carriedFromPrev.filter(r=>/done/i.test(r[sh])):[];
+    const total=carriedFromPrev.length;
+    const res=resolvedFromPrev.length;
+    const pct=total>0?Math.round(res/total*100):100;
+    const col=pct>=70?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
+    resolveChartHtml+=`<div class="mb-row">
+      <span class="mb-lbl" style="width:90px">S${prevNum}→S${sprintNum(curSp)}</span>
+      <div class="mb-track"><div class="mb-fill" style="width:${pct}%;background:${col}"></div></div>
+      <span class="mb-cnt" style="width:60px;color:${col}">${res}/${total} (${pct}%)</span>
+    </div>`;
+  }
+  resolveChartHtml+=`</div>`;
+
+  // Status breakdown
+  const rows=allRows;
+  const countBy=(h)=>{const m={};rows.forEach(r=>{const v=(r[h]||'Other').split(',')[0].trim();m[v]=(m[v]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,6)};
+  const sh2=getFieldH(['Status']);
+  let statusHtml=`<div class="chart-card"><div class="cc-title">🚦 Issue Status Breakdown</div>`;
+  if(sh2){const mx=Math.max(...countBy(sh2).map(e=>e[1]),1);statusHtml+=countBy(sh2).map(([l,c])=>`<div class="mb-row"><span class="mb-lbl">${l}</span><div class="mb-track"><div class="mb-fill" style="width:${Math.round(c/mx*100)}%;background:${statusStyle(l).c}"></div></div><span class="mb-cnt">${c}</span></div>`).join('')}
+  statusHtml+=`</div>`;
+
+  document.getElementById('chartsRow').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px">${spChartHtml}${resolveChartHtml}${statusHtml}</div>`;
+}
+
+// ═══ SIDEBAR SPRINT PICKER ═══
+function buildSidebarSprintPicker(){
+  const sprints=detectSprints();
+  const el=document.getElementById('sidebarSprintPicker');
+  if(!el) return;
+  let html='<div style="display:flex;flex-direction:column;gap:4px">';
+  sprints.forEach((sp,i)=>{
+    const n=sprintNum(sp);
+    const isActive=activeSprintDetail===sp;
+    html+=`<button onclick="selectSprintDetail('${sp.replace(/'/g,"\\'")}')"
+      style="text-align:left;padding:7px 10px;border-radius:7px;border:1px solid ${isActive?'var(--teal)':'var(--border)'};
+      background:${isActive?'var(--teal-dim)':'rgba(255,255,255,.03)'};color:${isActive?'var(--teal)':'var(--text)'};
+      font-size:12px;font-weight:${isActive?'700':'500'};cursor:pointer;transition:var(--tr)"
+      id="ssp_${n}">
+      Sprint ${n} ${i===sprints.length-1?'🔴':'✅'}
+    </button>`;
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function selectSprintDetail(sp){
+  activeSprintDetail=sp;
+  buildSidebarSprintPicker();
+  buildSprintDetail();
+}
+
+// ═══ SPRINT DETAIL (Tab 2) — single sprint tabbed ═══
+function buildSprintDetail(){
+  const sprints=detectSprints();
+  if(!sprints.length){
+    document.getElementById('sdTabBar').innerHTML='';
+    document.getElementById('sprintDetailContent').innerHTML='<div class="empty"><div class="ei">📊</div><h3>No data loaded</h3></div>';
+    return;
+  }
+
+  // If no sprint selected yet, default to first
+  if(!activeSprintDetail||!sprints.includes(activeSprintDetail)) activeSprintDetail=sprints[0];
+
+  // Build tab bar
+  const tabBar=document.getElementById('sdTabBar');
+  tabBar.innerHTML=sprints.map(sp=>{
+    const n=sprintNum(sp);
+    const isActive=sp===activeSprintDetail;
+    return`<button class="sd-tab${isActive?' active':''}" onclick="selectSprintDetail('${sp.replace(/'/g,"\\'")}')">Sprint ${n}</button>`;
+  }).join('');
+
+  // Render only the active sprint
+  const sp=activeSprintDetail;
+  const n=sprintNum(sp);
+  const spH=getSprintH(),sh=getFieldH(['Status']),cyH=getFieldH(['Custom field (Carried Over)']),spE=getFieldH(['Custom field (Story point estimate)']);
+  const sumH=getFieldH(['Summary']),keyH=getFieldH(['Issue key']),ahH=getFieldH(['Assignee']),tyH=getFieldH(['Issue Type']),epicH=getFieldH(['Custom field (Epic Name)']);
+  const rows=allRows.filter(r=>r[spH]===sp);
+  const total=rows.length;
+  const doneRows=sh?rows.filter(r=>/done/i.test(r[sh])):[];
+  const carriedRows=cyH?rows.filter(r=>r[cyH]):[];
+  const inProgRows=sh?rows.filter(r=>/progress/i.test(r[sh])):[];
+  const blockedRows=sh?rows.filter(r=>/blocked/i.test(r[sh])):[];
+  const spTotal=spE?rows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+  const spDone=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+  const spCarry=spE?carriedRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+  const spCarryDone=spE?carriedRows.filter(r=>sh&&/done/i.test(r[sh]||'')).reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+  const pct=total>0?Math.round(doneRows.length/total*100):0;
+  const unplannedRows=rows.filter(r=>isUnplanned(r,sp));
+  const fillCol=pct>=70?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
+  const dateMatch=sp.match(/\((.*?)\)/);
+  const dateStr=dateMatch?dateMatch[1]:'';
+
+  // Stat cards row
+  const statRow=`<div class="sd-stat-row">
+    <div class="sd-stat"><div class="sd-stat-val" style="color:${fillCol}">${pct}%</div><div class="sd-stat-lbl">Completion</div></div>
+    <div class="sd-stat"><div class="sd-stat-val" style="color:var(--green)">${doneRows.length}/${total}</div><div class="sd-stat-lbl">Issues Done</div></div>
+    <div class="sd-stat"><div class="sd-stat-val" style="color:var(--blue-lt)">${spDone}/${spTotal}</div><div class="sd-stat-lbl">Story Points</div></div>
+    <div class="sd-stat"><div class="sd-stat-val" style="color:${carriedRows.length?'var(--gold)':'var(--green)'}">${carriedRows.length}</div><div class="sd-stat-lbl">Carried In</div></div>
+    <div class="sd-stat"><div class="sd-stat-val" style="color:${blockedRows.length?'var(--red)':'var(--green)'}">${blockedRows.length}</div><div class="sd-stat-lbl">Blocked</div></div>
+    ${unplannedRows.length>0?`<div class="sd-stat"><div class="sd-stat-val" style="color:var(--purple)">${unplannedRows.length}</div><div class="sd-stat-lbl">⚠️ Unplanned</div></div>`:''}
+  </div>`;
+
+  // SP breakdown bar
+  const spBar=spTotal>0?`<div style="margin-bottom:14px">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:5px">
+      Story Points — <span style="color:var(--green)">${spDone-spCarryDone} orig done</span> · 
+      <span style="color:var(--teal)">${spCarryDone} carry done</span> · 
+      <span style="color:var(--gold)">${spCarry-spCarryDone} carry open</span> · 
+      <span style="color:var(--red)">${spTotal-spDone} remaining</span>
+    </div>
+    <div class="sp-stack" style="height:12px">
+      <div class="sp-seg" style="width:${Math.round((spDone-spCarryDone)/spTotal*100)}%;background:var(--green)"></div>
+      <div class="sp-seg" style="width:${Math.round(spCarryDone/spTotal*100)}%;background:var(--teal)"></div>
+      <div class="sp-seg" style="width:${Math.round((spCarry-spCarryDone)/spTotal*100)}%;background:rgba(245,166,35,.6)"></div>
+      <div class="sp-seg" style="width:${Math.round((spTotal-spDone-Math.max(0,spCarry-spCarryDone))/spTotal*100)}%;background:rgba(232,68,90,.35)"></div>
+    </div>
+  </div>`:'';
+
+  // Burndown
+  const burndownSVG=buildBurndown(rows,spTotal,sp);
+
+  // Assignee breakdown
+  const assigneeMap={};
+  rows.forEach(r=>{
+    if(!r[ahH])return;
+    if(!assigneeMap[r[ahH]])assigneeMap[r[ahH]]={done:0,total:0,sp:0};
+    assigneeMap[r[ahH]].total++;
+    if(/done/i.test(r[sh]||''))assigneeMap[r[ahH]].done++;
+    assigneeMap[r[ahH]].sp+=(parseFloat(r[spE])||0);
+  });
+  const assigneeHtml=Object.entries(assigneeMap).map(([name,d])=>{
+    const c=avatarCol(name),init=name.split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const apct=d.total>0?Math.round(d.done/d.total*100):0;
+    const ac=apct>=70?'var(--green)':apct>=50?'var(--gold)':'var(--red)';
+    return`<div class="mb-row" style="margin-bottom:8px">
+      <span style="display:flex;align-items:center;gap:5px;width:100px;flex-shrink:0">
+        <span class="avatar" style="background:${c}20;color:${c}">${init}</span>
+        <span style="color:var(--muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name.split(' ')[0]}</span>
+      </span>
+      <div class="mb-track"><div class="mb-fill" style="width:${apct}%;background:${ac}"></div></div>
+      <span style="font-size:10px;color:${ac};font-weight:700;width:75px;text-align:right">${d.done}/${d.total} · ${d.sp}sp</span>
+    </div>`;
+  }).join('');
+
+  // Carryover list
+  const carryHtml=carriedRows.length?`<div style="display:flex;flex-direction:column;gap:5px">`+carriedRows.map(r=>{
+    const key=r[keyH]||'',sum=r[sumH]||'',stat=r[sh]||'',sp2=r[spE]||'',from=r[cyH]||'';
+    const isDone=/done/i.test(stat),isBlock=/blocked/i.test(stat);
+    return`<div class="carry-item-sm" style="border-left-color:${isDone?'var(--green)':isBlock?'var(--red)':'var(--gold)'}">
+      <span class="ci-key">${key}</span>
+      <div class="ci-info">
+        <div class="ci-sum" title="${sum}">${sum.length>60?sum.slice(0,60)+'…':sum}</div>
+        <div class="ci-chips">
+          <span class="ci-chip" style="background:rgba(245,166,35,.15);color:var(--gold)">from ${from}</span>
+          <span class="status-pill" style="background:${statusStyle(stat).bg};color:${statusStyle(stat).c};font-size:10px;padding:1px 7px">${stat}</span>
+          ${sp2?`<span class="sp-badge">${sp2}sp</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('')+'</div>':'<div style="color:var(--muted);font-size:12px">No carried-over issues this sprint.</div>';
+
+  // Issue list (done / in-progress / blocked)
+  function issueGroup(groupRows, label, col){
+    if(!groupRows.length) return '';
+    return`<div style="margin-bottom:12px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:${col};margin-bottom:6px">${label} (${groupRows.length})</div>
+      ${groupRows.slice(0,15).map(r=>{
+        const key=r[keyH]||'',sum=r[sumH]||'',sp2=r[spE]||'',type=r[tyH]||'';
+        return`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--navy-card);border-radius:6px;margin-bottom:3px;font-size:12px">
+          <span class="key" style="font-size:10px">${key}</span>
+          <span class="type-chip" style="font-size:10px;padding:1px 5px"><span class="dot" style="background:${typeCol(type)}"></span>${type}</span>
+          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sum}</span>
+          ${sp2?`<span class="sp-badge">${sp2}</span>`:''}
+        </div>`;
+      }).join('')}
+      ${groupRows.length>15?`<div style="font-size:11px;color:var(--muted);padding:4px 8px">+ ${groupRows.length-15} more</div>`:''}
+    </div>`;
+  }
+
+  document.getElementById('sprintDetailContent').innerHTML=`
+    <div style="margin-bottom:6px;color:var(--muted);font-size:12px">${dateStr}</div>
+    ${statRow}
+    ${spBar}
+    <div class="sd-cols">
+      <div class="sd-chart">
+        <div class="cc-title">📉 Burndown (simulated)</div>
+        ${burndownSVG}
+      </div>
+      <div class="sd-chart">
+        <div class="cc-title">👤 Completion by Assignee</div>
+        ${assigneeHtml||'<div style="color:var(--muted);font-size:12px">No data</div>'}
+      </div>
+    </div>
+    <div class="sd-cols">
+      <div class="sd-chart">
+        <div class="cc-title">🔄 Carried-Over Issues (${carriedRows.length})</div>
+        ${carryHtml}
+      </div>
+      <div class="sd-chart">
+        <div class="cc-title">📋 Issues This Sprint</div>
+        ${issueGroup(doneRows,'✅ Done','var(--green)')}
+        ${issueGroup(inProgRows,'🔵 In Progress','var(--blue-lt)')}
+        ${issueGroup(blockedRows,'🔴 Blocked','var(--red)')}
+      </div>
+    </div>
+    <div class="ai-summary" id="ai_${n}">
+      <h4>✨ AI Summary</h4>
+      <div class="ai-loading">Enter your API key in the sidebar and click "Generate AI Summary".</div>
+    </div>
+  `;
+}
+
+
+// ═══ BURNDOWN ═══
+function buildBurndown(rows,spTotal,sp){
+  const days=14;
+  const w=260,h=90,pad=28;
+  const sh=getFieldH(['Status']);
+  const spE=getFieldH(['Custom field (Story point estimate)']);
+  const doneRows=rows.filter(r=>sh&&/done/i.test(r[sh]||''));
+  const doneSP=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+  const ideal=[];for(let d=0;d<=days;d++)ideal.push(spTotal*(1-d/days));
+  const actual=[];
+  for(let d=0;d<=days;d++){
+    if(d<4)actual.push(spTotal);
+    else{const prog=Math.min(1,(d-4)/(days-4));actual.push(Math.max(0,spTotal-doneSP*prog*prog))}
+  }
+  const maxVal=Math.max(spTotal,1);
+  const scale=v=>h-pad-(v/maxVal)*(h-pad*1.4);
+  const sx=d=>pad+(d/days)*(w-pad*1.3);
+  const idealPath=ideal.map((v,d)=>`${d===0?'M':'L'}${sx(d).toFixed(1)},${scale(v).toFixed(1)}`).join(' ');
+  const actualPath=actual.map((v,d)=>`${d===0?'M':'L'}${sx(d).toFixed(1)},${scale(v).toFixed(1)}`).join(' ');
+  const remaining=Math.round(actual[actual.length-1]);
+  return`<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:90px">
+    <line x1="${pad}" y1="${h-pad}" x2="${w-pad*.5}" y2="${h-pad}" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
+    <line x1="${pad}" y1="${pad*.4}" x2="${pad}" y2="${h-pad}" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
+    <path d="${idealPath}" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <path d="${actualPath}" fill="none" stroke="var(--teal)" stroke-width="2"/>
+    <text x="${pad+2}" y="${h-pad+11}" font-size="9" fill="rgba(255,255,255,.3)">Day 1</text>
+    <text x="${w-pad*.5-22}" y="${h-pad+11}" font-size="9" fill="rgba(255,255,255,.3)">Day ${days}</text>
+    <text x="${pad-2}" y="${pad*.5}" font-size="9" fill="rgba(255,255,255,.3)" text-anchor="end">${spTotal}sp</text>
+    <text x="${w-18}" y="${scale(remaining)+4}" font-size="9" fill="var(--teal)" font-weight="bold">${remaining}sp</text>
+  </svg>
+  <div style="display:flex;gap:12px;font-size:10px;margin-top:3px">
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:1px;border-top:2px dashed rgba(255,255,255,.3);display:inline-block"></span>Ideal</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:2px;background:var(--teal);display:inline-block;border-radius:1px"></span>Actual</span>
+  </div>`;
+}
+
+// ═══ AI SUMMARY ═══
+async function generateAISummary(){
+  const apiKey=(document.getElementById('apiKeyInput')?.value||'').trim();
+  const sp=activeSprintDetail;
+  const n=sp?sprintNum(sp):0;
+  const el=document.getElementById('ai_'+n);
+  if(!el){showToast('Select a sprint first','err');return;}
+  if(!apiKey){
+    el.innerHTML=`<h4>✨ AI Summary</h4><p style="color:var(--muted)">Paste your Anthropic API key in the sidebar, then click Generate AI Summary.<br><a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--teal)">Get a key at console.anthropic.com →</a></p>`;
+    return;
+  }
+  el.innerHTML=`<h4>✨ AI Summary</h4><div class="ai-loading">⏳ Generating summary…</div>`;
+  const spH=getSprintH(),sumH=getFieldH(['Summary']),epicH=getFieldH(['Custom field (Epic Name)']),tyH=getFieldH(['Issue Type']),sh=getFieldH(['Status']),cyH=getFieldH(['Custom field (Carried Over)']);
+  const rows=allRows.filter(r=>r[spH]===sp);
+  const done=sh?rows.filter(r=>/done/i.test(r[sh])).length:0;
+  const carried=cyH?rows.filter(r=>r[cyH]).length:0;
+  const blocked=sh?rows.filter(r=>/blocked/i.test(r[sh])).length:0;
+  const issues=rows.slice(0,20).map(r=>`[${r[tyH]||'Issue'}] ${r[sumH]||''} (Epic: ${r[epicH]||'?'}, Status: ${r[sh]||'?'})`).join('\n');
+  const prompt=`You are a senior engineering project manager summarising a Jira sprint for stakeholders. Sprint: ${sp}. Stats: ${rows.length} issues, ${done} done, ${carried} carried over from previous sprint, ${blocked} blocked. Sample issues:\n${issues}\n\nWrite a concise 3-4 sentence executive summary covering: what was achieved, any notable blockers or risks, and what the carryover pattern suggests about team capacity. Be specific and constructive. No bullet points.`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:prompt}]})});
+    const data=await resp.json();
+    if(!resp.ok){el.innerHTML=`<h4>✨ AI Summary</h4><p style="color:var(--red)">⚠️ ${resp.status===401?'Invalid API key.':data?.error?.message||'API error'}</p>`;return;}
+    const txt=data.content?.find(b=>b.type==='text')?.text||'Could not generate summary.';
+    el.innerHTML=`<h4>✨ AI Summary — Sprint ${n}</h4><p>${txt}</p>`;
+  }catch(e){el.innerHTML=`<h4>✨ AI Summary</h4><p style="color:var(--red)">⚠️ ${e.message}</p>`}
+}
+
+// ═══ VELOCITY TAB ═══
+function buildVelocity(){
+  const sprints=detectSprints();
+  const sh=getFieldH(['Status']),spH=getSprintH(),spE=getFieldH(['Custom field (Story point estimate)']),cyH=getFieldH(['Custom field (Carried Over)']),ahH=getFieldH(['Assignee']);
+  if(!sprints.length)return;
+
+  const data=sprints.map(sp=>{
+    const rows=allRows.filter(r=>r[spH]===sp);
+    const doneRows=sh?rows.filter(r=>/done/i.test(r[sh])):[];
+    const carryRows=cyH?rows.filter(r=>r[cyH]):[];
+    const total=rows.length,done=doneRows.length;
+    const spCommit=spE?rows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    const spDone=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    const spCarry=spE?carryRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    const pct=total>0?Math.round(done/total*100):0;
+    const carried=carryRows.length;
+    const n=sprintNum(sp);
+    const dateMatch=sp.match(/\((.*?)\)/);
+    return{sp,n,total,done,pct,spCommit,spDone,spCarry,carried,dateStr:dateMatch?dateMatch[1]:''};
+  });
+
+  const avg3=data.length>=3?Math.round(data.slice(-3).reduce((s,d)=>s+d.spDone,0)/3):null;
+  const avgComp=Math.round(data.reduce((s,d)=>s+d.pct,0)/data.length);
+  const totalSPDone=data.reduce((s,d)=>s+d.spDone,0);
+  const totalCarried=data.reduce((s,d)=>s+d.carried,0);
+  const best=data.reduce((b,d)=>d.pct>b.pct?d:b,data[0]);
+
+  document.getElementById('velStats').innerHTML=`
+    <div class="sc teal"><div class="sv">${avgComp}%</div><div class="sl">Avg Completion</div></div>
+    <div class="sc green"><div class="sv">${totalSPDone}</div><div class="sl">Total SP Done</div></div>
+    <div class="sc amber"><div class="sv">${totalCarried}</div><div class="sl">Total Carryovers</div></div>
+    <div class="sc blue"><div class="sv">Sprint ${best.n}</div><div class="sl">Best Sprint (${best.pct}%)</div></div>
+    ${avg3!==null?`<div class="sc purple"><div class="sv">~${avg3}</div><div class="sl">3-Sprint Avg SP</div></div>`:''}
+  `;
+
+  // Performance table with sprint names
+  let tbl=`<tr><th>Sprint</th><th>Dates</th><th>Issues</th><th>Done</th><th>Completion</th><th>SP Commit</th><th>SP Done</th><th>SP Carryover</th><th>Carried In</th><th>Trend</th></tr>`;
+  data.forEach((d,i)=>{
+    const prev=i>0?data[i-1]:null;
+    const trend=prev?(d.pct>prev.pct?'↑':d.pct<prev.pct?'↓':'→'):'-';
+    const tc=trend==='↑'?'trend-up':trend==='↓'?'trend-dn':'trend-eq';
+    const fillCol=d.pct>=70?'var(--green)':d.pct>=50?'var(--gold)':'var(--red)';
+    tbl+=`<tr>
+      <td><strong>Sprint ${d.n}</strong></td>
+      <td style="color:var(--muted);font-size:11px">${d.dateStr}</td>
+      <td>${d.total}</td>
+      <td style="color:var(--green);font-weight:700">${d.done}</td>
+      <td><span style="color:${fillCol};font-weight:700">${d.pct}%</span></td>
+      <td>${d.spCommit}</td>
+      <td style="color:var(--green);font-weight:700">${d.spDone}</td>
+      <td style="color:var(--gold)">${d.spCarry}</td>
+      <td style="color:var(--gold)">${d.carried}</td>
+      <td class="${tc}" style="font-size:16px">${trend}</td>
+    </tr>`;
+  });
+  document.getElementById('spPerfTable').innerHTML=tbl;
+
+  // SP bar chart
+  const maxSP=Math.max(...data.map(d=>d.spCommit),1);
+  let velH='<div class="vel-bar-chart">';
+  data.forEach(d=>{
+    const hC=Math.round(d.spCommit/maxSP*68),hD=Math.round(d.spDone/maxSP*68),hK=Math.round(d.spCarry/maxSP*68);
+    velH+=`<div class="vel-col">
+      <div class="vel-sp-label" style="font-size:9px">${d.spDone}</div>
+      <div class="vel-bars">
+        <div class="vel-bar" style="height:${hC}px;background:rgba(12,125,224,.4)" data-tip="S${d.n} Committed: ${d.spCommit} SP"></div>
+        <div class="vel-bar" style="height:${hD}px;background:var(--green)" data-tip="S${d.n} Done: ${d.spDone} SP"></div>
+        <div class="vel-bar" style="height:${hK}px;background:rgba(245,166,35,.7)" data-tip="S${d.n} Carryover: ${d.spCarry} SP"></div>
+      </div>
+      <div class="vel-sprint-label">S${d.n}</div>
+    </div>`;
+  });
+  velH+='</div>';
+  document.getElementById('velChart').innerHTML=velH;
+
+  // Assignee SP
+  const aMap={};
+  allRows.forEach(r=>{
+    if(!r[ahH]||!spE)return;
+    if(!sh||!/done/i.test(r[sh]||''))return;
+    aMap[r[ahH]]=(aMap[r[ahH]]||0)+(parseFloat(r[spE])||0);
+  });
+  const aEntries=Object.entries(aMap).sort((a,b)=>b[1]-a[1]);
+  const mx2=Math.max(...aEntries.map(e=>e[1]),1);
+  document.getElementById('assigneeChart').innerHTML=aEntries.map(([n,sp])=>{
+    const pct=Math.round(sp/mx2*100),c=avatarCol(n);
+    const init=n.split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    return`<div class="mb-row">
+      <span style="display:flex;align-items:center;gap:5px;width:80px;flex-shrink:0">
+        <span class="avatar" style="background:${c}20;color:${c};width:18px;height:18px;font-size:8px">${init}</span>
+        <span class="mb-lbl" style="width:auto">${n.split(' ')[0]}</span>
+      </span>
+      <div class="mb-track"><div class="mb-fill" style="width:${pct}%;background:${c}"></div></div>
+      <span class="mb-cnt">${sp}</span>
+    </div>`;
+  }).join('');
+
+  // Completion % chart with trend
+  const mx3=100;
+  let cHtml='';
+  data.forEach((d,i)=>{
+    const col=d.pct>=70?'var(--green)':d.pct>=50?'var(--gold)':'var(--red)';
+    cHtml+=`<div class="mb-row"><span class="mb-lbl">Sprint ${d.n}</span><div class="mb-track"><div class="mb-fill" style="width:${d.pct}%;background:${col}"></div></div><span class="mb-cnt" style="color:${col}">${d.pct}%</span></div>`;
+  });
+  document.getElementById('compChart').innerHTML=cHtml;
+
+  if(avg3!==null){
+    const pred3=data.length>0?Math.round(data.slice(-3).reduce((s,d)=>s+d.pct,0)/3):0;
+    document.getElementById('predBox').innerHTML=`<div style="background:rgba(0,196,180,.08);border:1px solid rgba(0,196,180,.2);border-radius:7px;padding:9px 12px;font-size:12px"><strong style="color:var(--teal)">🔮 Prediction:</strong> Based on the last 3 sprints, next sprint is projected to complete <strong>${pred3}%</strong> of issues (~${avg3} SP). ${pred3>=70?'Team is performing well 🟢':'Consider reducing scope or addressing blockers 🔴'}</div>`;
+  }
+
+  // Carry chart
+  const mx4=Math.max(...data.map(d=>d.carried),1);
+  document.getElementById('carryChart').innerHTML=data.map(d=>{
+    const pct=Math.round(d.carried/mx4*100);
+    const col=d.carried===0?'var(--green)':d.carried<=2?'var(--gold)':'var(--red)';
+    return`<div class="mb-row"><span class="mb-lbl">Sprint ${d.n}</span><div class="mb-track"><div class="mb-fill" style="width:${pct}%;background:${col}"></div></div><span class="mb-cnt">${d.carried}</span></div>`;
+  }).join('');
+
+  // ── Per-assignee committed vs done per sprint ──
+  const velSection3 = document.querySelector('#panel-velocity .vel-section:last-of-type');
+  const wlDiv = document.createElement('div');
+  wlDiv.className = 'vel-section';
+  wlDiv.innerHTML = '<h3>👤 Workload Balance — Committed vs Completed per Assignee per Sprint</h3>' +
+    '<div class="chart-card"><div class="cc-title" style="margin-bottom:10px">SP committed vs completed, per person per sprint</div>' +
+    buildWorkloadTable(sprints,spH,sh,spE,ahH) + '</div>';
+  const velPanel = document.getElementById('panel-velocity');
+  if(velPanel) velPanel.appendChild(wlDiv);
+
+  // ── Bug vs Story split in velocity bars ──
+  const splitDiv = document.createElement('div');
+  splitDiv.className = 'vel-section';
+  const tyH2=getFieldH(['Issue Type']);
+  splitDiv.innerHTML = '<h3>🔷 Issue Type Mix per Sprint</h3>' +
+    '<div class="vel-charts">' +
+    '<div class="chart-card"><div class="cc-title">Story / Bug / Task split</div>' +
+    buildTypeSplitChart(sprints,spH,tyH2) + '</div>' +
+    '<div class="chart-card"><div class="cc-title">📐 Est. vs Actual Time (work ratio %)</div>' +
+    buildEstActualChart() + '</div>' +
+    '</div>';
+  if(velPanel) velPanel.appendChild(splitDiv);
+}
+
+function buildWorkloadTable(sprints,spH,sh,spE,ahH){
+  if(!ahH||!spE) return '<div style="color:var(--muted);font-size:12px">No assignee or SP data</div>';
+  // Collect all assignees
+  const assignees=[...new Set(allRows.map(r=>r[ahH]).filter(Boolean))].sort();
+  let html='<div style="overflow-x:auto"><table class="workload-table"><thead><tr><th>Assignee</th>';
+  sprints.forEach(sp=>html+=`<th>S${sprintNum(sp)}<br><span style="font-weight:400;color:var(--muted)">${
+    (sp.match(/\(([^-]+)-/)||['',''])[1].trim().slice(0,6)}</span></th>`);
+  html+='</tr></thead><tbody>';
+  assignees.forEach(a=>{
+    const init=a.split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const col=avatarCol(a);
+    html+=`<tr><td><span class="asgn"><span class="avatar" style="background:${col}20;color:${col}">${init}</span>${a.split(' ')[0]}</span></td>`;
+    sprints.forEach(sp=>{
+      const rows=allRows.filter(r=>r[spH]===sp&&r[ahH]===a);
+      if(!rows.length){html+='<td style="color:var(--muted)">—</td>';return;}
+      const commit=rows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0);
+      const done=sh?rows.filter(r=>/done/i.test(r[sh]||'')).reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+      const pct=commit>0?Math.round(done/commit*100):0;
+      const col2=pct>=80?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
+      html+=`<td>
+        <div style="font-size:11px;font-weight:700;color:${col2}">${done}/${commit} SP</div>
+        <div class="wl-bar-wrap"><div class="wl-bar" style="width:${pct}%;background:${col2}"></div></div>
+      </td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table></div>';
+  return html;
+}
+
+function buildTypeSplitChart(sprints,spH,tyH){
+  if(!tyH||!sprints.length) return '<div style="color:var(--muted);font-size:12px">No data</div>';
+  const typeColors={'Story':'var(--green)','Bug':'var(--red)','Task':'var(--blue-lt)','Sub-task':'var(--muted)','Epic':'var(--purple)'};
+  const allTypes=[...new Set(allRows.map(r=>r[tyH]).filter(Boolean))];
+  let html='<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:8px;font-size:10px">';
+  allTypes.forEach(t=>html+=`<span style="display:flex;align-items:center;gap:3px"><span style="width:8px;height:8px;background:${typeColors[t]||'#7A93AA'};border-radius:2px;display:inline-block"></span>${t}</span>`);
+  html+='</div>';
+  sprints.forEach(sp=>{
+    const rows=allRows.filter(r=>r[spH]===sp);
+    const total=rows.length||1;
+    const n=sprintNum(sp);
+    html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+      <span style="font-size:10px;color:var(--muted);width:18px">S${n}</span>
+      <div class="cfd-bar-row" style="flex:1">`;
+    allTypes.forEach(t=>{
+      const cnt=rows.filter(r=>r[tyH]===t).length;
+      const pct=Math.round(cnt/total*100);
+      if(pct>0) html+=`<div class="cfd-seg" style="width:${pct}%;background:${typeColors[t]||'#7A93AA'}" title="${t}: ${cnt} (${pct}%)">${pct>10?pct+'%':''}</div>`;
+    });
+    html+=`</div><span style="font-size:10px;color:var(--muted)">${rows.length}</span></div>`;
+  });
+  return html;
+}
+
+function buildEstActualChart(){
+  const oeH=getFieldH(['Original estimate']),tsH=getFieldH(['Time Spent']);
+  const spH=getSprintH(),sh=getFieldH(['Status']);
+  const sprints=detectSprints();
+  if(!oeH||!tsH||!sprints.length) return '<div style="color:var(--muted);font-size:12px">No time tracking data in CSV</div>';
+  let html='';
+  sprints.forEach(sp=>{
+    const rows=allRows.filter(r=>r[spH]===sp&&parseFloat(r[oeH])>0&&parseFloat(r[tsH])>0);
+    if(!rows.length){html+=`<div class="mb-row"><span class="mb-lbl">Sprint ${sprintNum(sp)}</span><span style="color:var(--muted);font-size:11px">no data</span></div>`;return;}
+    const avgRatio=Math.round(rows.reduce((s,r)=>s+(parseFloat(r[tsH])||0),0)/rows.reduce((s,r)=>s+(parseFloat(r[oeH])||1),0)*100);
+    const col=avgRatio<=110?'var(--green)':avgRatio<=150?'var(--gold)':'var(--red)';
+    const w=Math.min(avgRatio,200);
+    html+=`<div class="mb-row"><span class="mb-lbl">Sprint ${sprintNum(sp)}</span>
+      <div class="mb-track" style="position:relative">
+        <div class="mb-fill" style="width:${Math.min(w/2,100)}%;background:${col}"></div>
+        ${avgRatio>100?`<div style="position:absolute;top:0;left:50%;width:1px;height:100%;background:rgba(255,255,255,.2)"></div>`:''}
+      </div>
+      <span class="mb-cnt" style="color:${col};width:45px">${avgRatio}%</span>
+    </div>`;
+  });
+  html+=`<div style="font-size:10px;color:var(--muted);margin-top:6px">100% = on estimate · >150% = significantly over</div>`;
+  return html;
+}
+
+// ── DUMMY PLACEHOLDER (replaced above) ──
+// ═══ CARRYOVER TAB ═══
+function buildCarryover(){
+  const cyH=getFieldH(['Custom field (Carried Over)']),spH=getSprintH(),sh=getFieldH(['Status']);
+  const sumH=getFieldH(['Summary']),keyH=getFieldH(['Issue key']),ahH=getFieldH(['Assignee']),tyH=getFieldH(['Issue Type']),spE=getFieldH(['Custom field (Story point estimate)']);
+
+  const carried=allRows.filter(r=>cyH&&r[cyH]);
+  const carriedDone=carried.filter(r=>sh&&/done/i.test(r[sh]));
+  const blocked=carried.filter(r=>sh&&/blocked/i.test(r[sh]));
+  const spCost=spE?carried.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+
+  document.getElementById('carryStats').innerHTML=`
+    <div class="sc amber"><div class="sv">${carried.length}</div><div class="sl">Total Carries</div></div>
+    <div class="sc green"><div class="sv">${carriedDone.length}</div><div class="sl">Resolved After Carry</div></div>
+    <div class="sc red"><div class="sv">${carried.length-carriedDone.length}</div><div class="sl">Still Open</div></div>
+    <div class="sc blue"><div class="sv">${carried.length>0?Math.round(carriedDone.length/carried.length*100):0}%</div><div class="sl">Carry Resolution Rate</div></div>
+    <div class="sc purple"><div class="sv">${spCost}</div><div class="sl">SP Delayed</div></div>
+  `;
+
+  if(!carried.length){document.getElementById('carryTimeline').innerHTML='<div class="empty"><div class="ei">🎉</div><h3>No carryovers!</h3></div>';return}
+
+  // Group by from-sprint
+  const groups={};
+  carried.forEach(r=>{const from=r[cyH]||'?';if(!groups[from])groups[from]=[];groups[from].push(r)});
+
+  let html='';
+  Object.entries(groups).sort().forEach(([fromSp,rows])=>{
+    html+=`<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px">🔄 From ${fromSp} (${rows.length} issue${rows.length>1?'s':''})</div>`;
+    rows.forEach(r=>{
+      const key=r[keyH]||'',sum=r[sumH]||'',sp2=r[spH]||'',stat=r[sh]||'',spN=sprintNum(sp2),fromN=fromSp.replace('Sprint ','');
+      const spCostR=spE?(parseFloat(r[spE])||0):0;
+      const isDone=/done/i.test(stat),isBlock=/blocked/i.test(stat);
+      const cls=isDone?'resolved':isBlock?'blocked':'';
+      // Estimate days slipped (14 days per sprint difference)
+      const sprintsDiff=spN-parseInt(fromN);
+      const daysSlipped=sprintsDiff>0?sprintsDiff*14:14;
+      html+=`<div class="carry-item ${cls}" onclick="openModalByKey('${key.replace(/'/g,"\'")}')">
+        <span class="ci-key2">${key}</span> <span style="color:var(--muted);font-size:10px">${r[tyH]||''}</span>
+        <div class="ci-sum">${sum}</div>
+        <div class="ci-chain">
+          <span class="ci-sprint">Sprint ${fromN}</span>
+          <span class="ci-arrow">→</span>
+          <span class="ci-sprint">Sprint ${spN}</span>
+          <span class="ci-arrow">→</span>
+          ${isDone?`<span class="ci-done">✅ Done</span>`:`<span class="ci-open">⏳ ${stat}</span>`}
+          ${spCostR?`<span class="ci-cost">📐 ${spCostR} SP</span>`:''}
+          <span class="ci-cost">⏰ ~${daysSlipped}d slipped</span>
+          ${r[ahH]?`<span style="color:var(--muted)">· ${r[ahH]}</span>`:''}
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  document.getElementById('carryTimeline').innerHTML=html;
+}
+
+// ═══ TABLE ═══
+function renderTable(){
+  if(!selectedFields.length){
+    document.getElementById('tHead').innerHTML='';
+    document.getElementById('tBody').innerHTML=`<tr><td><div class="empty"><div class="ei">🗂</div><h3>No fields selected</h3></div></td></tr>`;
+    return;
+  }
+  let rows=[...filteredRows];
+  if(sortCol>=0&&sortCol<selectedFields.length){
+    const h=selectedFields[sortCol];
+    rows.sort((a,b)=>{const av=a[h]||'',bv=b[h]||'';const an=parseFloat(av),bn=parseFloat(bv);if(!isNaN(an)&&!isNaN(bn))return(an-bn)*sortDir;return av.localeCompare(bv)*sortDir});
+  }
+  const total=rows.length,pages=Math.ceil(total/PAGE);
+  curPage=Math.min(curPage,pages||1);
+  const start=(curPage-1)*PAGE,prows=rows.slice(start,start+PAGE);
+  const keyH=getFieldH(['Issue key']),sh=getFieldH(['Status']),ph=getFieldH(['Priority']),spE=getFieldH(['Custom field (Story point estimate)']);
+  const ah=getFieldH(['Assignee']),th=getFieldH(['Issue Type']),ddH=getFieldH(['Due date']),cyH=getFieldH(['Custom field (Carried Over)']);
+  const sumH=getFieldH(['Summary']);
+
+  let thead='<tr>';
+  selectedFields.forEach((h,i)=>{const sc=sortCol===i?(sortDir===1?'sa':'sd'):'';thead+=`<th class="${sc}" onclick="sortBy(${i})">${fieldMeta[h]?.name||h}</th>`});
+  thead+='</tr>';
+  document.getElementById('tHead').innerHTML=thead;
+
+  if(!prows.length){document.getElementById('tBody').innerHTML=`<tr><td colspan="${selectedFields.length}"><div class="empty"><div class="ei">🔍</div><h3>No issues match</h3></div></td></tr>`;document.getElementById('tblFooter').innerHTML='';return}
+
+  let tbody='';
+  prows.forEach(row=>{
+    const idx=allRows.indexOf(row);
+    const k=row[sumH]||row[keyH];
+    const cc=carryCounts[k]||0;
+    const isCarried=cyH&&!!row[cyH];
+    const isBlocked=sh&&/blocked/i.test(row[sh]||'');
+    let rowClass='';
+    if(isCarried&&cc>=3)rowClass='problem-3x';
+    else if(isCarried&&cc>=2)rowClass='problem-2x';
+    else if(isCarried)rowClass='carried';
+    tbody+=`<tr class="${rowClass}" onclick="openModal(${idx})">`;
+    selectedFields.forEach(h=>{tbody+=`<td>${renderCell(h,row[h]||'',[keyH,sh,ph,spE,ah,th,ddH,cyH,sumH],row,idx)}</td>`});
+    tbody+='</tr>';
+  });
+  document.getElementById('tBody').innerHTML=tbody;
+
+  // Footer totals
+  const spH2=getFieldH(['Custom field (Story point estimate)']);
+  const doneCount=sh?filteredRows.filter(r=>/done/i.test(r[sh])).length:0;
+  const totalSP=spH2?filteredRows.reduce((s,r)=>s+(parseFloat(r[spH2])||0),0):0;
+  const carriedCount=cyH?filteredRows.filter(r=>r[cyH]).length:0;
+  const blockedCount=sh?filteredRows.filter(r=>/blocked/i.test(r[sh])).length:0;
+  document.getElementById('tblFooter').innerHTML=`
+    <div class="tbl-footer-stat">Total: <strong>${filteredRows.length}</strong></div>
+    <div class="tbl-footer-stat">✅ Done: <strong style="color:var(--green)">${doneCount}</strong></div>
+    <div class="tbl-footer-stat">📐 SP Total: <strong style="color:var(--blue-lt)">${totalSP}</strong></div>
+    <div class="tbl-footer-stat">🔄 Carried: <strong style="color:var(--gold)">${carriedCount}</strong></div>
+    <div class="tbl-footer-stat">🔴 Blocked: <strong style="color:var(--red)">${blockedCount}</strong></div>
+  `;
+
+  document.getElementById('pInfo').textContent=`Showing ${Math.min(start+1,total)}–${Math.min(start+PAGE,total)} of ${total} issues`;
+  const range=pageRange(curPage,pages);
+  let phtml=`<button class="pgb" onclick="goPage(${curPage-1})" ${curPage<=1?'disabled':''}>‹</button>`;
+  range.forEach(p=>{if(p==='…')phtml+='<span class="pgb" style="pointer-events:none;opacity:.5">…</span>';else phtml+=`<button class="pgb ${p===curPage?'on':''}" onclick="goPage(${p})">${p}</button>`});
+  phtml+=`<button class="pgb" onclick="goPage(${curPage+1})" ${curPage>=pages?'disabled':''}>›</button>`;
+  document.getElementById('pBtns').innerHTML=phtml;
+  document.getElementById('tableTitle').textContent=`Issue Table (${total} issues)`;
+}
+
+function pageRange(c,t){if(t<=7)return Array.from({length:t},(_,i)=>i+1);if(c<=4)return[1,2,3,4,5,'…',t];if(c>=t-3)return[1,'…',t-4,t-3,t-2,t-1,t];return[1,'…',c-1,c,c+1,'…',t]}
+function goPage(p){const pages=Math.ceil(filteredRows.length/PAGE);curPage=Math.max(1,Math.min(p,pages));renderTable();window.scrollTo({top:0,behavior:'smooth'})}
+function sortBy(c){if(sortCol===c)sortDir*=-1;else{sortCol=c;sortDir=1}renderTable()}
+
+function renderCell(h,v,hs,row,idx){
+  const[keyH,sh,ph,spE,ah,th,ddH,cyH,sumH]=hs;
+  if(!v)return'<span style="color:var(--muted);font-size:11px">—</span>';
+  if(h===keyH)return`<span class="key">${v}</span>`;
+  if(h===sh){const s=statusStyle(v);return`<span class="status-pill" style="background:${s.bg};color:${s.c}">${v}</span>`}
+  if(h===ph){const p=priStyle(v);return`<span class="pri-badge"><span class="pdot" style="background:${p.c}"></span><span style="color:${p.c}">${v}</span></span>`}
+  if(h===spE&&v)return`<span class="sp-badge">${v}</span>`;
+  if(h===ah&&v){const i2=(v.split(/[\s.]+/).map(w=>w[0]||'')).join('').toUpperCase().slice(0,2),c=avatarCol(v);return`<span class="asgn"><span class="avatar" style="background:${c}20;color:${c}">${i2}</span>${v}</span>`}
+  if(h===th&&v){const c=typeCol(v);return`<span class="type-chip"><span class="dot" style="background:${c}"></span>${v}</span>`}
+  if(h===ddH&&v){const d=new Date(v),diff=(d-new Date())/86400000;const cls='date-c'+(isNaN(diff)?'':(diff<0?' ov':diff<3?' soon':''));return`<span class="${cls}">${v}</span>`}
+  if(h===cyH&&v){
+    // Also show attention badge based on carry count
+    const k=row[sumH]||row[keyH];
+    const cc=carryCounts[k]||0;
+    let badge='';
+    if(cc>=3)badge=`<span class="attn-badge attn-danger">🚨 Bottleneck ×${cc}</span>`;
+    else if(cc>=2)badge=`<span class="attn-badge attn-warn">⚠️ Attention ×${cc}</span>`;
+    return`<span class="carry-flag">🔄 from ${v}</span> ${badge}`;
+  }
+  if(/date|created|updated|resolved/i.test(h)){
+    // Created: show age + unplanned badge
+    if(h===getFieldH(['Created'])){
+      const age=issueAgeDays(row);
+      const spH2=getSprintH();const sp=spH2?row[spH2]:'';
+      const unpl=isUnplanned(row,sp);
+      const ageCls=age===null?'':age<14?'age-fresh':age<60?'age-mid':'age-old';
+      const ageStr=age!==null?`<span class="age-badge ${ageCls}">${age}d</span>`:'';
+      const unplStr=unpl?`<span class="unplanned-badge">⚠️ unplanned</span>`:'';
+      return`<span class="date-c">${v}</span> ${ageStr}${unplStr}`;
+    }
+    return`<span class="date-c">${v}</span>`;
+  }
+  // Work ratio / est-vs-actual
+  if(h===getFieldH(['Work Ratio'])&&v){
+    const n=parseInt(v);
+    const cls=n<=110?'est-good':n<=150?'est-warn':'est-over';
+    return`<span class="${cls}">${v}%</span>`;
+  }
+  const s=v.length>75?v.slice(0,75)+'…':v;
+  return`<div class="cw" title="${v.replace(/"/g,'&quot;')}">${s}</div>`;
+}
+
+// ═══ MODAL ═══
+function openModal(idx){
+  const row=allRows[idx];if(!row)return;
+  const kh=getFieldH(['Issue key']),sh2=getFieldH(['Summary']);
+  const cyH=getFieldH(['Custom field (Carried Over)']),osH=getFieldH(['Custom field (Original Sprint)']),spH=getSprintH();
+  const sumH=getFieldH(['Summary']),keyH=getFieldH(['Issue key']);
+  document.getElementById('mTitle').textContent=(kh?row[kh]:'')+': '+(sh2?row[sh2]:'Issue');
+
+  const k=row[sumH]||row[keyH];const cc=carryCounts[k]||0;
+  let carryHtml='';
+  if(cyH&&row[cyH]){
+    carryHtml=`<div class="carry-info-box"><h4>🔄 This issue was carried over</h4><p>Originally planned for <strong>${row[osH]||'an earlier sprint'}</strong>. Moved to <strong>Sprint ${sprintNum(row[spH]||'')}</strong>.</p></div>`;
+  }
+  let attnHtml='';
+  if(cc>=2){
+    attnHtml=`<div class="attn-info-box"><h4>${cc>=3?'🚨 Bottleneck Issue':'⚠️ Requires Attention'}</h4><p>This issue has been carried over <strong>${cc} time${cc>1?'s':''}</strong>. ${cc>=3?'This is a potential process bottleneck — consider breaking it down or reassigning.':'Monitor closely to prevent it becoming a recurring blocker.'}</p></div>`;
+  }
+  document.getElementById('mCarryInfo').innerHTML=carryHtml;
+  document.getElementById('mAttnInfo').innerHTML=attnHtml;
+  let html='';
+  headers.forEach(h=>{const v=row[h];if(!v)return;const m=fieldMeta[h];html+=`<div class="df${v.length>100?' full':''}"><div class="df-lbl">${m?.i||''} ${m?.name||h}</div><div class="df-val">${v.replace(/\n/g,'<br>')}</div></div>`});
+  document.getElementById('mBody').innerHTML=html;
+  document.getElementById('modalOv').classList.add('open');
+}
+function openModalByKey(key){const idx=allRows.findIndex(r=>r[getFieldH(['Issue key'])]===key);if(idx>=0)openModal(idx)}
+function closeModal(){document.getElementById('modalOv').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+// ═══ EXPORT CSV ═══
+function exportCSV(){
+  if(!selectedFields.length){showToast('Select fields first','err');return}
+  const rows=[selectedFields,...filteredRows.map(r=>selectedFields.map(h=>{const v=r[h]||'';return v.includes(',')||v.includes('"')||v.includes('\n')?`"${v.replace(/"/g,'""')}"`:v}))];
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='jira-sprint-report.csv';a.click();
+  showToast('✅ CSV exported','ok');
+}
+
+// ═══ EXPORT PPTX ═══
+function exportPPTX(){
+  showToast('📊 Building PowerPoint…','ok');
+  // Collect data for slides
+  const sprints=detectSprints();
+  const sh=getFieldH(['Status']),spH=getSprintH(),spE=getFieldH(['Custom field (Story point estimate)']),cyH=getFieldH(['Custom field (Carried Over)']),ahH=getFieldH(['Assignee']);
+
+  const sprintData=sprints.map(sp=>{
+    const rows=allRows.filter(r=>r[spH]===sp);
+    const doneRows=sh?rows.filter(r=>/done/i.test(r[sh])):[];
+    const carryRows=cyH?rows.filter(r=>r[cyH]):[];
+    const spCommit=spE?rows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    const spDone=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    const spCarry=spE?carryRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+    const pct=rows.length>0?Math.round(doneRows.length/rows.length*100):0;
+    const dateMatch=sp.match(/\((.*?)\)/);
+    const blockedCount=sh?rows.filter(r=>/blocked/i.test(r[sh])).length:0;
+    return{n:sprintNum(sp),total:rows.length,done:doneRows.length,carried:carryRows.length,spCommit,spDone,spCarry,pct,dateStr:dateMatch?dateMatch[1]:'',blockedCount};
+  });
+
+  // Build the PPTX via pptxgenjs running in a server worker
+  // Since we're in the browser, we generate a JSON payload and download it as a spec
+  // the node script (jira-pptx-gen.cjs) will process it
+  const payload={
+    projectName: allRows[0]?.['Project name']||'Sprint Report',
+    generated: new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),
+    totalIssues: allRows.length,
+    sprints: sprintData,
+    avgCompletion: Math.round(sprintData.reduce((s,d)=>s+d.pct,0)/sprintData.length),
+    totalSPDone: sprintData.reduce((s,d)=>s+d.spDone,0),
+    totalCarried: sprintData.reduce((s,d)=>s+d.carried,0),
+  };
+
+  // Download the JSON spec so the user can run the Node script
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='sprint-report-data.json';a.click();
+
+  showToast('📄 JSON exported — run jira-pptx-gen.cjs to build the PPTX','ok');
+  setTimeout(()=>{
+    document.getElementById('pptxInstructions').style.display='';
+  },500);
+}
+
+// ═══ URL STATE ═══
+function pushURLState(){
+  try{
+    const params=new URLSearchParams();
+    params.set('tab',currentTab);
+    const sps=[...activeSprints].filter(s=>s!=='all');
+    if(sps.length)params.set('sprints',sps.join('|'));
+    window.history.replaceState({},'','#'+params.toString());
+  }catch(e){/* sandboxed iframe — silently skip */}
+}
+function restoreURLState(){
+  try{
+    const hash=window.location.hash.slice(1);
+    if(!hash)return;
+    const params=new URLSearchParams(hash);
+    const tab=params.get('tab');
+    if(tab)switchTab(tab);
+    const sps=params.get('sprints');
+    if(sps){activeSprints=new Set(sps.split('|'));buildSprintToggles();applyFilter();refreshAll()}
+  }catch(e){}
+}
+function copyShareURL(){
+  // Build a shareable state string (URL hash may not be available in sandboxed context)
+  const params=new URLSearchParams();
+  params.set('tab',currentTab);
+  const sps=[...activeSprints].filter(s=>s!=='all');
+  if(sps.length)params.set('sprints',sps.join('|'));
+  const stateStr=params.toString();
+  // Try to get real URL, fall back to a descriptive string
+  let shareText='';
+  try{
+    const base=window.location.href.split('#')[0];
+    shareText=base+'#'+stateStr;
+  }catch(e){shareText='#'+stateStr;}
+  navigator.clipboard.writeText(shareText).then(()=>showToast('✅ Share link copied!','ok')).catch(()=>{
+    const bar=document.getElementById('urlBar');bar.style.display='flex';document.getElementById('urlInput').value=shareText;
+  });
+}
+
+// ═══ TABS ═══
+function switchTab(t){
+  currentTab=t;
+  const names=['overview','sprint','table','velocity','carryover'];
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',names[i]===t));
+  document.querySelectorAll('.panel').forEach(el=>el.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  // Update sidebar context sections
+  ['overview','sprint','table','velocity','carryover'].forEach(ctx=>{
+    document.querySelectorAll('.ctx-'+ctx).forEach(el=>el.style.display=t===ctx?'':'none');
+  });
+  // sFields is only shown on table tab (controlled by ctx-table class already)
+  const sf=document.getElementById('sFields');
+  if(sf) sf.style.display=t==='table'&&allRows.length?'':'none';
+  if(t==='sprint') buildSprintDetail();
+}
+
+// ═══ TOAST ═══
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+type;
+  clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',3500);
+}
+
+// PPTX instructions panel (hidden by default)
+document.addEventListener('DOMContentLoaded',()=>{
+  const div=document.createElement('div');
+  div.id='pptxInstructions';
+  div.style.cssText='display:none;position:fixed;bottom:60px;right:20px;background:var(--navy-mid);border:1px solid var(--border-md);border-radius:10px;padding:14px 16px;font-size:12px;max-width:320px;z-index:999;box-shadow:0 4px 24px rgba(0,0,0,.4)';
+  div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><strong>📊 Generate PPTX</strong><button onclick="this.parentElement.parentElement.style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px">×</button></div>
+  <p style="color:var(--muted);line-height:1.6;margin-bottom:8px">A <code>sprint-report-data.json</code> file was downloaded. To generate the PPTX:</p>
+  <code style="background:var(--navy-card);display:block;padding:8px;border-radius:6px;font-size:11px;color:var(--teal);line-height:1.8">node jira-pptx-gen.cjs<br>sprint-report-data.json</code>
+  <p style="color:var(--muted);font-size:11px;margin-top:6px">Download <strong>jira-pptx-gen.cjs</strong> from the same source as this app.</p>`;
+  document.body.appendChild(div);
+});
+
+loadSample();
+</script>
+</body>
+</html>
