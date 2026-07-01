@@ -381,8 +381,9 @@ td{padding:9px 12px;vertical-align:middle;max-width:250px}
   <div class="topbar-right">
     <span id="topBadge" style="display:none;background:var(--teal-dim);color:var(--teal);border:1px solid rgba(0,196,180,.3);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700"></span>
     <button class="btn success" onclick="exportCSV()">⬇ CSV</button>
-    <button class="btn danger" onclick="exportPPTX()" id="btnPPTX" style="display:none">📊 Export PPT</button>
+    <button class="btn danger" onclick="exportPPTX()" id="btnPPTX" style="display:none" title="Download a PowerPoint summary of your sprints">📊 PowerPoint</button>
     <button class="btn primary" onclick="window.print()">🖨 Print</button>
+    <button class="btn" id="btnReset" onclick="resetData()" style="display:none;background:rgba(232,68,90,.12);color:var(--red);border:1px solid rgba(232,68,90,.3)" title="Clear all loaded data">🗑 Reset</button>
   </div>
 </div>
 
@@ -598,6 +599,7 @@ td{padding:9px 12px;vertical-align:middle;max-width:250px}
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js" async></script>
 <script>
 const SAMPLE_CSV = "Summary,Issue key,Issue id,Issue Type,Status,Project key,Project name,Project type,Project lead,Project lead id,Project description,Priority,Resolution,Assignee,Assignee Id,Reporter,Reporter Id,Creator,Creator Id,Created,Updated,Last Viewed,Resolved,Due date,Votes,Description,Environment,Watchers,Watchers Id,Original estimate,Remaining Estimate,Time Spent,Work Ratio,\u03a3 Original Estimate,\u03a3 Remaining Estimate,\u03a3 Time Spent,Security Level,Custom field (Development),Custom field (Issue color),Custom field (Rank),Custom field (Start date),Custom field (Story point estimate),Custom field (Team),Custom field (Vulnerability),Custom field (Sprint),Custom field (Epic Link),Custom field (Epic Name),Custom field (Carried Over),Custom field (Original Sprint),Status Category,Status Category Changed\nUser Authentication,SCRUM-1,10001,Epic,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Aug/25 12:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,0,Epic covering all work for User Authentication.,,0,,0,0,0,0,0,0,0,,,,0|rank10001:,1/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-1,User Authentication,,Sprint 1,Done,29/Aug/25 12:00 AM\nDashboard Redesign,SCRUM-2,10002,Epic,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,12/Sep/25 12:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,0,Epic covering all work for Dashboard Redesign.,,0,,0,0,0,0,0,0,0,,,,0|rank10002:,15/Sep/25 12:00 AM,,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-2,Dashboard Redesign,,Sprint 2,Done,12/Sep/25 12:00 AM\nAPI Integration,SCRUM-3,10003,Epic,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,26/Sep/25 12:00 AM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,0,Epic covering all work for API Integration.,,0,,0,0,0,0,0,0,0,,,,0|rank10003:,29/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-3,API Integration,,Sprint 3,Done,26/Sep/25 12:00 AM\nPerformance Optimisation,SCRUM-4,10004,Epic,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,10/Oct/25 12:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,0,Epic covering all work for Performance Optimisation.,,0,,0,0,0,0,0,0,0,,,,0|rank10004:,13/Oct/25 12:00 AM,,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-4,Performance Optimisation,,Sprint 4,Done,10/Oct/25 12:00 AM\nMobile Responsive Layout,SCRUM-5,10005,Epic,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,24/Oct/25 12:00 AM,3/Nov/25 12:00 AM,3/Nov/25 12:00 AM,,9/Nov/25 12:00 AM,0,Epic covering all work for Mobile Responsive Layout.,,0,,0,0,0,0,0,0,0,,,,0|rank10005:,27/Oct/25 12:00 AM,,Gamma,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-5,Mobile Responsive Layout,,Sprint 5,In Progress,24/Oct/25 12:00 AM\n\"As a user, I can connect third-party integrations\",SCRUM-11,10006,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 4:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 12:00 AM,14/Sep/25 12:00 AM,0,\"As a user, I can connect third-party integrations. Auto-generated for sprint 1.\",,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10006:,1/Sep/25 12:00 AM,3,Beta,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-1,User Authentication,,Sprint 1,Done,2/Sep/25 4:00 PM\n\"As a user, I can reset my password via email\",SCRUM-12,10007,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 7:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 5:00 PM,13/Sep/25 12:00 AM,0,\"As a user, I can reset my password via email. Auto-generated for sprint 1.\",,0,,18000,0,18000,100,18000,0,18000,,,,0|rank10007:,1/Sep/25 12:00 AM,5,Beta,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 1,Done,2/Sep/25 7:00 PM\n\"As a PM, I can generate sprint burndown charts\",SCRUM-13,10008,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 8:00 AM,10/Sep/25 12:00 AM,10/Sep/25 12:00 AM,,11/Sep/25 12:00 AM,0,\"As a PM, I can generate sprint burndown charts. Auto-generated for sprint 1.\",,0,,7200,3042,4158,57,7200,3042,4158,,,,0|rank10008:,1/Sep/25 12:00 AM,2,Alpha,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 1,In Progress,2/Sep/25 8:00 AM\n\"As a user, I can log in with SSO\",SCRUM-14,10009,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 2:00 PM,4/Sep/25 12:00 AM,4/Sep/25 12:00 AM,,11/Sep/25 12:00 AM,0,\"As a user, I can log in with SSO. Auto-generated for sprint 1.\",,0,,72000,25539,46461,64,72000,25539,46461,,,,0|rank10009:,1/Sep/25 12:00 AM,21,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-4,Performance Optimisation,,Sprint 1,In Progress,1/Sep/25 2:00 PM\n\"As a user, I can configure notification preferences\",SCRUM-15,10010,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 9:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 11:00 AM,14/Sep/25 12:00 AM,0,\"As a user, I can configure notification preferences. Auto-generated for sprint 1.\",,0,,72000,0,72000,100,72000,0,72000,,,,0|rank10010:,1/Sep/25 12:00 AM,21,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-3,API Integration,,Sprint 1,Done,1/Sep/25 9:00 PM\n\"As a user, I can reset my password via email\",SCRUM-16,10011,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 10:00 PM,10/Sep/25 12:00 AM,10/Sep/25 12:00 AM,,14/Sep/25 12:00 AM,0,\"As a user, I can reset my password via email. Auto-generated for sprint 1.\",,0,,72000,32731,39269,54,72000,32731,39269,,,,0|rank10011:,1/Sep/25 12:00 AM,21,Alpha,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-3,API Integration,,Sprint 1,In Progress,1/Sep/25 10:00 PM\nDate picker shows wrong timezone offset,SCRUM-17,10012,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 12:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 12:00 PM,13/Sep/25 12:00 AM,0,Date picker shows wrong timezone offset. Auto-generated for sprint 1.,,0,,72000,0,72000,100,72000,0,72000,,,,0|rank10012:,1/Sep/25 12:00 AM,21,Alpha,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-1,User Authentication,,Sprint 1,Done,2/Sep/25 12:00 AM\nPagination breaks when filtering by assignee,SCRUM-18,10013,Bug,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 2:00 AM,8/Sep/25 12:00 AM,8/Sep/25 12:00 AM,,12/Sep/25 12:00 AM,0,Pagination breaks when filtering by assignee. Auto-generated for sprint 1.,Development,0,,72000,39808,32192,44,72000,39808,32192,,,,0|rank10013:,1/Sep/25 12:00 AM,21,Beta,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-2,Dashboard Redesign,,Sprint 1,In Progress,1/Sep/25 2:00 AM\nPagination breaks when filtering by assignee,SCRUM-19,10014,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 4:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 1:00 AM,14/Sep/25 12:00 AM,0,Pagination breaks when filtering by assignee. Auto-generated for sprint 1.,Production,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10014:,1/Sep/25 12:00 AM,3,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-3,API Integration,,Sprint 1,Done,2/Sep/25 4:00 PM\nPassword reset email not sent for SSO accounts,SCRUM-20,10015,Bug,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 10:00 AM,12/Sep/25 12:00 AM,12/Sep/25 12:00 AM,,13/Sep/25 12:00 AM,0,Password reset email not sent for SSO accounts. Auto-generated for sprint 1.,Staging,0,,18000,10411,7589,42,18000,10411,7589,,,,0|rank10015:,1/Sep/25 12:00 AM,5,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-2,Dashboard Redesign,,Sprint 1,In Progress,2/Sep/25 10:00 AM\nPerformance audit on dashboard load time,SCRUM-21,10016,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 3:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 9:00 PM,13/Sep/25 12:00 AM,0,Performance audit on dashboard load time. Auto-generated for sprint 1.,,0,,0,0,0,0,0,0,0,,,,0|rank10016:,1/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-2,Dashboard Redesign,,Sprint 1,Done,1/Sep/25 3:00 AM\nMigrate legacy jQuery components to React,SCRUM-22,10017,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 12:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 3:00 AM,11/Sep/25 12:00 AM,0,Migrate legacy jQuery components to React. Auto-generated for sprint 1.,,0,,0,0,0,0,0,0,0,,,,0|rank10017:,1/Sep/25 12:00 AM,,Beta,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-3,API Integration,,Sprint 1,Done,2/Sep/25 12:00 PM\nWrite integration tests for OAuth2 flow,SCRUM-23,10018,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 9:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 3:00 PM,11/Sep/25 12:00 AM,0,Write integration tests for OAuth2 flow. Auto-generated for sprint 1.,,0,,0,0,0,0,0,0,0,,,,0|rank10018:,1/Sep/25 12:00 AM,,Beta,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-3,API Integration,,Sprint 1,Done,1/Sep/25 9:00 AM\nSet up CI/CD pipeline for staging environment,SCRUM-24,10019,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 1:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 9:00 PM,14/Sep/25 12:00 AM,0,Set up CI/CD pipeline for staging environment. Auto-generated for sprint 1.,,0,,0,0,0,0,0,0,0,,,,0|rank10019:,1/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-4,Performance Optimisation,,Sprint 1,Done,2/Sep/25 1:00 PM\nImplement rate limiting on login endpoint,SCRUM-25,10020,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 7:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 9:00 PM,11/Sep/25 12:00 AM,0,Implement rate limiting on login endpoint. Auto-generated for sprint 1.,,0,,0,0,0,0,0,0,0,,,,0|rank10020:,1/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-2,Dashboard Redesign,,Sprint 1,Done,1/Sep/25 7:00 AM\nDeploy hotfix to staging,SCRUM-26,10021,Sub-task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 12:00 AM,2/Sep/25 12:00 AM,2/Sep/25 12:00 AM,,14/Sep/25 12:00 AM,0,Deploy hotfix to staging. Auto-generated for sprint 1.,,0,,10800,5704,5096,47,10800,5704,5096,,,,0|rank10021:,1/Sep/25 12:00 AM,3,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 1,In Progress,2/Sep/25 12:00 AM\nHandle error states in OAuth2 flow,SCRUM-27,10022,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 7:00 PM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 10:00 AM,13/Sep/25 12:00 AM,0,Handle error states in OAuth2 flow. Auto-generated for sprint 1.,,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10022:,1/Sep/25 12:00 AM,13,Gamma,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 1,Done,2/Sep/25 7:00 PM\nDesign mockup for dashboard header,SCRUM-28,10023,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 5:00 AM,14/Sep/25 12:00 AM,14/Sep/25 12:00 AM,13/Sep/25 8:00 PM,12/Sep/25 12:00 AM,0,Design mockup for dashboard header. Auto-generated for sprint 1.,,0,,72000,0,72000,100,72000,0,72000,,,,0|rank10023:,1/Sep/25 12:00 AM,21,Beta,,SCRUM Sprint 1 (01/Sep/25 - 14/Sep/25),SCRUM-1,User Authentication,,Sprint 1,Done,2/Sep/25 5:00 AM\nDeploy hotfix to staging,SCRUM-29,10024,Sub-task,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 12:00 AM,25/Sep/25 12:00 AM,25/Sep/25 12:00 AM,,26/Sep/25 12:00 AM,0,[CARRIED OVER] Deploy hotfix to staging. Auto-generated for sprint 2.,,0,,10800,5661,5139,47,10800,5661,5139,,,,0|rank10024:,15/Sep/25 12:00 AM,3,Beta,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,Sprint 1,Sprint 1,In Progress,2/Sep/25 12:00 AM\nPassword reset email not sent for SSO accounts,SCRUM-30,10025,Bug,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 10:00 AM,20/Sep/25 12:00 AM,20/Sep/25 12:00 AM,,27/Sep/25 12:00 AM,0,[CARRIED OVER] Password reset email not sent for SSO accounts. Auto-generated for sprint 2.,,0,,18000,10162,7838,43,18000,10162,7838,,,,0|rank10025:,15/Sep/25 12:00 AM,5,Beta,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-2,Dashboard Redesign,Sprint 1,Sprint 1,In Progress,2/Sep/25 10:00 AM\n\"As a user, I can log in with SSO\",SCRUM-31,10026,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,1/Sep/25 2:00 PM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 9:00 PM,27/Sep/25 12:00 AM,0,\"[CARRIED OVER] As a user, I can log in with SSO. Auto-generated for sprint 2.\",,0,,72000,0,72000,100,72000,0,72000,,,,0|rank10026:,15/Sep/25 12:00 AM,21,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-4,Performance Optimisation,Sprint 1,Sprint 1,Done,1/Sep/25 2:00 PM\n\"As a PM, I can generate sprint burndown charts\",SCRUM-32,10027,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,2/Sep/25 8:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 4:00 AM,25/Sep/25 12:00 AM,0,\"[CARRIED OVER] As a PM, I can generate sprint burndown charts. Auto-generated for sprint 2.\",,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10027:,15/Sep/25 12:00 AM,2,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,Sprint 1,Sprint 1,Done,2/Sep/25 8:00 AM\n\"As a user, I can search issues using JQL\",SCRUM-33,10028,Story,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 1:00 PM,26/Sep/25 12:00 AM,26/Sep/25 12:00 AM,,26/Sep/25 12:00 AM,0,\"As a user, I can search issues using JQL. Auto-generated for sprint 2.\",,0,,10800,3666,7134,66,10800,3666,7134,,,,0|rank10028:,15/Sep/25 12:00 AM,3,Beta,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 2,In Progress,15/Sep/25 1:00 PM\n\"As a user, I can connect third-party integrations\",SCRUM-34,10029,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 4:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 11:00 PM,27/Sep/25 12:00 AM,0,\"As a user, I can connect third-party integrations. Auto-generated for sprint 2.\",,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10029:,15/Sep/25 12:00 AM,2,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 2,Done,16/Sep/25 4:00 AM\n\"As a user, I can view issue history and changelog\",SCRUM-35,10030,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 1:00 PM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 9:00 PM,28/Sep/25 12:00 AM,0,\"As a user, I can view issue history and changelog. Auto-generated for sprint 2.\",,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10030:,15/Sep/25 12:00 AM,13,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-2,Dashboard Redesign,,Sprint 2,Done,16/Sep/25 1:00 PM\n\"As a user, I can create sub-tasks from a story\",SCRUM-36,10031,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 9:00 PM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 6:00 AM,27/Sep/25 12:00 AM,0,\"As a user, I can create sub-tasks from a story. Auto-generated for sprint 2.\",,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10031:,15/Sep/25 12:00 AM,3,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-1,User Authentication,,Sprint 2,Done,15/Sep/25 9:00 PM\n\"As a mobile user, I can access all core features\",SCRUM-37,10032,Story,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 10:00 PM,19/Sep/25 12:00 AM,19/Sep/25 12:00 AM,,28/Sep/25 12:00 AM,0,\"As a mobile user, I can access all core features. Auto-generated for sprint 2.\",,0,,7200,1617,5583,77,7200,1617,5583,,,,0|rank10032:,15/Sep/25 12:00 AM,2,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 2,In Progress,16/Sep/25 10:00 PM\nNotification bell shows incorrect count,SCRUM-38,10033,Bug,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 6:00 AM,16/Sep/25 12:00 AM,16/Sep/25 12:00 AM,,28/Sep/25 12:00 AM,0,Notification bell shows incorrect count. Auto-generated for sprint 2.,,0,,18000,10934,7066,39,18000,10934,7066,,,,0|rank10033:,15/Sep/25 12:00 AM,5,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-4,Performance Optimisation,,Sprint 2,In Progress,15/Sep/25 6:00 AM\nPagination breaks when filtering by assignee,SCRUM-39,10034,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 1:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 7:00 PM,25/Sep/25 12:00 AM,0,Pagination breaks when filtering by assignee. Auto-generated for sprint 2.,Production,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10034:,15/Sep/25 12:00 AM,2,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-3,API Integration,,Sprint 2,Done,16/Sep/25 1:00 AM\nNotification bell shows incorrect count,SCRUM-40,10035,Bug,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 5:00 PM,24/Sep/25 12:00 AM,24/Sep/25 12:00 AM,,28/Sep/25 12:00 AM,0,Notification bell shows incorrect count. Auto-generated for sprint 2.,,0,,3600,1649,1951,54,3600,1649,1951,,,,0|rank10035:,15/Sep/25 12:00 AM,1,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-4,Performance Optimisation,,Sprint 2,In Progress,15/Sep/25 5:00 PM\nSet up feature flags for mobile rollout,SCRUM-41,10036,Task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 5:00 PM,19/Sep/25 12:00 AM,19/Sep/25 12:00 AM,,27/Sep/25 12:00 AM,0,Set up feature flags for mobile rollout. Auto-generated for sprint 2.,,0,,0,0,0,0,0,0,0,,,,0|rank10036:,15/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 2,In Progress,16/Sep/25 5:00 PM\nDatabase index optimisation for issue search,SCRUM-42,10037,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 2:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 10:00 PM,27/Sep/25 12:00 AM,0,Database index optimisation for issue search. Auto-generated for sprint 2.,,0,,0,0,0,0,0,0,0,,,,0|rank10037:,15/Sep/25 12:00 AM,,Gamma,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-4,Performance Optimisation,,Sprint 2,Done,16/Sep/25 2:00 AM\nSet up feature flags for mobile rollout,SCRUM-43,10038,Task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 12:00 AM,23/Sep/25 12:00 AM,23/Sep/25 12:00 AM,,26/Sep/25 12:00 AM,0,Set up feature flags for mobile rollout. Auto-generated for sprint 2.,,0,,0,0,0,0,0,0,0,,,,0|rank10038:,15/Sep/25 12:00 AM,,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-1,User Authentication,,Sprint 2,In Progress,16/Sep/25 12:00 AM\nRefactor API client to use async/await,SCRUM-44,10039,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 3:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 10:00 PM,28/Sep/25 12:00 AM,0,Refactor API client to use async/await. Auto-generated for sprint 2.,,0,,0,0,0,0,0,0,0,,,,0|rank10039:,15/Sep/25 12:00 AM,,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 2,Done,16/Sep/25 3:00 AM\nQA: regression test after dependency upgrade,SCRUM-45,10040,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 11:00 PM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 7:00 AM,27/Sep/25 12:00 AM,0,QA: regression test after dependency upgrade. Auto-generated for sprint 2.,,0,,28800,0,28800,100,28800,0,28800,,,,0|rank10040:,15/Sep/25 12:00 AM,8,Beta,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-3,API Integration,,Sprint 2,Done,16/Sep/25 11:00 PM\nUpdate API schema for role management,SCRUM-46,10041,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 3:00 AM,28/Sep/25 12:00 AM,28/Sep/25 12:00 AM,27/Sep/25 2:00 AM,27/Sep/25 12:00 AM,0,Update API schema for role management. Auto-generated for sprint 2.,,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10041:,15/Sep/25 12:00 AM,2,Alpha,,SCRUM Sprint 2 (15/Sep/25 - 28/Sep/25),SCRUM-5,Mobile Responsive Layout,,Sprint 2,Done,15/Sep/25 3:00 AM\nNotification bell shows incorrect count,SCRUM-47,10042,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 5:00 PM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 5:00 AM,10/Oct/25 12:00 AM,0,[CARRIED OVER] Notification bell shows incorrect count. Auto-generated for sprint 3.,Staging,0,,3600,0,3600,100,3600,0,3600,,,,0|rank10042:,29/Sep/25 12:00 AM,1,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-4,Performance Optimisation,Sprint 2,Sprint 2,Done,15/Sep/25 5:00 PM\n\"As a user, I can search issues using JQL\",SCRUM-48,10043,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Sep/25 1:00 PM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 3:00 AM,10/Oct/25 12:00 AM,0,\"[CARRIED OVER] As a user, I can search issues using JQL. Auto-generated for sprint 3.\",,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10043:,29/Sep/25 12:00 AM,3,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-5,Mobile Responsive Layout,Sprint 2,Sprint 2,Done,15/Sep/25 1:00 PM\n\"As a mobile user, I can access all core features\",SCRUM-49,10044,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,16/Sep/25 10:00 PM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 5:00 AM,12/Oct/25 12:00 AM,0,\"[CARRIED OVER] As a mobile user, I can access all core features. Auto-generated for sprint 3.\",,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10044:,29/Sep/25 12:00 AM,2,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-5,Mobile Responsive Layout,Sprint 2,Sprint 2,Done,16/Sep/25 10:00 PM\n\"As a user, I can filter dashboard widgets by date\",SCRUM-50,10045,Story,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 4:00 AM,1/Oct/25 12:00 AM,1/Oct/25 12:00 AM,,11/Oct/25 12:00 AM,0,\"As a user, I can filter dashboard widgets by date. Auto-generated for sprint 3.\",,0,,10800,7484,3316,30,10800,7484,3316,,,,0|rank10045:,29/Sep/25 12:00 AM,3,Gamma,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 3,In Progress,29/Sep/25 4:00 AM\n\"As a team lead, I can assign tasks to team members\",SCRUM-51,10046,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 11:00 PM,9/Oct/25 12:00 AM,9/Oct/25 12:00 AM,,12/Oct/25 12:00 AM,0,\"As a team lead, I can assign tasks to team members. Auto-generated for sprint 3.\",,0,,72000,45844,26156,36,72000,45844,26156,,,,0|rank10046:,29/Sep/25 12:00 AM,21,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-3,API Integration,,Sprint 3,In Progress,29/Sep/25 11:00 PM\n\"As a user, I can filter dashboard widgets by date\",SCRUM-52,10047,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 6:00 PM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 8:00 PM,11/Oct/25 12:00 AM,0,\"As a user, I can filter dashboard widgets by date. Auto-generated for sprint 3.\",,0,,3600,0,3600,100,3600,0,3600,,,,0|rank10047:,29/Sep/25 12:00 AM,1,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 3,Done,30/Sep/25 6:00 PM\n\"As a user, I can configure notification preferences\",SCRUM-53,10048,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 5:00 PM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 3:00 AM,10/Oct/25 12:00 AM,0,\"As a user, I can configure notification preferences. Auto-generated for sprint 3.\",,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10048:,29/Sep/25 12:00 AM,13,Gamma,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-3,API Integration,,Sprint 3,Done,29/Sep/25 5:00 PM\n\"As an admin, I can manage user roles\",SCRUM-54,10049,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 8:00 AM,4/Oct/25 12:00 AM,4/Oct/25 12:00 AM,,12/Oct/25 12:00 AM,0,\"As an admin, I can manage user roles. Auto-generated for sprint 3.\",,0,,3600,1995,1605,44,3600,1995,1605,,,,0|rank10049:,29/Sep/25 12:00 AM,1,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-4,Performance Optimisation,,Sprint 3,In Progress,30/Sep/25 8:00 AM\n\"As a user, I can export dashboard data to CSV\",SCRUM-55,10050,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 12:00 AM,8/Oct/25 12:00 AM,8/Oct/25 12:00 AM,,9/Oct/25 12:00 AM,0,\"As a user, I can export dashboard data to CSV. Auto-generated for sprint 3.\",,0,,10800,4116,6684,61,10800,4116,6684,,,,0|rank10050:,29/Sep/25 12:00 AM,3,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-3,API Integration,,Sprint 3,In Progress,29/Sep/25 12:00 AM\nKanban board flickers on column re-order,SCRUM-56,10051,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 11:00 AM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 10:00 PM,10/Oct/25 12:00 AM,0,Kanban board flickers on column re-order. Auto-generated for sprint 3.,Production,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10051:,29/Sep/25 12:00 AM,13,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-1,User Authentication,,Sprint 3,Done,30/Sep/25 11:00 AM\nKanban board flickers on column re-order,SCRUM-57,10052,Bug,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 3:00 AM,30/Sep/25 12:00 AM,30/Sep/25 12:00 AM,,10/Oct/25 12:00 AM,0,Kanban board flickers on column re-order. Auto-generated for sprint 3.,Production,0,,10800,2848,7952,73,10800,2848,7952,,,,0|rank10052:,29/Sep/25 12:00 AM,3,Gamma,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 3,In Progress,30/Sep/25 3:00 AM\nSprint report does not count carried-over stories,SCRUM-58,10053,Bug,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 7:00 PM,6/Oct/25 12:00 AM,6/Oct/25 12:00 AM,,11/Oct/25 12:00 AM,0,Sprint report does not count carried-over stories. Auto-generated for sprint 3.,Production,0,,72000,40164,31836,44,72000,40164,31836,,,,0|rank10053:,29/Sep/25 12:00 AM,21,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 3,In Progress,30/Sep/25 7:00 PM\nSet up CI/CD pipeline for staging environment,SCRUM-59,10054,Task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 10:00 AM,5/Oct/25 12:00 AM,5/Oct/25 12:00 AM,,9/Oct/25 12:00 AM,0,Set up CI/CD pipeline for staging environment. Auto-generated for sprint 3.,,0,,0,0,0,0,0,0,0,,,,0|rank10054:,29/Sep/25 12:00 AM,,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 3,In Progress,29/Sep/25 10:00 AM\nCode review: sprint 3 auth PRs,SCRUM-60,10055,Task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 6:00 PM,6/Oct/25 12:00 AM,6/Oct/25 12:00 AM,,12/Oct/25 12:00 AM,0,Code review: sprint 3 auth PRs. Auto-generated for sprint 3.,,0,,0,0,0,0,0,0,0,,,,0|rank10055:,29/Sep/25 12:00 AM,,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 3,In Progress,30/Sep/25 6:00 PM\nSet up feature flags for mobile rollout,SCRUM-61,10056,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 6:00 AM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 2:00 PM,11/Oct/25 12:00 AM,0,Set up feature flags for mobile rollout. Auto-generated for sprint 3.,,0,,0,0,0,0,0,0,0,,,,0|rank10056:,29/Sep/25 12:00 AM,,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 3,Done,30/Sep/25 6:00 AM\nAdd loading skeleton to widget component,SCRUM-62,10057,Sub-task,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 2:00 PM,4/Oct/25 12:00 AM,4/Oct/25 12:00 AM,,10/Oct/25 12:00 AM,0,Add loading skeleton to widget component. Auto-generated for sprint 3.,,0,,10800,6944,3856,35,10800,6944,3856,,,,0|rank10057:,29/Sep/25 12:00 AM,3,Alpha,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-1,User Authentication,,Sprint 3,In Progress,29/Sep/25 2:00 PM\nDeploy hotfix to staging,SCRUM-63,10058,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 5:00 PM,12/Oct/25 12:00 AM,12/Oct/25 12:00 AM,11/Oct/25 11:00 PM,12/Oct/25 12:00 AM,0,Deploy hotfix to staging. Auto-generated for sprint 3.,,0,,72000,0,72000,100,72000,0,72000,,,,0|rank10058:,29/Sep/25 12:00 AM,21,Beta,,SCRUM Sprint 3 (29/Sep/25 - 12/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 3,Done,30/Sep/25 5:00 PM\nKanban board flickers on column re-order,SCRUM-64,10059,Bug,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 3:00 AM,19/Oct/25 12:00 AM,19/Oct/25 12:00 AM,,23/Oct/25 12:00 AM,0,[CARRIED OVER] Kanban board flickers on column re-order. Auto-generated for sprint 4.,,0,,10800,4905,5895,54,10800,4905,5895,,,,0|rank10059:,13/Oct/25 12:00 AM,3,Gamma,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-2,Dashboard Redesign,Sprint 3,Sprint 3,In Progress,30/Sep/25 3:00 AM\n\"As an admin, I can manage user roles\",SCRUM-65,10060,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 8:00 AM,14/Oct/25 12:00 AM,14/Oct/25 12:00 AM,,25/Oct/25 12:00 AM,0,\"[CARRIED OVER] As an admin, I can manage user roles. Auto-generated for sprint 4.\",,0,,3600,1387,2213,61,3600,1387,2213,,,,0|rank10060:,13/Oct/25 12:00 AM,1,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-4,Performance Optimisation,Sprint 3,Sprint 3,In Progress,30/Sep/25 8:00 AM\nAdd loading skeleton to widget component,SCRUM-66,10061,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,29/Sep/25 2:00 PM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 2:00 AM,26/Oct/25 12:00 AM,0,[CARRIED OVER] Add loading skeleton to widget component. Auto-generated for sprint 4.,,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10061:,13/Oct/25 12:00 AM,3,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-1,User Authentication,Sprint 3,Sprint 3,Done,29/Sep/25 2:00 PM\nCode review: sprint 3 auth PRs,SCRUM-67,10062,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,30/Sep/25 6:00 PM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 11:00 AM,24/Oct/25 12:00 AM,0,[CARRIED OVER] Code review: sprint 3 auth PRs. Auto-generated for sprint 4.,,0,,0,0,0,0,0,0,0,,,,0|rank10062:,13/Oct/25 12:00 AM,,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-2,Dashboard Redesign,Sprint 3,Sprint 3,Done,30/Sep/25 6:00 PM\n\"As a user, I can search issues using JQL\",SCRUM-68,10063,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 11:00 AM,16/Oct/25 12:00 AM,16/Oct/25 12:00 AM,,24/Oct/25 12:00 AM,0,\"As a user, I can search issues using JQL. Auto-generated for sprint 4.\",,0,,43200,12720,30480,70,43200,12720,30480,,,,0|rank10063:,13/Oct/25 12:00 AM,13,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 4,In Progress,14/Oct/25 11:00 AM\n\"As a developer, I can authenticate via OAuth2\",SCRUM-69,10064,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 1:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 5:00 AM,24/Oct/25 12:00 AM,0,\"As a developer, I can authenticate via OAuth2. Auto-generated for sprint 4.\",,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10064:,13/Oct/25 12:00 AM,3,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 4,Done,14/Oct/25 1:00 AM\n\"As a user, I can set due dates on tasks\",SCRUM-70,10065,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 5:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 12:00 AM,25/Oct/25 12:00 AM,0,\"As a user, I can set due dates on tasks. Auto-generated for sprint 4.\",,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10065:,13/Oct/25 12:00 AM,2,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-4,Performance Optimisation,,Sprint 4,Done,14/Oct/25 5:00 AM\n\"As a user, I can view issue history and changelog\",SCRUM-71,10066,Story,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 6:00 PM,15/Oct/25 12:00 AM,15/Oct/25 12:00 AM,,25/Oct/25 12:00 AM,0,\"As a user, I can view issue history and changelog. Auto-generated for sprint 4.\",,0,,43200,27682,15518,35,43200,27682,15518,,,,0|rank10066:,13/Oct/25 12:00 AM,13,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-1,User Authentication,,Sprint 4,In Progress,14/Oct/25 6:00 PM\n\"As a user, I can filter dashboard widgets by date\",SCRUM-72,10067,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 7:00 PM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 4:00 PM,23/Oct/25 12:00 AM,0,\"As a user, I can filter dashboard widgets by date. Auto-generated for sprint 4.\",,0,,7200,0,7200,100,7200,0,7200,,,,0|rank10067:,13/Oct/25 12:00 AM,2,Gamma,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-3,API Integration,,Sprint 4,Done,14/Oct/25 7:00 PM\nDrag-and-drop fails on Firefox 118,SCRUM-73,10068,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 3:00 PM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 1:00 AM,23/Oct/25 12:00 AM,0,Drag-and-drop fails on Firefox 118. Auto-generated for sprint 4.,Development,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10068:,13/Oct/25 12:00 AM,13,Gamma,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-1,User Authentication,,Sprint 4,Done,14/Oct/25 3:00 PM\nLogin page throws 500 error on Safari,SCRUM-74,10069,Bug,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 1:00 AM,15/Oct/25 12:00 AM,15/Oct/25 12:00 AM,,23/Oct/25 12:00 AM,0,Login page throws 500 error on Safari. Auto-generated for sprint 4.,Production,0,,43200,13160,30040,69,43200,13160,30040,,,,0|rank10069:,13/Oct/25 12:00 AM,13,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 4,In Progress,14/Oct/25 1:00 AM\nPagination breaks when filtering by assignee,SCRUM-75,10070,Bug,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,13/Oct/25 11:00 AM,15/Oct/25 12:00 AM,15/Oct/25 12:00 AM,,23/Oct/25 12:00 AM,0,Pagination breaks when filtering by assignee. Auto-generated for sprint 4.,Production,0,,28800,8991,19809,68,28800,8991,19809,,,,0|rank10070:,13/Oct/25 12:00 AM,8,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 4,In Progress,13/Oct/25 11:00 AM\nAttachment upload silently fails for files > 5MB,SCRUM-76,10071,Bug,In Review,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 5:00 AM,23/Oct/25 12:00 AM,23/Oct/25 12:00 AM,,23/Oct/25 12:00 AM,0,Attachment upload silently fails for files > 5MB. Auto-generated for sprint 4.,Development,0,,10800,5128,5672,52,10800,5128,5672,,,,0|rank10071:,13/Oct/25 12:00 AM,3,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 4,In Progress,14/Oct/25 5:00 AM\nCode review: sprint 3 auth PRs,SCRUM-77,10072,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,13/Oct/25 10:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 3:00 AM,24/Oct/25 12:00 AM,0,Code review: sprint 3 auth PRs. Auto-generated for sprint 4.,,0,,0,0,0,0,0,0,0,,,,0|rank10072:,13/Oct/25 12:00 AM,,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-4,Performance Optimisation,,Sprint 4,Done,13/Oct/25 10:00 AM\nMigrate legacy jQuery components to React,SCRUM-78,10073,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 9:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 2:00 PM,25/Oct/25 12:00 AM,0,Migrate legacy jQuery components to React. Auto-generated for sprint 4.,,0,,0,0,0,0,0,0,0,,,,0|rank10073:,13/Oct/25 12:00 AM,,Gamma,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-4,Performance Optimisation,,Sprint 4,Done,14/Oct/25 9:00 AM\nWrite unit tests for authentication module,SCRUM-79,10074,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,13/Oct/25 5:00 PM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 4:00 PM,23/Oct/25 12:00 AM,0,Write unit tests for authentication module. Auto-generated for sprint 4.,,0,,0,0,0,0,0,0,0,,,,0|rank10074:,13/Oct/25 12:00 AM,,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-3,API Integration,,Sprint 4,Done,13/Oct/25 5:00 PM\nCreate design tokens for new colour system,SCRUM-80,10075,Task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 8:00 PM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 6:00 AM,23/Oct/25 12:00 AM,0,Create design tokens for new colour system. Auto-generated for sprint 4.,,0,,0,0,0,0,0,0,0,,,,0|rank10075:,13/Oct/25 12:00 AM,,Beta,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-2,Dashboard Redesign,,Sprint 4,Done,14/Oct/25 8:00 PM\nWrite documentation for new API endpoints,SCRUM-81,10076,Sub-task,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 2:00 AM,23/Oct/25 12:00 AM,23/Oct/25 12:00 AM,,26/Oct/25 12:00 AM,0,Write documentation for new API endpoints. Auto-generated for sprint 4.,,0,,18000,7483,10517,58,18000,7483,10517,,,,0|rank10076:,13/Oct/25 12:00 AM,5,Alpha,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-1,User Authentication,,Sprint 4,In Progress,14/Oct/25 2:00 AM\nHandle error states in OAuth2 flow,SCRUM-82,10077,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,15/Oct/25 12:00 AM,26/Oct/25 12:00 AM,26/Oct/25 12:00 AM,25/Oct/25 11:00 AM,23/Oct/25 12:00 AM,0,Handle error states in OAuth2 flow. Auto-generated for sprint 4.,,0,,3600,0,3600,100,3600,0,3600,,,,0|rank10077:,13/Oct/25 12:00 AM,1,Gamma,,SCRUM Sprint 4 (13/Oct/25 - 26/Oct/25),SCRUM-5,Mobile Responsive Layout,,Sprint 4,Done,15/Oct/25 12:00 AM\nAttachment upload silently fails for files > 5MB,SCRUM-83,10078,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 5:00 AM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 1:00 PM,6/Nov/25 12:00 AM,0,[CARRIED OVER] Attachment upload silently fails for files > 5MB. Auto-generated for sprint 5.,Production,0,,10800,0,10800,100,10800,0,10800,,,,0|rank10078:,27/Oct/25 12:00 AM,3,Gamma,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-5,Mobile Responsive Layout,Sprint 4,Sprint 4,Done,14/Oct/25 5:00 AM\nWrite documentation for new API endpoints,SCRUM-84,10079,Sub-task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 2:00 AM,6/Nov/25 12:00 AM,6/Nov/25 12:00 AM,,9/Nov/25 12:00 AM,0,[CARRIED OVER] Write documentation for new API endpoints. Auto-generated for sprint 5.,,0,,18000,11707,6293,34,18000,11707,6293,,,,0|rank10079:,27/Oct/25 12:00 AM,5,Alpha,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-1,User Authentication,Sprint 4,Sprint 4,In Progress,14/Oct/25 2:00 AM\n\"As a user, I can view issue history and changelog\",SCRUM-85,10080,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Carol Smith,712020:carol003,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,14/Oct/25 6:00 PM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 3:00 PM,6/Nov/25 12:00 AM,0,\"[CARRIED OVER] As a user, I can view issue history and changelog. Auto-generated for sprint 5.\",,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10080:,27/Oct/25 12:00 AM,13,Gamma,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-1,User Authentication,Sprint 4,Sprint 4,Done,14/Oct/25 6:00 PM\n\"As a user, I can view all open blockers in one place\",SCRUM-86,10081,Story,To Do,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 8:00 PM,1/Nov/25 12:00 AM,1/Nov/25 12:00 AM,,6/Nov/25 12:00 AM,0,\"As a user, I can view all open blockers in one place. Auto-generated for sprint 5.\",,0,,10800,6421,4379,40,10800,6421,4379,,,,0|rank10081:,27/Oct/25 12:00 AM,3,Gamma,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-2,Dashboard Redesign,,Sprint 5,To Do,27/Oct/25 8:00 PM\n\"As a team lead, I can assign tasks to team members\",SCRUM-87,10082,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 4:00 PM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 12:00 PM,8/Nov/25 12:00 AM,0,\"As a team lead, I can assign tasks to team members. Auto-generated for sprint 5.\",,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10082:,27/Oct/25 12:00 AM,13,Alpha,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-1,User Authentication,,Sprint 5,Done,27/Oct/25 4:00 PM\n\"As a user, I can connect third-party integrations\",SCRUM-88,10083,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Critical,Done,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,28/Oct/25 5:00 PM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 11:00 PM,8/Nov/25 12:00 AM,0,\"As a user, I can connect third-party integrations. Auto-generated for sprint 5.\",,0,,3600,0,3600,100,3600,0,3600,,,,0|rank10083:,27/Oct/25 12:00 AM,1,Alpha,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-1,User Authentication,,Sprint 5,Done,28/Oct/25 5:00 PM\n\"As a user, I can add attachments to issues\",SCRUM-89,10084,Story,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 3:00 PM,4/Nov/25 12:00 AM,4/Nov/25 12:00 AM,,7/Nov/25 12:00 AM,0,\"As a user, I can add attachments to issues. Auto-generated for sprint 5.\",,0,,3600,2089,1511,41,3600,2089,1511,,,,0|rank10084:,27/Oct/25 12:00 AM,1,Gamma,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-2,Dashboard Redesign,,Sprint 5,In Progress,27/Oct/25 3:00 PM\n\"As a PM, I can generate sprint burndown charts\",SCRUM-90,10085,Story,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 11:00 PM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 6:00 PM,7/Nov/25 12:00 AM,0,\"As a PM, I can generate sprint burndown charts. Auto-generated for sprint 5.\",,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10085:,27/Oct/25 12:00 AM,13,Alpha,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-2,Dashboard Redesign,,Sprint 5,Done,27/Oct/25 11:00 PM\nDate picker shows wrong timezone offset,SCRUM-91,10086,Bug,Blocked,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Alice Chen,712020:alice001,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 6:00 AM,3/Nov/25 12:00 AM,3/Nov/25 12:00 AM,,6/Nov/25 12:00 AM,0,Date picker shows wrong timezone offset. Auto-generated for sprint 5.,Production,0,,28800,17906,10894,37,28800,17906,10894,,,,0|rank10086:,27/Oct/25 12:00 AM,8,Beta,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-5,Mobile Responsive Layout,,Sprint 5,In Progress,27/Oct/25 6:00 AM\nAttachment upload silently fails for files > 5MB,SCRUM-92,10087,Bug,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,High,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 4:00 AM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 2:00 AM,9/Nov/25 12:00 AM,0,Attachment upload silently fails for files > 5MB. Auto-generated for sprint 5.,,0,,43200,0,43200,100,43200,0,43200,,,,0|rank10087:,27/Oct/25 12:00 AM,13,Beta,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-5,Mobile Responsive Layout,,Sprint 5,Done,27/Oct/25 4:00 AM\nDashboard widgets do not load for new users,SCRUM-93,10088,Bug,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 10:00 PM,2/Nov/25 12:00 AM,2/Nov/25 12:00 AM,,9/Nov/25 12:00 AM,0,Dashboard widgets do not load for new users. Auto-generated for sprint 5.,Development,0,,10800,3838,6962,64,10800,3838,6962,,,,0|rank10088:,27/Oct/25 12:00 AM,3,Beta,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-5,Mobile Responsive Layout,,Sprint 5,In Progress,27/Oct/25 10:00 PM\nImplement rate limiting on login endpoint,SCRUM-94,10089,Task,To Do,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,28/Oct/25 7:00 AM,4/Nov/25 12:00 AM,4/Nov/25 12:00 AM,,8/Nov/25 12:00 AM,0,Implement rate limiting on login endpoint. Auto-generated for sprint 5.,,0,,0,0,0,0,0,0,0,,,,0|rank10089:,27/Oct/25 12:00 AM,,Alpha,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-1,User Authentication,,Sprint 5,To Do,28/Oct/25 7:00 AM\nDocument REST API endpoints in Swagger,SCRUM-95,10090,Task,In Progress,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Low,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,28/Oct/25 3:00 AM,5/Nov/25 12:00 AM,5/Nov/25 12:00 AM,,6/Nov/25 12:00 AM,0,Document REST API endpoints in Swagger. Auto-generated for sprint 5.,,0,,0,0,0,0,0,0,0,,,,0|rank10090:,27/Oct/25 12:00 AM,,Beta,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-2,Dashboard Redesign,,Sprint 5,In Progress,28/Oct/25 3:00 AM\nPerformance audit on dashboard load time,SCRUM-96,10091,Task,To Do,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,,Eva M\u00fcller,712020:eva005,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,28/Oct/25 5:00 AM,29/Oct/25 12:00 AM,29/Oct/25 12:00 AM,,7/Nov/25 12:00 AM,0,Performance audit on dashboard load time. Auto-generated for sprint 5.,,0,,0,0,0,0,0,0,0,,,,0|rank10091:,27/Oct/25 12:00 AM,,Beta,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-4,Performance Optimisation,,Sprint 5,To Do,28/Oct/25 5:00 AM\nWrite documentation for new API endpoints,SCRUM-97,10092,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,David Kim,712020:david004,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,28/Oct/25 4:00 AM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 8:00 AM,7/Nov/25 12:00 AM,0,Write documentation for new API endpoints. Auto-generated for sprint 5.,,0,,28800,0,28800,100,28800,0,28800,,,,0|rank10092:,27/Oct/25 12:00 AM,8,Alpha,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-2,Dashboard Redesign,,Sprint 5,Done,28/Oct/25 4:00 AM\nAdd loading skeleton to widget component,SCRUM-98,10093,Sub-task,Done,SCRUM,Igor Is A Genius,software,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Agile project tracking dataset,Medium,Done,Bob Patel,712020:bob002,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,Ihar Dudzin,712020:bd010578-59cd-48a6-9903-bd5b415d4602,27/Oct/25 11:00 AM,9/Nov/25 12:00 AM,9/Nov/25 12:00 AM,8/Nov/25 4:00 AM,7/Nov/25 12:00 AM,0,Add loading skeleton to widget component. Auto-generated for sprint 5.,,0,,72000,0,72000,100,72000,0,72000,,,,0|rank10093:,27/Oct/25 12:00 AM,21,Gamma,,SCRUM Sprint 5 (27/Oct/25 - 09/Nov/25),SCRUM-4,Performance Optimisation,,Sprint 5,Done,27/Oct/25 11:00 AM\n";
 
@@ -655,22 +657,57 @@ function avatarCol(n){
   return cols[Math.abs(h)%cols.length];
 }
 function getFieldH(names){return headers.find(h=>names.some(n=>h===n||h.toLowerCase()===n.toLowerCase()))}
-function getSprintH(){return headers.find(h=>h==='Custom field (Sprint)')}
+// A Sprint column may be named "Sprint", "Custom field (Sprint)", or "Sprint (1)" etc.
+function isSprintHeader(h){return /^(custom field \()?sprint(\s*\(\d+\)|\))?\s*$/i.test((h||'').trim())}
+function getSprintH(){return headers.find(h=>isSprintHeader(h))}
+let sprintColIdxs=[];
 function sprintNum(s){const m=(s||'').match(/Sprint\s*(\d+)/i);return m?parseInt(m[1]):0}
+
+// ── Issue → sprint list (oldest→newest), de-duplicated, numerically sorted ──
+function rowSprints(r){
+  const list=(r.__sprints&&r.__sprints.length)?r.__sprints
+    :(()=>{const sh=getSprintH();return sh&&r[sh]?[r[sh]]:[];})();
+  // de-dup while preserving first-seen order, then sort by sprint number
+  const seen=new Set(),out=[];
+  list.forEach(v=>{if(!seen.has(v)){seen.add(v);out.push(v);}});
+  return out.sort((a,b)=>sprintNum(a)-sprintNum(b));
+}
+function rowOriginalSprint(r){const l=rowSprints(r);return l[0]||'';}
+function rowLastSprint(r){const l=rowSprints(r);return l[l.length-1]||'';}
+function rowCarryCount(r){return Math.max(0,rowSprints(r).length-1);}
+
+// Done statuses (case-insensitive)
+function isDoneStatus(st){return /^(done|closed|resolved)$/i.test((st||'').trim());}
+
+// The latest sprint number present anywhere in the dataset
+function latestSprintNum(){
+  let mx=0; allRows.forEach(r=>rowSprints(r).forEach(s=>{const n=sprintNum(s);if(n>mx)mx=n;}));
+  return mx;
+}
+
+// Classify an issue's overall state: 'done' | 'removed' | 'inflight'
+// done    = status is Done/Closed/Resolved (counts as done in its LAST sprint)
+// removed = NOT done-status AND its last sprint is behind the latest sprint
+//           (it stopped carrying forward but never finished — needs review)
+// inflight= NOT done-status AND its last sprint IS the latest sprint (still being worked)
+function issueState(r){
+  const stH=getFieldH(['Status']);
+  const st=stH?r[stH]:'';
+  if(isDoneStatus(st)) return 'done';
+  const last=sprintNum(rowLastSprint(r));
+  const latest=latestSprintNum();
+  if(last>0 && last<latest) return 'removed';
+  return 'inflight';
+}
 
 // carry count per issue key (how many times carried across sprints)
 function buildCarryCounts(){
-  const cyH=getFieldH(['Custom field (Carried Over)']);
   const keyH=getFieldH(['Issue key']);
   const sumH=getFieldH(['Summary']);
   const counts={};
-  if(!cyH||!keyH) return counts;
   allRows.forEach(r=>{
-    if(r[cyH]){
-      // group by summary to track the same issue across sprints
-      const k=r[sumH]||r[keyH];
-      counts[k]=(counts[k]||0)+1;
-    }
+    const c=rowCarryCount(r);
+    if(c>0){ const k=(sumH&&r[sumH])||(keyH&&r[keyH]); if(k) counts[k]=c; }
   });
   return counts;
 }
@@ -678,6 +715,27 @@ let carryCounts={};
 
 // ═══ LOAD ═══
 function loadSample(){parseCSV(SAMPLE_CSV,'SCRUM_Sprint_Data.csv');showToast('✅ Sample data loaded','ok')}
+
+// ═══ RESET ═══ clear all loaded data and return to the empty upload state
+function resetData(){
+  if(allRows.length && !confirm('Clear all loaded data? This removes the current CSV from the page.')) return;
+  allRows=[]; headers=[]; selectedFields=[]; filteredRows=[]; sprintColIdxs=[]; carryCounts={};
+  activeSprints=new Set(['all']); activeSprintDetail=null; curPage=1; sortCol=-1;
+  Object.keys(msState).forEach(k=>msState[k].clear());
+  // wipe rendered panels
+  ['statsBar','sprintCards','chartsRow','sdTabBar','carryStats','carryTimeline','velStats'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  const sd=document.getElementById('sprintDetailContent'); if(sd) sd.innerHTML='<div class="empty"><div class="ei">📊</div><h3>No data loaded</h3><p style="color:var(--muted);font-size:12px">Upload a Jira CSV to begin.</p></div>';
+  const tb=document.getElementById('tBody'); if(tb) tb.innerHTML='<tr><td><div class="empty"><div class="ei">🗂</div><h3>No data loaded</h3></div></td></tr>';
+  const th=document.getElementById('tHead'); if(th) th.innerHTML='';
+  const tf=document.getElementById('tblFooter'); if(tf) tf.innerHTML='';
+  const ssp=document.getElementById('sidebarSprintPicker'); if(ssp) ssp.innerHTML='';
+  const velBody=document.getElementById('velChart'); if(velBody) velBody.innerHTML='';
+  // hide data-dependent UI
+  ['topBadge','btnPPTX','btnReset','sShare','loadedName','lastUpdatedBar'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  // reset the file input so re-uploading the SAME file fires change again
+  const fin=document.getElementById('fileInput'); if(fin) fin.value='';
+  showToast('🗑 Data cleared','ok');
+}
 
 const uz=document.getElementById('uploadZone'),fi=document.getElementById('fileInput');
 uz.addEventListener('click',()=>fi.click());
@@ -688,6 +746,8 @@ uz.addEventListener('drop',e=>{e.preventDefault();uz.classList.remove('drag');e.
 function readFile(f){const r=new FileReader();r.onload=e=>parseCSV(e.target.result,f.name);r.readAsText(f)}
 
 function parseCSV(text,fname){
+  // Strip UTF-8 BOM if present (Jira exports include it; breaks the first header)
+  if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
   const rows=[];let cur='',inQ=false,cells=[];
   for(let i=0;i<text.length;i++){
     const ch=text[i],nx=text[i+1];
@@ -697,8 +757,21 @@ function parseCSV(text,fname){
   }
   if(cur||cells.length){cells.push(cur.trim());if(cells.some(c=>c!==''))rows.push(cells)}
   if(rows.length<2){showToast('❌ Invalid CSV','err');return}
-  headers=rows[0];
-  allRows=rows.slice(1).map(r=>{const o={};headers.forEach((h,i)=>o[h]=r[i]||'');return o});
+  const rawHeaders=rows[0];
+  // De-duplicate header NAMES for object keys, but remember which raw columns
+  // share a name (Jira repeats "Sprint"/"Custom field (Sprint)" for carried items).
+  headers=[]; const seen={}; sprintColIdxs=[];
+  rawHeaders.forEach((h,i)=>{
+    headers.push(h); // keep original order; lookups use first match
+    if(isSprintHeader(h)) sprintColIdxs.push(i);
+  });
+  allRows=rows.slice(1).map(r=>{
+    const o={};
+    rawHeaders.forEach((h,i)=>{ if(o[h]===undefined) o[h]=r[i]||''; }); // first non-dup wins for normal fields
+    // collect ALL sprint values for this row, in column order (oldest -> newest), de-blanked
+    o.__sprints = sprintColIdxs.map(i=>(r[i]||'').trim()).filter(Boolean);
+    return o;
+  });
   carryCounts=buildCarryCounts();
   buildFieldMeta();
   // Reset multi-select filter state
@@ -715,18 +788,15 @@ function parseCSV(text,fname){
   document.getElementById('topBadge').textContent=allRows.length+' issues';
   document.getElementById('topBadge').style.display='';
   document.getElementById('btnPPTX').style.display='';
-  // Build sidebar sprint picker
+  document.getElementById('btnReset').style.display='';
   buildSidebarSprintPicker();
-  // Last updated bar
   const lastUp=getLastUpdated();
   const luBar=document.getElementById('lastUpdatedBar');
   if(luBar&&lastUp){
     luBar.style.display='flex';
     luBar.innerHTML=`📅 Data exported from Jira &nbsp;·&nbsp; Last updated: <strong>${lastUp.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</strong> &nbsp;·&nbsp; <span>${allRows.length} issues</span>`;
   }
-  // Trigger correct sidebar context for current tab
   switchTab(currentTab);
-  // restore URL state if any
   restoreURLState();
 }
 
@@ -742,9 +812,52 @@ function buildFieldMeta(){
 
 // ═══ SPRINTS ═══
 function detectSprints(){
-  const sh=getSprintH();
-  if(!sh) return[];
-  return[...new Set(allRows.map(r=>r[sh]).filter(Boolean))].sort((a,b)=>sprintNum(a)-sprintNum(b));
+  const set=new Set();
+  allRows.forEach(r=>rowSprints(r).forEach(s=>set.add(s)));
+  return [...set].sort((a,b)=>sprintNum(a)-sprintNum(b));
+}
+// rows that were COMMITTED to a given sprint (appear in its list)
+function rowsCommittedTo(sprint){return allRows.filter(r=>rowSprints(r).includes(sprint));}
+
+// ── Unified per-sprint metrics (the agreed model) ──
+// committed: every issue whose sprint-list includes this sprint
+// done:      committed issues that are Done-status AND whose LAST sprint == this sprint
+// removed:   committed issues that are NOT done and whose last sprint < latest sprint
+//            (stopped carrying forward, never finished — needs review)
+// inflight:  committed, not done, last sprint == latest sprint (still being worked)
+// carriedIn: committed here AND also committed to an earlier sprint
+// carriedOut:committed here AND also committed to a later sprint
+function sprintMetrics(sprint){
+  const spE=getFieldH(['Custom field (Story point estimate)']);
+  const n=sprintNum(sprint);
+  const committed=rowsCommittedTo(sprint);
+  const sp=r=>spE?(parseFloat(r[spE])||0):0;
+  let done=[],removed=[],inflight=[],carriedIn=[],carriedOut=[];
+  committed.forEach(r=>{
+    const list=rowSprints(r), last=sprintNum(rowLastSprint(r));
+    if(list.some(s=>sprintNum(s)<n)) carriedIn.push(r);
+    if(list.some(s=>sprintNum(s)>n)) carriedOut.push(r);
+    const state=issueState(r);
+    if(state==='done' && last===n) done.push(r);
+    else if(state==='done' && last!==n) {/* done in a later sprint; just committed here */}
+    else if(state==='removed') removed.push(r);
+    else inflight.push(r); // not done, still in flight
+  });
+  const total=committed.length;
+  const pct=total>0?Math.round(done.length/total*100):0; // removed stays in denominator
+  return {
+    sprint, n,
+    committed, total,
+    done, doneCount:done.length,
+    removed, removedCount:removed.length,
+    inflight, inflightCount:inflight.length,
+    carriedIn, carriedInCount:carriedIn.length,
+    carriedOut, carriedOutCount:carriedOut.length,
+    pct,
+    spCommitted:committed.reduce((s,r)=>s+sp(r),0),
+    spDone:done.reduce((s,r)=>s+sp(r),0),
+    spCarriedOut:carriedOut.reduce((s,r)=>s+sp(r),0),
+  };
 }
 
 function buildSprintToggles(){
@@ -794,9 +907,7 @@ function openSprintDetail(sp){
 
 function getActiveRows(){
   if(activeSprints.has('all'))return allRows;
-  const spH=getSprintH();
-  if(!spH)return allRows;
-  return allRows.filter(r=>[...activeSprints].some(s=>r[spH]===s));
+  return allRows.filter(r=>{const ls=rowSprints(r);return [...activeSprints].some(s=>ls.includes(s));});
 }
 
 // ═══ FILTER ═══
@@ -1109,88 +1220,77 @@ function refreshAll(){
 // ═══ STATS BAR ═══
 function buildStats(){
   const rows=getActiveRows();
-  const sh=getFieldH(['Status']),spE=getFieldH(['Custom field (Story point estimate)']),cyH=getFieldH(['Custom field (Carried Over)']);
+  const spE=getFieldH(['Custom field (Story point estimate)']);
   const total=rows.length;
-  const spH2=getSprintH();
-  const unplanned=rows.filter(r=>{
-    const sp=spH2?r[spH2]:'';
-    return isUnplanned(r,sp);
-  }).length;
-  const done=sh?rows.filter(r=>/done/i.test(r[sh])).length:'-';
-  const spDone=spE&&sh?rows.filter(r=>/done/i.test(r[sh])).reduce((s,r)=>s+(parseFloat(r[spE])||0),0):'-';
-  const spCarry=spE&&cyH?rows.filter(r=>r[cyH]).reduce((s,r)=>s+(parseFloat(r[spE])||0),0):'-';
-  const blocked=sh?rows.filter(r=>/blocked/i.test(r[sh])).length:0;
-  const carried=cyH?rows.filter(r=>r[cyH]).length:'-';
-  const pct=total>0&&done!=='-'?Math.round(done/total*100):'-';
+  const unplanned=rows.filter(r=>isUnplanned(r,rowLastSprint(r))).length;
+  // classify each active row
+  let done=0,removed=0,inflight=0,spDone=0,spCarry=0,carried=0;
+  rows.forEach(r=>{
+    const state=issueState(r);
+    if(state==='done'){done++; spDone+=spE?(parseFloat(r[spE])||0):0;}
+    else if(state==='removed') removed++;
+    else inflight++;
+    if(rowCarryCount(r)>0){ carried++; spCarry+=spE?(parseFloat(r[spE])||0):0; }
+  });
+  const pct=total>0?Math.round(done/total*100):0;
   document.getElementById('statsBar').innerHTML=`
-    <div class="sc blue"><div class="sv">${total}</div><div class="sl">Total Issues</div></div>
-    <div class="sc green"><div class="sv">${done==='-'?'—':done}</div><div class="sl">Done</div></div>
-    <div class="sc teal"><div class="sv">${pct==='-'?'—':pct+'%'}</div><div class="sl">Completion</div></div>
-    <div class="sc amber"><div class="sv">${spDone==='-'?'—':spDone}</div><div class="sl">SP Done</div></div>
-    <div class="sc purple"><div class="sv">${spCarry==='-'?'—':spCarry}</div><div class="sl">SP in Carryover</div></div>
-    <div class="sc red"><div class="sv">${blocked}</div><div class="sl">Blocked</div></div>
-    <div class="sc"><div class="sv" style="color:var(--gold)">${carried==='-'?'—':carried}</div><div class="sl">Carried Over</div></div>
+    <div class="sc blue"><div class="sv">${total}</div><div class="sl">Committed</div></div>
+    <div class="sc green"><div class="sv">${done}</div><div class="sl">Done</div></div>
+    <div class="sc teal"><div class="sv">${pct}%</div><div class="sl">Completion</div></div>
+    <div class="sc amber"><div class="sv">${Math.round(spDone)}</div><div class="sl">SP Done</div></div>
+    <div class="sc purple"><div class="sv">${Math.round(spCarry)}</div><div class="sl">SP Carried</div></div>
+    <div class="sc"><div class="sv" style="color:var(--blue-lt)">${inflight}</div><div class="sl">In flight</div></div>
+    <div class="sc"><div class="sv" style="color:var(--gold)">${carried}</div><div class="sl">Carried Over</div></div>
+    ${removed>0?`<div class="sc red"><div class="sv">${removed}</div><div class="sl">⚠️ Removed</div></div>`:''}
     ${unplanned>0?`<div class="sc purple"><div class="sv">${unplanned}</div><div class="sl">⚠️ Unplanned</div></div>`:''}
   `;
 }
 
 // ═══ SPRINT CARDS (Tab 1) ═══
 function buildSprintCards(){
-  const sh=getFieldH(['Status']),spH=getSprintH(),spE=getFieldH(['Custom field (Story point estimate)']),cyH=getFieldH(['Custom field (Carried Over)']);
+  const spE=getFieldH(['Custom field (Story point estimate)']);
   const sprints=detectSprints();
   if(!sprints.length){document.getElementById('sprintCards').innerHTML='';return}
-  const isCurrent=sprints[sprints.length-1];
+  const latest=latestSprintNum();
   let html='';
   sprints.forEach(sp=>{
-    const isLast=sp===isCurrent;
-    const spRows=allRows.filter(r=>r[spH]===sp);
-    const total=spRows.length;
-    const doneRows=sh?spRows.filter(r=>/done/i.test(r[sh])):[];
-    const done=doneRows.length;
-    const inProg=sh?spRows.filter(r=>/progress|review/i.test(r[sh])).length:0;
-    const blocked=sh?spRows.filter(r=>/blocked/i.test(r[sh])).length:0;
-    const carriedRows=cyH?spRows.filter(r=>r[cyH]):[];
-    const carried=carriedRows.length;
-    const carriedDone=cyH&&sh?spRows.filter(r=>r[cyH]&&/done/i.test(r[sh])).length:0;
-    // SP breakdown
-    const spDone=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    const spCarry=spE?carriedRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    const spTotal=spE?spRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    const spOrigDone=spDone-carriedRows.filter(r=>/done/i.test(r[sh]||'')).reduce((s,r)=>s+(parseFloat(r[spE])||0),0);
-    const pct=total>0?Math.round(done/total*100):0;
-    const n=sprintNum(sp);
-    const unplanned=spRows.filter(r=>isUnplanned(r,sp)).length;
+    const m=sprintMetrics(sp);
+    const isLast=m.n===latest;
+    const sp_=r=>spE?(parseFloat(r[spE])||0):0;
+    const spTotal=m.spCommitted;
+    const spDone=m.spDone;
+    const spCarry=m.spCarriedOut;
+    const pct=m.pct;
     const dateMatch=sp.match(/\((.*?)\)/);
     const dateStr=dateMatch?dateMatch[1]:'';
     const fillCol=pct>=70?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
-    // pct of carryover SP in total SP
     const carryPct=spTotal>0?Math.round(spCarry/spTotal*100):0;
+    const unplanned=m.committed.filter(r=>isUnplanned(r,sp)).length;
     html+=`<div class="sprint-card ${isLast?'current':''}" style="border-top-color:${fillCol}" onclick="openSprintDetail('${sp.replace(/'/g,"\'")}')">
       <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${fillCol}"></div>
-      <div class="sc-name">Sprint ${n} ${isLast?'🔴 Active':'✅ Done'}</div>
+      <div class="sc-name">Sprint ${m.n} ${isLast?'🔴 Active':'✅ Done'}</div>
       ${dateStr?`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">${dateStr}</div>`:''}
       <div class="sc-pct" style="color:${fillCol}">${pct}%</div>
       <div class="sc-sub">Issue completion rate</div>
       <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${fillCol}"></div></div>
-      <div class="sc-row"><span class="lbl">Total</span><span class="val">${total}</span></div>
-      <div class="sc-row"><span class="lbl">✅ Done</span><span class="val" style="color:var(--green)">${done}</span></div>
-      <div class="sc-row"><span class="lbl">🔵 In Progress</span><span class="val" style="color:var(--blue-lt)">${inProg}</span></div>
-      ${blocked?`<div class="sc-row"><span class="lbl">🔴 Blocked</span><span class="val" style="color:var(--red)">${blocked}</span></div>`:''}
+      <div class="sc-row"><span class="lbl">Committed</span><span class="val">${m.total}</span></div>
+      <div class="sc-row"><span class="lbl">✅ Done</span><span class="val" style="color:var(--green)">${m.doneCount}</span></div>
+      <div class="sc-row"><span class="lbl">🔵 In flight</span><span class="val" style="color:var(--blue-lt)">${m.inflightCount}</span></div>
+      ${m.removedCount?`<div class="sc-row"><span class="lbl">⚠️ Removed</span><span class="val" style="color:var(--gold)">${m.removedCount}</span></div>`:''}
       ${spTotal>0?`
       <div class="sp-stack-wrap">
-        <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SP: ${spDone} done / ${spTotal} total (${carryPct}% carryover SP)</div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SP: ${Math.round(spDone)} done / ${Math.round(spTotal)} committed (${carryPct}% carried out)</div>
         <div class="sp-stack">
-          <div class="sp-seg" style="width:${spTotal>0?Math.round(spOrigDone/spTotal*100):0}%;background:var(--green)" title="${spOrigDone} SP — original done"></div>
-          <div class="sp-seg" style="width:${spTotal>0?Math.round(carriedRows.filter(r=>/done/i.test(r[sh]||'')).reduce((s,r)=>s+(parseFloat(r[spE])||0),0)/spTotal*100):0}%;background:var(--teal)" title="Carryover SP resolved"></div>
-          <div class="sp-seg" style="width:${spTotal>0?Math.round(spCarry/spTotal*100):0}%;background:rgba(245,166,35,.6)" title="${spCarry} SP in carryover"></div>
+          <div class="sp-seg" style="width:${spTotal>0?Math.round(spDone/spTotal*100):0}%;background:var(--green)" title="${Math.round(spDone)} SP done"></div>
+          <div class="sp-seg" style="width:${spTotal>0?Math.round(spCarry/spTotal*100):0}%;background:rgba(245,166,35,.6)" title="${Math.round(spCarry)} SP carried out"></div>
         </div>
         <div class="sp-legend">
-          <div class="sp-leg-item"><div class="sp-leg-dot" style="background:var(--green)"></div>Done (original)</div>
-          <div class="sp-leg-item"><div class="sp-leg-dot" style="background:var(--teal)"></div>Done (carryover)</div>
-          <div class="sp-leg-item"><div class="sp-leg-dot" style="background:rgba(245,166,35,.6)"></div>Carryover SP</div>
+          <div class="sp-leg-item"><div class="sp-leg-dot" style="background:var(--green)"></div>SP done</div>
+          <div class="sp-leg-item"><div class="sp-leg-dot" style="background:rgba(245,166,35,.6)"></div>SP carried out</div>
         </div>
       </div>`:''}
-      ${carried>0?`<div class="carry-badge">🔄 ${carried} carried in · ${carriedDone} resolved</div>`:''}
+      ${m.carriedInCount>0?`<div class="carry-badge">🔄 ${m.carriedInCount} carried in</div>`:''}
+      ${m.carriedOutCount>0?`<div class="carry-badge" style="background:rgba(62,159,245,.12);border-color:rgba(62,159,245,.3);color:var(--blue-lt)">↪ ${m.carriedOutCount} carried out</div>`:''}
       ${unplanned>0?`<div class="carry-badge" style="background:rgba(155,89,182,.15);border-color:rgba(155,89,182,.3);color:var(--purple)">⚠️ ${unplanned} unplanned added</div>`:''}
       <div style="margin-top:8px;font-size:10px;color:var(--teal)">Click for detail →</div>
     </div>`;
@@ -1204,18 +1304,11 @@ function buildOverviewCharts(){
   const sh=getFieldH(['Status']),spH=getSprintH(),spE=getFieldH(['Custom field (Story point estimate)']),cyH=getFieldH(['Custom field (Carried Over)']);
   if(!sprints.length){document.getElementById('chartsRow').innerHTML='';return}
 
-  // SP done vs carryover SP per sprint
-  let spChartHtml=`<div class="chart-card" style="grid-column:span 2"><div class="cc-title">📐 SP Done vs Carryover SP per Sprint</div>`;
+  // SP committed / done / carried-out per sprint
+  let spChartHtml=`<div class="chart-card" style="grid-column:span 2"><div class="cc-title">📐 SP Committed · Done · Carried Out per Sprint</div>`;
   const sprintData=sprints.map(sp=>{
-    const rows=allRows.filter(r=>r[spH]===sp);
-    const doneRows=sh?rows.filter(r=>/done/i.test(r[sh])):[];
-    const carryRows=cyH?rows.filter(r=>r[cyH]):[];
-    const carryDoneRows=cyH&&sh?rows.filter(r=>r[cyH]&&/done/i.test(r[sh])):[];
-    const spDone=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    const spCarry=spE?carryRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    const spCarryDone=spE?carryDoneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    const spTotal=spE?rows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    return{n:sprintNum(sp),spDone,spCarry,spCarryDone,spTotal,total:rows.length,done:doneRows.length};
+    const m=sprintMetrics(sp);
+    return{n:m.n,spDone:m.spDone,spCarry:m.spCarriedOut,spTotal:m.spCommitted,total:m.total,done:m.doneCount};
   });
   const maxSP=Math.max(...sprintData.map(d=>d.spTotal),1);
   spChartHtml+=`<div style="display:flex;align-items:flex-end;gap:10px;height:100px;padding-top:8px">`;
@@ -1225,34 +1318,35 @@ function buildOverviewCharts(){
     const hDone=Math.round(d.spDone/maxSP*80);
     spChartHtml+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
       <div style="display:flex;gap:2px;align-items:flex-end;height:80px;width:100%">
-        <div style="flex:1;background:rgba(12,125,224,.35);height:${hTotal}px;border-radius:2px 2px 0 0" title="Total SP: ${d.spTotal}"></div>
-        <div style="flex:1;background:var(--green);height:${hDone}px;border-radius:2px 2px 0 0" title="SP Done: ${d.spDone}"></div>
-        <div style="flex:1;background:rgba(245,166,35,.7);height:${hCarry}px;border-radius:2px 2px 0 0" title="Carryover SP: ${d.spCarry}"></div>
+        <div style="flex:1;background:rgba(12,125,224,.35);height:${hTotal}px;border-radius:2px 2px 0 0" title="Committed SP: ${Math.round(d.spTotal)}"></div>
+        <div style="flex:1;background:var(--green);height:${hDone}px;border-radius:2px 2px 0 0" title="SP Done: ${Math.round(d.spDone)}"></div>
+        <div style="flex:1;background:rgba(245,166,35,.7);height:${hCarry}px;border-radius:2px 2px 0 0" title="Carried-out SP: ${Math.round(d.spCarry)}"></div>
       </div>
       <div style="font-size:10px;color:var(--muted);font-weight:600">S${d.n}</div>
     </div>`;
   });
   spChartHtml+=`</div>
   <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;flex-wrap:wrap">
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(12,125,224,.35);border-radius:2px;display:inline-block"></span>Total SP</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(12,125,224,.35);border-radius:2px;display:inline-block"></span>Committed SP</span>
     <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block"></span>SP Done</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(245,166,35,.7);border-radius:2px;display:inline-block"></span>Carryover SP</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(245,166,35,.7);border-radius:2px;display:inline-block"></span>Carried Out SP</span>
   </div></div>`;
 
   // Previous sprint carryovers resolved in next sprint
   let resolveChartHtml=`<div class="chart-card"><div class="cc-title">✅ Previous Sprint Carryovers Resolved in Next Sprint</div>`;
   for(let i=1;i<sprints.length;i++){
     const prevSp=sprints[i-1],curSp=sprints[i];
-    const cyH2=getFieldH(['Custom field (Carried Over)']);
-    const prevNum=sprintNum(prevSp);
-    const carriedFromPrev=allRows.filter(r=>r[spH]===curSp&&cyH2&&r[cyH2]==='Sprint '+prevNum);
-    const resolvedFromPrev=sh?carriedFromPrev.filter(r=>/done/i.test(r[sh])):[];
+    const prevNum=sprintNum(prevSp),curNum=sprintNum(curSp);
+    // issues that were in prev AND carried into cur
+    const carriedFromPrev=allRows.filter(r=>{const ls=rowSprints(r).map(sprintNum);return ls.includes(prevNum)&&ls.includes(curNum);});
+    // resolved = Done AND their last sprint is cur (finished in the sprint they carried into)
+    const resolvedFromPrev=carriedFromPrev.filter(r=>issueState(r)==='done'&&sprintNum(rowLastSprint(r))===curNum);
     const total=carriedFromPrev.length;
     const res=resolvedFromPrev.length;
     const pct=total>0?Math.round(res/total*100):100;
     const col=pct>=70?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
     resolveChartHtml+=`<div class="mb-row">
-      <span class="mb-lbl" style="width:90px">S${prevNum}→S${sprintNum(curSp)}</span>
+      <span class="mb-lbl" style="width:90px">S${prevNum}→S${curNum}</span>
       <div class="mb-track"><div class="mb-fill" style="width:${pct}%;background:${col}"></div></div>
       <span class="mb-cnt" style="width:60px;color:${col}">${res}/${total} (${pct}%)</span>
     </div>`;
@@ -1320,19 +1414,20 @@ function buildSprintDetail(){
   // Render only the active sprint
   const sp=activeSprintDetail;
   const n=sprintNum(sp);
-  const spH=getSprintH(),sh=getFieldH(['Status']),cyH=getFieldH(['Custom field (Carried Over)']),spE=getFieldH(['Custom field (Story point estimate)']);
+  const sh=getFieldH(['Status']),spE=getFieldH(['Custom field (Story point estimate)']);
   const sumH=getFieldH(['Summary']),keyH=getFieldH(['Issue key']),ahH=getFieldH(['Assignee']),tyH=getFieldH(['Issue Type']),epicH=getFieldH(['Custom field (Epic Name)']);
-  const rows=allRows.filter(r=>r[spH]===sp);
-  const total=rows.length;
-  const doneRows=sh?rows.filter(r=>/done/i.test(r[sh])):[];
-  const carriedRows=cyH?rows.filter(r=>r[cyH]):[];
-  const inProgRows=sh?rows.filter(r=>/progress/i.test(r[sh])):[];
-  const blockedRows=sh?rows.filter(r=>/blocked/i.test(r[sh])):[];
-  const spTotal=spE?rows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-  const spDone=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-  const spCarry=spE?carriedRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-  const spCarryDone=spE?carriedRows.filter(r=>sh&&/done/i.test(r[sh]||'')).reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-  const pct=total>0?Math.round(doneRows.length/total*100):0;
+  const m=sprintMetrics(sp);
+  const rows=m.committed;             // everything committed to this sprint
+  const total=m.total;
+  const doneRows=m.done;              // done AND last sprint == this one
+  const carriedRows=m.carriedIn;      // carried in from an earlier sprint
+  const carriedOutRows=m.carriedOut;
+  const removedRows=m.removed;
+  const inflightRows=m.inflight;
+  const spTotal=m.spCommitted;
+  const spDone=m.spDone;
+  const spCarry=m.spCarriedOut;
+  const pct=m.pct;
   const unplannedRows=rows.filter(r=>isUnplanned(r,sp));
   const fillCol=pct>=70?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
   const dateMatch=sp.match(/\((.*?)\)/);
@@ -1341,26 +1436,30 @@ function buildSprintDetail(){
   // Stat cards row
   const statRow=`<div class="sd-stat-row">
     <div class="sd-stat"><div class="sd-stat-val" style="color:${fillCol}">${pct}%</div><div class="sd-stat-lbl">Completion</div></div>
-    <div class="sd-stat"><div class="sd-stat-val" style="color:var(--green)">${doneRows.length}/${total}</div><div class="sd-stat-lbl">Issues Done</div></div>
-    <div class="sd-stat"><div class="sd-stat-val" style="color:var(--blue-lt)">${spDone}/${spTotal}</div><div class="sd-stat-lbl">Story Points</div></div>
+    <div class="sd-stat"><div class="sd-stat-val" style="color:var(--green)">${doneRows.length}/${total}</div><div class="sd-stat-lbl">Done / Committed</div></div>
+    <div class="sd-stat"><div class="sd-stat-val" style="color:var(--blue-lt)">${Math.round(spDone)}/${Math.round(spTotal)}</div><div class="sd-stat-lbl">Story Points</div></div>
     <div class="sd-stat"><div class="sd-stat-val" style="color:${carriedRows.length?'var(--gold)':'var(--green)'}">${carriedRows.length}</div><div class="sd-stat-lbl">Carried In</div></div>
-    <div class="sd-stat"><div class="sd-stat-val" style="color:${blockedRows.length?'var(--red)':'var(--green)'}">${blockedRows.length}</div><div class="sd-stat-lbl">Blocked</div></div>
+    <div class="sd-stat"><div class="sd-stat-val" style="color:${carriedOutRows.length?'var(--blue-lt)':'var(--green)'}">${carriedOutRows.length}</div><div class="sd-stat-lbl">Carried Out</div></div>
+    ${inflightRows.length>0?`<div class="sd-stat"><div class="sd-stat-val" style="color:var(--blue-lt)">${inflightRows.length}</div><div class="sd-stat-lbl">In flight</div></div>`:''}
+    ${removedRows.length>0?`<div class="sd-stat"><div class="sd-stat-val" style="color:var(--red)">${removedRows.length}</div><div class="sd-stat-lbl">⚠️ Removed</div></div>`:''}
     ${unplannedRows.length>0?`<div class="sd-stat"><div class="sd-stat-val" style="color:var(--purple)">${unplannedRows.length}</div><div class="sd-stat-lbl">⚠️ Unplanned</div></div>`:''}
-  </div>`;
+  </div>
+  ${removedRows.length>0?`<div style="background:rgba(232,68,90,.08);border:1px solid rgba(232,68,90,.25);border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:12px;color:var(--text)">
+    ⚠️ <strong>${removedRows.length} issue${removedRows.length>1?'s':''} need review:</strong> committed to this sprint but no longer carried forward and not Done — likely removed or stalled. ${removedRows.map(r=>r[keyH]).filter(Boolean).join(', ')}
+  </div>`:''}`;
 
-  // SP breakdown bar
+  // SP breakdown bar (committed -> done / carried-out / remaining)
+  const spOpen=Math.max(0,spTotal-spDone-spCarry);
   const spBar=spTotal>0?`<div style="margin-bottom:14px">
     <div style="font-size:11px;color:var(--muted);margin-bottom:5px">
-      Story Points — <span style="color:var(--green)">${spDone-spCarryDone} orig done</span> · 
-      <span style="color:var(--teal)">${spCarryDone} carry done</span> · 
-      <span style="color:var(--gold)">${spCarry-spCarryDone} carry open</span> · 
-      <span style="color:var(--red)">${spTotal-spDone} remaining</span>
+      Story Points — <span style="color:var(--green)">${Math.round(spDone)} done</span> · 
+      <span style="color:var(--gold)">${Math.round(spCarry)} carried out</span> · 
+      <span style="color:var(--red)">${Math.round(spOpen)} open</span>
     </div>
     <div class="sp-stack" style="height:12px">
-      <div class="sp-seg" style="width:${Math.round((spDone-spCarryDone)/spTotal*100)}%;background:var(--green)"></div>
-      <div class="sp-seg" style="width:${Math.round(spCarryDone/spTotal*100)}%;background:var(--teal)"></div>
-      <div class="sp-seg" style="width:${Math.round((spCarry-spCarryDone)/spTotal*100)}%;background:rgba(245,166,35,.6)"></div>
-      <div class="sp-seg" style="width:${Math.round((spTotal-spDone-Math.max(0,spCarry-spCarryDone))/spTotal*100)}%;background:rgba(232,68,90,.35)"></div>
+      <div class="sp-seg" style="width:${Math.round(spDone/spTotal*100)}%;background:var(--green)"></div>
+      <div class="sp-seg" style="width:${Math.round(spCarry/spTotal*100)}%;background:rgba(245,166,35,.6)"></div>
+      <div class="sp-seg" style="width:${Math.round(spOpen/spTotal*100)}%;background:rgba(232,68,90,.35)"></div>
     </div>
   </div>`:'';
 
@@ -1373,7 +1472,7 @@ function buildSprintDetail(){
     if(!r[ahH])return;
     if(!assigneeMap[r[ahH]])assigneeMap[r[ahH]]={done:0,total:0,sp:0};
     assigneeMap[r[ahH]].total++;
-    if(/done/i.test(r[sh]||''))assigneeMap[r[ahH]].done++;
+    if(issueState(r)==='done'&&sprintNum(rowLastSprint(r))===n)assigneeMap[r[ahH]].done++;
     assigneeMap[r[ahH]].sp+=(parseFloat(r[spE])||0);
   });
   const assigneeHtml=Object.entries(assigneeMap).map(([name,d])=>{
@@ -1390,10 +1489,11 @@ function buildSprintDetail(){
     </div>`;
   }).join('');
 
-  // Carryover list
+  // Carryover list (carried IN — derive previous sprint from the issue's own list)
   const carryHtml=carriedRows.length?`<div style="display:flex;flex-direction:column;gap:5px">`+carriedRows.map(r=>{
-    const key=r[keyH]||'',sum=r[sumH]||'',stat=r[sh]||'',sp2=r[spE]||'',from=r[cyH]||'';
-    const isDone=/done/i.test(stat),isBlock=/blocked/i.test(stat);
+    const key=r[keyH]||'',sum=r[sumH]||'',stat=r[sh]||'',sp2=r[spE]||'';
+    const list=rowSprints(r); const idx=list.indexOf(sp); const from=idx>0?('Sprint '+sprintNum(list[idx-1])):'earlier';
+    const isDone=isDoneStatus(stat),isBlock=/blocked/i.test(stat);
     return`<div class="carry-item-sm" style="border-left-color:${isDone?'var(--green)':isBlock?'var(--red)':'var(--gold)'}">
       <span class="ci-key">${key}</span>
       <div class="ci-info">
@@ -1447,8 +1547,8 @@ function buildSprintDetail(){
       <div class="sd-chart">
         <div class="cc-title">📋 Issues This Sprint</div>
         ${issueGroup(doneRows,'✅ Done','var(--green)')}
-        ${issueGroup(inProgRows,'🔵 In Progress','var(--blue-lt)')}
-        ${issueGroup(blockedRows,'🔴 Blocked','var(--red)')}
+        ${issueGroup(inflightRows,'🔵 In flight','var(--blue-lt)')}
+        ${issueGroup(removedRows,'⚠️ Removed / needs review','var(--red)')}
       </div>
     </div>
     <div class="ai-summary" id="ai_${n}">
@@ -1465,7 +1565,7 @@ function buildBurndown(rows,spTotal,sp){
   const w=260,h=90,pad=28;
   const sh=getFieldH(['Status']);
   const spE=getFieldH(['Custom field (Story point estimate)']);
-  const doneRows=rows.filter(r=>sh&&/done/i.test(r[sh]||''));
+  const doneRows=rows.filter(r=>isDoneStatus(r[sh]||''));
   const doneSP=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
   const ideal=[];for(let d=0;d<=days;d++)ideal.push(spTotal*(1-d/days));
   const actual=[];
@@ -1507,13 +1607,14 @@ async function generateAISummary(){
     return;
   }
   el.innerHTML=`<h4>✨ AI Summary</h4><div class="ai-loading">⏳ Generating summary…</div>`;
-  const spH=getSprintH(),sumH=getFieldH(['Summary']),epicH=getFieldH(['Custom field (Epic Name)']),tyH=getFieldH(['Issue Type']),sh=getFieldH(['Status']),cyH=getFieldH(['Custom field (Carried Over)']);
-  const rows=allRows.filter(r=>r[spH]===sp);
-  const done=sh?rows.filter(r=>/done/i.test(r[sh])).length:0;
-  const carried=cyH?rows.filter(r=>r[cyH]).length:0;
-  const blocked=sh?rows.filter(r=>/blocked/i.test(r[sh])).length:0;
+  const sumH=getFieldH(['Summary']),epicH=getFieldH(['Custom field (Epic Name)']),tyH=getFieldH(['Issue Type']),sh=getFieldH(['Status']);
+  const m=sprintMetrics(sp);
+  const rows=m.committed;
+  const done=m.doneCount;
+  const carried=m.carriedInCount;
+  const removed=m.removedCount;
   const issues=rows.slice(0,20).map(r=>`[${r[tyH]||'Issue'}] ${r[sumH]||''} (Epic: ${r[epicH]||'?'}, Status: ${r[sh]||'?'})`).join('\n');
-  const prompt=`You are a senior engineering project manager summarising a Jira sprint for stakeholders. Sprint: ${sp}. Stats: ${rows.length} issues, ${done} done, ${carried} carried over from previous sprint, ${blocked} blocked. Sample issues:\n${issues}\n\nWrite a concise 3-4 sentence executive summary covering: what was achieved, any notable blockers or risks, and what the carryover pattern suggests about team capacity. Be specific and constructive. No bullet points.`;
+  const prompt=`You are a senior engineering project manager summarising a Jira sprint for stakeholders. Sprint: ${sp}. Stats: ${rows.length} issues committed, ${done} done, ${carried} carried in from a previous sprint, ${m.carriedOutCount} carried out to a later sprint, ${removed} removed/stalled (committed but no longer in flight and not done). Sample issues:\n${issues}\n\nWrite a concise 3-4 sentence executive summary covering: what was achieved, any notable blockers or risks, and what the carryover pattern suggests about team capacity. Be specific and constructive. No bullet points.`;
   try{
     const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:prompt}]})});
     const data=await resp.json();
@@ -1530,18 +1631,11 @@ function buildVelocity(){
   if(!sprints.length)return;
 
   const data=sprints.map(sp=>{
-    const rows=allRows.filter(r=>r[spH]===sp);
-    const doneRows=sh?rows.filter(r=>/done/i.test(r[sh])):[];
-    const carryRows=cyH?rows.filter(r=>r[cyH]):[];
-    const total=rows.length,done=doneRows.length;
-    const spCommit=spE?rows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    const spDone=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    const spCarry=spE?carryRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    const pct=total>0?Math.round(done/total*100):0;
-    const carried=carryRows.length;
-    const n=sprintNum(sp);
+    const m=sprintMetrics(sp);
     const dateMatch=sp.match(/\((.*?)\)/);
-    return{sp,n,total,done,pct,spCommit,spDone,spCarry,carried,dateStr:dateMatch?dateMatch[1]:''};
+    return{sp,n:m.n,total:m.total,done:m.doneCount,pct:m.pct,
+      spCommit:m.spCommitted,spDone:m.spDone,spCarry:m.spCarriedOut,
+      carried:m.carriedInCount,dateStr:dateMatch?dateMatch[1]:''};
   });
 
   const avg3=data.length>=3?Math.round(data.slice(-3).reduce((s,d)=>s+d.spDone,0)/3):null;
@@ -1747,48 +1841,52 @@ function buildEstActualChart(){
 // ── DUMMY PLACEHOLDER (replaced above) ──
 // ═══ CARRYOVER TAB ═══
 function buildCarryover(){
-  const cyH=getFieldH(['Custom field (Carried Over)']),spH=getSprintH(),sh=getFieldH(['Status']);
-  const sumH=getFieldH(['Summary']),keyH=getFieldH(['Issue key']),ahH=getFieldH(['Assignee']),tyH=getFieldH(['Issue Type']),spE=getFieldH(['Custom field (Story point estimate)']);
+  const sh=getFieldH(['Status']),sumH=getFieldH(['Summary']),keyH=getFieldH(['Issue key']),ahH=getFieldH(['Assignee']),tyH=getFieldH(['Issue Type']),spE=getFieldH(['Custom field (Story point estimate)']);
 
-  const carried=allRows.filter(r=>cyH&&r[cyH]);
-  const carriedDone=carried.filter(r=>sh&&/done/i.test(r[sh]));
-  const blocked=carried.filter(r=>sh&&/blocked/i.test(r[sh]));
+  // Carried issues = those whose sprint-list spans more than one sprint
+  const carried=allRows.filter(r=>rowCarryCount(r)>0);
+  const carriedDone=carried.filter(r=>isDoneStatus(r[sh]||''));
+  const removed=carried.filter(r=>issueState(r)==='removed');
+  const stillOpen=carried.filter(r=>issueState(r)==='inflight');
   const spCost=spE?carried.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+  const totalCarries=carried.reduce((s,r)=>s+rowCarryCount(r),0); // total times anything was carried
 
   document.getElementById('carryStats').innerHTML=`
-    <div class="sc amber"><div class="sv">${carried.length}</div><div class="sl">Total Carries</div></div>
+    <div class="sc amber"><div class="sv">${carried.length}</div><div class="sl">Issues Carried</div></div>
     <div class="sc green"><div class="sv">${carriedDone.length}</div><div class="sl">Resolved After Carry</div></div>
-    <div class="sc red"><div class="sv">${carried.length-carriedDone.length}</div><div class="sl">Still Open</div></div>
-    <div class="sc blue"><div class="sv">${carried.length>0?Math.round(carriedDone.length/carried.length*100):0}%</div><div class="sl">Carry Resolution Rate</div></div>
-    <div class="sc purple"><div class="sv">${spCost}</div><div class="sl">SP Delayed</div></div>
+    <div class="sc blue"><div class="sv">${stillOpen.length}</div><div class="sl">Still In Flight</div></div>
+    ${removed.length?`<div class="sc red"><div class="sv">${removed.length}</div><div class="sl">⚠️ Removed / Review</div></div>`:''}
+    <div class="sc teal"><div class="sv">${carried.length>0?Math.round(carriedDone.length/carried.length*100):0}%</div><div class="sl">Carry Resolution</div></div>
+    <div class="sc purple"><div class="sv">${Math.round(spCost)}</div><div class="sl">SP Delayed</div></div>
   `;
 
   if(!carried.length){document.getElementById('carryTimeline').innerHTML='<div class="empty"><div class="ei">🎉</div><h3>No carryovers!</h3></div>';return}
 
-  // Group by from-sprint
+  // Group by the sprint each issue was ORIGINALLY committed to
   const groups={};
-  carried.forEach(r=>{const from=r[cyH]||'?';if(!groups[from])groups[from]=[];groups[from].push(r)});
+  carried.forEach(r=>{const from=rowOriginalSprint(r)||'?';if(!groups[from])groups[from]=[];groups[from].push(r)});
 
   let html='';
-  Object.entries(groups).sort().forEach(([fromSp,rows])=>{
-    html+=`<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px">🔄 From ${fromSp} (${rows.length} issue${rows.length>1?'s':''})</div>`;
+  Object.entries(groups).sort((a,b)=>sprintNum(a[0])-sprintNum(b[0])).forEach(([fromSp,rows])=>{
+    html+=`<div style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px">🔄 Originated in Sprint ${sprintNum(fromSp)} (${rows.length} issue${rows.length>1?'s':''})</div>`;
     rows.forEach(r=>{
-      const key=r[keyH]||'',sum=r[sumH]||'',sp2=r[spH]||'',stat=r[sh]||'',spN=sprintNum(sp2),fromN=fromSp.replace('Sprint ','');
+      const key=r[keyH]||'',sum=r[sumH]||'',stat=r[sh]||'';
+      const chain=rowSprints(r); // full chain oldest->newest
       const spCostR=spE?(parseFloat(r[spE])||0):0;
-      const isDone=/done/i.test(stat),isBlock=/blocked/i.test(stat);
-      const cls=isDone?'resolved':isBlock?'blocked':'';
-      // Estimate days slipped (14 days per sprint difference)
-      const sprintsDiff=spN-parseInt(fromN);
+      const state=issueState(r);
+      const isDone=state==='done',isRemoved=state==='removed';
+      const cls=isDone?'resolved':isRemoved?'blocked':'';
+      const sprintsDiff=chain.length-1;
       const daysSlipped=sprintsDiff>0?sprintsDiff*14:14;
+      const chainHtml=chain.map((s,i)=>`<span class="ci-sprint">S${sprintNum(s)}</span>${i<chain.length-1?'<span class="ci-arrow">→</span>':''}`).join('');
+      const endChip=isDone?`<span class="ci-done">✅ Done</span>`:isRemoved?`<span class="ci-open" style="color:var(--red)">⚠️ ${stat||'removed'} · review</span>`:`<span class="ci-open">⏳ ${stat||'in flight'}</span>`;
       html+=`<div class="carry-item ${cls}" onclick="openModalByKey('${key.replace(/'/g,"\'")}')">
         <span class="ci-key2">${key}</span> <span style="color:var(--muted);font-size:10px">${r[tyH]||''}</span>
         <div class="ci-sum">${sum}</div>
         <div class="ci-chain">
-          <span class="ci-sprint">Sprint ${fromN}</span>
+          ${chainHtml}
           <span class="ci-arrow">→</span>
-          <span class="ci-sprint">Sprint ${spN}</span>
-          <span class="ci-arrow">→</span>
-          ${isDone?`<span class="ci-done">✅ Done</span>`:`<span class="ci-open">⏳ ${stat}</span>`}
+          ${endChip}
           ${spCostR?`<span class="ci-cost">📐 ${spCostR} SP</span>`:''}
           <span class="ci-cost">⏰ ~${daysSlipped}d slipped</span>
           ${r[ahH]?`<span style="color:var(--muted)">· ${r[ahH]}</span>`:''}
@@ -1950,48 +2048,133 @@ function exportCSV(){
   showToast('✅ CSV exported','ok');
 }
 
-// ═══ EXPORT PPTX ═══
+// ═══ EXPORT PPTX (real, in-browser via PptxGenJS) ═══
 function exportPPTX(){
+  if(typeof PptxGenJS==='undefined'){
+    showToast('⚠️ PowerPoint library still loading (needs internet) — try again in a moment','err');
+    return;
+  }
   showToast('📊 Building PowerPoint…','ok');
+
   // Collect data for slides
   const sprints=detectSprints();
   const sh=getFieldH(['Status']),spH=getSprintH(),spE=getFieldH(['Custom field (Story point estimate)']),cyH=getFieldH(['Custom field (Carried Over)']),ahH=getFieldH(['Assignee']);
 
   const sprintData=sprints.map(sp=>{
-    const rows=allRows.filter(r=>r[spH]===sp);
-    const doneRows=sh?rows.filter(r=>/done/i.test(r[sh])):[];
-    const carryRows=cyH?rows.filter(r=>r[cyH]):[];
-    const spCommit=spE?rows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    const spDone=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    const spCarry=spE?carryRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-    const pct=rows.length>0?Math.round(doneRows.length/rows.length*100):0;
+    const m=sprintMetrics(sp);
     const dateMatch=sp.match(/\((.*?)\)/);
-    const blockedCount=sh?rows.filter(r=>/blocked/i.test(r[sh])).length:0;
-    return{n:sprintNum(sp),total:rows.length,done:doneRows.length,carried:carryRows.length,spCommit,spDone,spCarry,pct,dateStr:dateMatch?dateMatch[1]:'',blockedCount};
+    return{n:m.n,total:m.total,done:m.doneCount,carried:m.carriedInCount,
+      spCommit:m.spCommitted,spDone:m.spDone,spCarry:m.spCarriedOut,pct:m.pct,
+      dateStr:dateMatch?dateMatch[1]:'',blockedCount:m.removedCount};
   });
 
-  // Build the PPTX via pptxgenjs running in a server worker
-  // Since we're in the browser, we generate a JSON payload and download it as a spec
-  // the node script (jira-pptx-gen.cjs) will process it
-  const payload={
-    projectName: allRows[0]?.['Project name']||'Sprint Report',
-    generated: new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),
-    totalIssues: allRows.length,
-    sprints: sprintData,
-    avgCompletion: Math.round(sprintData.reduce((s,d)=>s+d.pct,0)/sprintData.length),
-    totalSPDone: sprintData.reduce((s,d)=>s+d.spDone,0),
-    totalCarried: sprintData.reduce((s,d)=>s+d.carried,0),
-  };
+  if(!sprintData.length){ showToast('⚠️ No sprint data to export','err'); return; }
 
-  // Download the JSON spec so the user can run the Node script
-  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='sprint-report-data.json';a.click();
+  const projectName=allRows[0]?.['Project name']||'Sprint Report';
+  const generated=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const avgCompletion=Math.round(sprintData.reduce((s,d)=>s+d.pct,0)/sprintData.length);
+  const totalSPDone=sprintData.reduce((s,d)=>s+d.spDone,0);
+  const totalCarried=sprintData.reduce((s,d)=>s+d.carried,0);
+  const totalIssues=allRows.length;
 
-  showToast('📄 JSON exported — run jira-pptx-gen.cjs to build the PPTX','ok');
-  setTimeout(()=>{
-    document.getElementById('pptxInstructions').style.display='';
-  },500);
+  try{
+    const pptx=new PptxGenJS();
+    pptx.author='Jira Sprint Reporter';
+    pptx.company=projectName;
+    pptx.title=projectName+' — Sprint Report';
+    pptx.layout='LAYOUT_WIDE'; // 13.3 x 7.5"
+
+    // palette
+    const NAVY='1E2F42', NAVY_DK='0D1B2A', BLUE='3E9FF5', TEAL='00C4B4', GOLD='F5A623', RED='E8445A', GREEN='27C47A', WHITE='FFFFFF', MUTED='7A93AA';
+
+    // ── Slide 1: Title ──
+    let s=pptx.addSlide(); s.background={color:NAVY_DK};
+    s.addShape(pptx.ShapeType.rect,{x:0,y:3.0,w:13.33,h:0.06,fill:{color:TEAL}});
+    s.addText(projectName,{x:0.6,y:1.9,w:12,h:1.0,fontSize:40,bold:true,color:WHITE,fontFace:'Segoe UI'});
+    s.addText('Sprint Report',{x:0.6,y:2.9,w:12,h:0.6,fontSize:22,color:TEAL,fontFace:'Segoe UI'});
+    s.addText('Generated '+generated,{x:0.6,y:3.7,w:12,h:0.4,fontSize:13,color:MUTED,fontFace:'Segoe UI'});
+
+    // ── Slide 2: Executive summary ──
+    s=pptx.addSlide(); s.background={color:NAVY};
+    s.addText('Summary',{x:0.5,y:0.35,w:12,h:0.6,fontSize:26,bold:true,color:WHITE});
+    const cards=[
+      {label:'Sprints',value:String(sprintData.length),color:BLUE},
+      {label:'Total Issues',value:String(totalIssues),color:TEAL},
+      {label:'Avg Completion',value:avgCompletion+'%',color:avgCompletion>=80?GREEN:avgCompletion>=60?GOLD:RED},
+      {label:'Story Points Done',value:String(Math.round(totalSPDone)),color:GREEN},
+      {label:'Carried Over',value:String(totalCarried),color:GOLD},
+    ];
+    cards.forEach((c,i)=>{
+      const x=0.5+i*2.52;
+      s.addShape(pptx.ShapeType.roundRect,{x,y:1.3,w:2.3,h:1.7,fill:{color:NAVY_DK},line:{color:'2A3F57',width:1},rectRadius:0.08});
+      s.addText(c.value,{x,y:1.55,w:2.3,h:0.8,fontSize:34,bold:true,color:c.color,align:'center'});
+      s.addText(c.label,{x,y:2.45,w:2.3,h:0.4,fontSize:12,color:MUTED,align:'center'});
+    });
+    // completion bar chart across sprints
+    if(sprintData.length){
+      const chartData=[{name:'Completion %',labels:sprintData.map(d=>'S'+d.n),values:sprintData.map(d=>d.pct)}];
+      s.addChart(pptx.ChartType.bar,chartData,{
+        x:0.5,y:3.4,w:12.3,h:3.6,barDir:'col',
+        showValue:true,dataLabelColor:WHITE,dataLabelFontSize:11,
+        chartColors:[TEAL],
+        catAxisLabelColor:MUTED,valAxisLabelColor:MUTED,
+        valAxisMaxVal:100,valAxisMinVal:0,
+        showLegend:false,showTitle:true,title:'Completion % by sprint',titleColor:MUTED,titleFontSize:13,
+      });
+    }
+
+    // ── Per-sprint slides ──
+    sprintData.forEach(d=>{
+      const sl=pptx.addSlide(); sl.background={color:NAVY};
+      sl.addText('Sprint '+d.n+(d.dateStr?'  ·  '+d.dateStr:''),{x:0.5,y:0.35,w:12,h:0.6,fontSize:24,bold:true,color:WHITE});
+      // big completion %
+      sl.addShape(pptx.ShapeType.roundRect,{x:0.5,y:1.3,w:3.2,h:2.6,fill:{color:NAVY_DK},line:{color:'2A3F57',width:1},rectRadius:0.08});
+      sl.addText(d.pct+'%',{x:0.5,y:1.7,w:3.2,h:1.0,fontSize:48,bold:true,color:d.pct>=80?GREEN:d.pct>=60?GOLD:RED,align:'center'});
+      sl.addText('Issues completed',{x:0.5,y:2.8,w:3.2,h:0.4,fontSize:13,color:MUTED,align:'center'});
+      sl.addText(d.done+' of '+d.total,{x:0.5,y:3.2,w:3.2,h:0.4,fontSize:14,color:WHITE,align:'center'});
+      // metric rows
+      const metrics=[
+        ['Issues', d.total+''],
+        ['Completed', d.done+''],
+        ['Carried over', d.carried+''],
+        ['Blocked', d.blockedCount+''],
+        ['Story points committed', Math.round(d.spCommit)+''],
+        ['Story points done', Math.round(d.spDone)+''],
+        ['Story points carried', Math.round(d.spCarry)+''],
+      ];
+      metrics.forEach((m,i)=>{
+        const y=1.3+i*0.5;
+        sl.addText(m[0],{x:4.1,y,w:5.0,h:0.42,fontSize:14,color:MUTED,valign:'middle'});
+        sl.addText(m[1],{x:9.1,y,w:3.6,h:0.42,fontSize:14,bold:true,color:WHITE,align:'right',valign:'middle'});
+        sl.addShape(pptx.ShapeType.line,{x:4.1,y:y+0.46,w:8.6,h:0,line:{color:'2A3F57',width:0.75}});
+      });
+    });
+
+    // ── Story-point trend slide ──
+    if(sprintData.length>=2){
+      const sl=pptx.addSlide(); sl.background={color:NAVY};
+      sl.addText('Story Point Trend',{x:0.5,y:0.35,w:12,h:0.6,fontSize:24,bold:true,color:WHITE});
+      const trend=[
+        {name:'Committed',labels:sprintData.map(d=>'S'+d.n),values:sprintData.map(d=>Math.round(d.spCommit))},
+        {name:'Completed',labels:sprintData.map(d=>'S'+d.n),values:sprintData.map(d=>Math.round(d.spDone))},
+      ];
+      sl.addChart(pptx.ChartType.bar,trend,{
+        x:0.5,y:1.2,w:12.3,h:5.6,barDir:'col',
+        chartColors:[BLUE,TEAL],showLegend:true,legendPos:'b',legendColor:MUTED,
+        catAxisLabelColor:MUTED,valAxisLabelColor:MUTED,showValue:false,
+      });
+    }
+
+    const fname=projectName.replace(/[^\w-]+/g,'-').toLowerCase()+'-sprint-report.pptx';
+    pptx.writeFile({fileName:fname}).then(()=>{
+      showToast('✅ PowerPoint downloaded','ok');
+    }).catch(err=>{
+      console.error(err); showToast('⚠️ PowerPoint export failed','err');
+    });
+  }catch(e){
+    console.error('PPTX export error:',e);
+    showToast('⚠️ PowerPoint export failed — '+(e.message||'unknown error'),'err');
+  }
 }
 
 // ═══ URL STATE ═══
@@ -2056,19 +2239,8 @@ function showToast(msg,type=''){
   clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',3500);
 }
 
-// PPTX instructions panel (hidden by default)
-document.addEventListener('DOMContentLoaded',()=>{
-  const div=document.createElement('div');
-  div.id='pptxInstructions';
-  div.style.cssText='display:none;position:fixed;bottom:60px;right:20px;background:var(--navy-mid);border:1px solid var(--border-md);border-radius:10px;padding:14px 16px;font-size:12px;max-width:320px;z-index:999;box-shadow:0 4px 24px rgba(0,0,0,.4)';
-  div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><strong>📊 Generate PPTX</strong><button onclick="this.parentElement.parentElement.style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px">×</button></div>
-  <p style="color:var(--muted);line-height:1.6;margin-bottom:8px">A <code>sprint-report-data.json</code> file was downloaded. To generate the PPTX:</p>
-  <code style="background:var(--navy-card);display:block;padding:8px;border-radius:6px;font-size:11px;color:var(--teal);line-height:1.8">node jira-pptx-gen.cjs<br>sprint-report-data.json</code>
-  <p style="color:var(--muted);font-size:11px;margin-top:6px">Download <strong>jira-pptx-gen.cjs</strong> from the same source as this app.</p>`;
-  document.body.appendChild(div);
-});
-
-loadSample();
+// No data on first load — user uploads a CSV or clicks "Load Sample Data".
+// (Sample is available via the sidebar button, but never auto-loaded.)
 </script>
 </body>
 </html>
