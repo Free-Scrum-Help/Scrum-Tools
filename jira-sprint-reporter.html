@@ -933,7 +933,6 @@ fi.addEventListener('change',e=>e.target.files[0]&&readFile(e.target.files[0]));
 uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag')});
 uz.addEventListener('dragleave',()=>uz.classList.remove('drag'));
 uz.addEventListener('drop',e=>{e.preventDefault();uz.classList.remove('drag');e.dataTransfer.files[0]&&readFile(e.dataTransfer.files[0])});
-function readFile(f){const r=new FileReader();r.onload=e=>parseCSV(e.target.result,f.name);r.readAsText(f)}
 // ── Loading overlay ──
 // Parsing a large CSV blocks the main thread, so we must let the browser paint
 // the overlay BEFORE starting work — hence the double rAF / timeout yield.
