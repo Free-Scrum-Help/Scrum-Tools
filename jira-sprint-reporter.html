@@ -934,7 +934,44 @@ uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag')})
 uz.addEventListener('dragleave',()=>uz.classList.remove('drag'));
 uz.addEventListener('drop',e=>{e.preventDefault();uz.classList.remove('drag');e.dataTransfer.files[0]&&readFile(e.dataTransfer.files[0])});
 function readFile(f){const r=new FileReader();r.onload=e=>parseCSV(e.target.result,f.name);r.readAsText(f)}
+// ── Loading overlay ──
+// Parsing a large CSV blocks the main thread, so we must let the browser paint
+// the overlay BEFORE starting work — hence the double rAF / timeout yield.
+function showLoading(title,sub){
+  const el=document.getElementById('loadingOverlay');
+  if(!el) return;
+  if(title) document.getElementById('loadingTitle').textContent=title;
+  if(sub!==undefined) document.getElementById('loadingSub').textContent=sub;
+  el.style.display='flex';
+}
+function hideLoading(){
+  const el=document.getElementById('loadingOverlay');
+  if(el) el.style.display='none';
+}
+function nextPaint(){
+  return new Promise(res=>{
+    if(typeof requestAnimationFrame==='function')
+      requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(res,0)));
+    else setTimeout(res,30);
+  });
+}
 
+function readFile(f){
+  const sizeMB=f.size/1024/1024;
+  showLoading('Reading '+f.name+'…',
+    sizeMB>2 ? `${sizeMB.toFixed(1)} MB — large exports can take a few seconds. Nothing is uploaded; this all happens in your browser.`
+             : 'This all happens in your browser — nothing is uploaded.');
+  const r=new FileReader();
+  r.onerror=()=>{hideLoading();showToast('❌ Could not read that file','err')};
+  r.onload=async e=>{
+    showLoading('Processing issues…','Building sprint metrics. Nothing is uploaded.');
+    await nextPaint();          // let the overlay actually render before we block
+    try{ parseCSV(e.target.result,f.name); }
+    catch(err){ console.error(err); showToast('❌ Could not parse that CSV','err'); }
+    finally{ hideLoading(); }
+  };
+  r.readAsText(f);
+}
 function parseCSV(text,fname){
   // Strip UTF-8 BOM if present (Jira exports include it; breaks the first header)
   if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
