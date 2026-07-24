@@ -971,22 +971,6 @@ function readFile(f){
   };
   r.readAsText(f);
 }
-  
-function readFile(f){
-  const sizeMB=f.size/1024/1024;
-  showLoading('Reading '+f.name+'…',
-    sizeMB>2 ? `${sizeMB.toFixed(1)} MB — large exports can take a few seconds. Nothing is uploaded; this all happens in your browser.`
-             : 'This all happens in your browser — nothing is uploaded.');
-  const r=new FileReader();
-  r.onerror=()=>{hideLoading();showToast('❌ Could not read that file','err')};
-  r.onload=async e=>{
-    showLoading('Processing issues…','Building sprint metrics. Nothing is uploaded.');
-    await nextPaint();          // let the overlay actually render before we block
-    try{ parseCSV(e.target.result,f.name); }
-    catch(err){ console.error(err); showToast('❌ Could not parse that CSV','err'); }
-    finally{ hideLoading(); }
-  };
-  r.readAsText(f);
 
 function parseCSV(text,fname){
   // Strip UTF-8 BOM if present (Jira exports include it; breaks the first header)
