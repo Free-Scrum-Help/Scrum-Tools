@@ -367,12 +367,43 @@ td{padding:9px 12px;vertical-align:middle;max-width:250px}
 .wl-bar{height:100%;border-radius:4px}
 
 @media print{
-  .sidebar,.topbar,.tabs,.filter-row,.btn-row,.pager,.modal-ov,.toast,.sprint-filter,.url-bar{display:none!important}
+  @page{margin:12mm}
+  .sidebar,.topbar,.tabs,.filter-row,.btn-row,.pager,.modal-ov,.toast,.sprint-filter,.url-bar,
+  .attn-legend,.ms-drop,#trackBar,.upload-zone,.tbl-actions{display:none!important}
   .layout{display:block!important}.main{padding:0!important}
-  body{background:#fff!important;color:#000!important}
-  table{font-size:9px!important}th,td{border:1px solid #ddd!important;padding:5px!important;color:#000!important}
-  thead{background:#f4f4f4!important}.charts-row{display:none!important}.stats-bar{display:none!important}
+  body{background:#fff!important;color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+  /* Un-clip every scrolling container so the FULL table prints, not just the visible window */
+  .tbl-wrap{max-height:none!important;overflow:visible!important;border:none!important}
+  .sd-chart,.chart-card,.modal{max-height:none!important;overflow:visible!important}
+
+  /* Tables */
+  table{font-size:9px!important;width:100%!important;border-collapse:collapse!important}
+  th,td{border:1px solid #999!important;padding:4px!important;color:#000!important;background:#fff!important}
+  thead{background:#eee!important;display:table-header-group}  /* repeat header on each page */
+  tr{page-break-inside:avoid;break-inside:avoid}
+
+  /* Sprint Detail is built from divs — give them visible structure on white paper */
+  .sd-stat-row{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:6px!important}
+  .sd-stat,.sd-chart,.chart-card,.carry-item,.issue-row{
+    background:#fff!important;border:1px solid #999!important;color:#000!important;
+    page-break-inside:avoid;break-inside:avoid}
+  .sd-stat-val,.sd-stat-lbl,.cc-title,.ci-sum,.ci-key2,.mb-lbl,.mb-cnt{color:#000!important}
+  .sd-cols{display:block!important}
+  .sd-chart{margin-bottom:8px!important}
+  .issue-row{border-bottom:1px solid #ccc!important;padding:3px 6px!important}
+  /* keep status/priority chips readable in mono print */
+  .st-chip,.ty-chip,.pri-chip,.attn-badge,.carry-flag,.cr-chip{
+    border:1px solid #999!important;color:#000!important;background:#fff!important}
+  /* progress bars still convey ratio */
+  .mb-track,.progress-track,.sp-stack{background:#eee!important;border:1px solid #bbb!important}
+  .mb-fill,.progress-fill,.sp-seg{background:#666!important}
+
+  .charts-row{display:none!important}.stats-bar{display:none!important}
   .sprint-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important}
+  .sprint-card{border:1px solid #999!important;background:#fff!important;color:#000!important;
+    page-break-inside:avoid;break-inside:avoid}
+  .sc-name,.sc-pct,.sc-sub,.lbl,.val{color:#000!important}
 }
 @media(max-width:860px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}.charts-row{grid-template-columns:1fr}.vel-charts{grid-template-columns:1fr}}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
@@ -386,7 +417,7 @@ td{padding:9px 12px;vertical-align:middle;max-width:250px}
     <span id="topBadge" style="display:none;background:var(--teal-dim);color:var(--teal);border:1px solid rgba(0,196,180,.3);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700"></span>
     <button class="btn success" onclick="exportCSV()">⬇ CSV</button>
     <button class="btn danger" onclick="exportPPTX()" id="btnPPTX" style="display:none" title="Download a PowerPoint summary of your sprints">📊 PowerPoint</button>
-    <button class="btn primary" onclick="window.print()">🖨 Print</button>
+    <button class="btn primary" onclick="printReport()">🖨 Print</button>
     <button class="btn" id="btnReset" onclick="resetData()" style="display:none;background:rgba(232,68,90,.12);color:var(--red);border:1px solid rgba(232,68,90,.3)" title="Clear all loaded data">🗑 Reset</button>
   </div>
 </div>
@@ -502,7 +533,7 @@ td{padding:9px 12px;vertical-align:middle;max-width:250px}
   <div class="btn-row">
     <h2 id="tableTitle">Issue Table</h2>
     <button class="btn success" onclick="exportCSV()">⬇ CSV</button>
-    <button class="btn primary" onclick="window.print()">🖨 Print</button>
+    <button class="btn primary" onclick="printReport()">🖨 Print</button>
   </div>
   <div class="sprint-filter" id="sprintToggleTable"></div>
   <div class="filter-row">
@@ -612,6 +643,24 @@ const SAMPLE_CSV = "Summary,Issue key,Issue id,Issue Type,Status,Project key,Pro
 // ═══════════════════════════════════════════════
 let allRows=[],headers=[],selectedFields=[],filteredRows=[];
 let sortCol=-1,sortDir=1,curPage=1;
+let printAllRows=false;
+// Print handler: on the Issue Table, temporarily render every filtered row so the
+// whole table prints (not just the visible page / scroll window), then restore.
+function printReport(){
+  const onTable = currentTab==='table';
+  if(onTable && typeof renderTable==='function'){
+    printAllRows=true;
+    renderTable();
+    // give the browser a tick to lay out the expanded table before opening the dialog
+    setTimeout(()=>{
+      window.print();
+      printAllRows=false;
+      renderTable();
+    },60);
+    return;
+  }
+  window.print();
+}
 const PAGE=50;
 let fieldMeta={};
 let activeSprints=new Set(['all']);
@@ -1994,7 +2043,8 @@ function renderTable(){
   }
   const total=rows.length,pages=Math.ceil(total/PAGE);
   curPage=Math.min(curPage,pages||1);
-  const start=(curPage-1)*PAGE,prows=rows.slice(start,start+PAGE);
+  // When printing, render EVERY filtered row rather than just the current page
+  const start=(curPage-1)*PAGE,prows=printAllRows?rows:rows.slice(start,start+PAGE);
   const keyH=getFieldH(['Issue key']),sh=getFieldH(['Status']),ph=getFieldH(['Priority']),spE=getSpH();
   const ah=getFieldH(['Assignee']),th=getFieldH(['Issue Type']),ddH=getFieldH(['Due date']),cyH=getFieldH(['Custom field (Carried Over)']);
   const sumH=getFieldH(['Summary']);
