@@ -661,6 +661,21 @@ function avatarCol(n){
   return cols[Math.abs(h)%cols.length];
 }
 function getFieldH(names){return headers.find(h=>names.some(n=>h===n||h.toLowerCase()===n.toLowerCase()))}
+// Story points live under different column names depending on the Jira instance:
+// "Custom field (Story Points)" (classic/DC), "Custom field (Story point estimate)" (Cloud),
+// "Story Points", "Story point estimate", etc. Pick whichever actually has data.
+function getSpH(){
+  const candidates=headers.filter(h=>/story\s*points?(\s*estimate)?/i.test((h||'').replace(/^custom field \(|\)$/gi,'').trim()));
+  if(!candidates.length) return undefined;
+  if(candidates.length===1) return candidates[0];
+  // more than one match — prefer the column with the most numeric values
+  let best=candidates[0],bestN=-1;
+  candidates.forEach(h=>{
+    const n=allRows.reduce((s,r)=>s+((parseFloat(r[h])>=0)?1:0),0);
+    if(n>bestN){bestN=n;best=h;}
+  });
+  return best;
+}
 // A Sprint column may be named "Sprint", "Custom field (Sprint)", or "Sprint (1)" etc.
 function isSprintHeader(h){return /^(custom field \()?sprint(\s*\(\d+\)|\))?\s*$/i.test((h||'').trim())}
 function getSprintH(){return headers.find(h=>isSprintHeader(h))}
@@ -918,7 +933,7 @@ function rowsCommittedTo(sprint){return allRows.filter(r=>rowSprints(r).includes
 // carriedIn: committed here AND also committed to an earlier sprint
 // carriedOut:committed here AND also committed to a later sprint
 function sprintMetrics(sprint){
-  const spE=getFieldH(['Custom field (Story point estimate)']);
+  const spE=getSpH();
   const n=sprintNum(sprint);
   const committed=rowsCommittedTo(sprint);
   const sp=r=>spE?(parseFloat(r[spE])||0):0;
@@ -1114,11 +1129,11 @@ function applyFilter(){
 
 // ═══ PRESETS ═══
 const PRESETS={
-  pm:   ['Issue key','Summary','Issue Type','Status','Priority','Assignee','Due date','Custom field (Sprint)','Custom field (Story point estimate)','Custom field (Epic Name)','Custom field (Carried Over)','Custom field (Original Sprint)'],
-  sprint:['Issue key','Summary','Issue Type','Status','Assignee','Custom field (Story point estimate)','Custom field (Sprint)','Priority','Custom field (Epic Name)','Custom field (Carried Over)'],
+  pm:   ['Issue key','Summary','Issue Type','Status','Priority','Assignee','Due date','Custom field (Sprint)','Custom field (Story point estimate)','Custom field (Story Points)','Custom field (Epic Name)','Custom field (Carried Over)','Custom field (Original Sprint)'],
+  sprint:['Issue key','Summary','Issue Type','Status','Assignee','Custom field (Story point estimate)','Custom field (Story Points)','Custom field (Sprint)','Priority','Custom field (Epic Name)','Custom field (Carried Over)'],
   status:['Issue key','Summary','Status','Priority','Assignee','Issue Type','Updated','Resolution','Custom field (Carried Over)'],
-  time:  ['Issue key','Summary','Assignee','Status','Original estimate','Remaining Estimate','Time Spent','Work Ratio','Custom field (Story point estimate)'],
-  carry: ['Issue key','Summary','Issue Type','Status','Assignee','Custom field (Sprint)','Custom field (Original Sprint)','Custom field (Carried Over)','Priority','Custom field (Story point estimate)'],
+  time:  ['Issue key','Summary','Assignee','Status','Original estimate','Remaining Estimate','Time Spent','Work Ratio','Custom field (Story point estimate)','Custom field (Story Points)'],
+  carry: ['Issue key','Summary','Issue Type','Status','Assignee','Custom field (Sprint)','Custom field (Original Sprint)','Custom field (Carried Over)','Priority','Custom field (Story point estimate)','Custom field (Story Points)'],
   all:   null
 };
 function applyPreset(name){
@@ -1310,7 +1325,7 @@ function refreshAll(){
 // ═══ STATS BAR ═══
 function buildStats(){
   const rows=getActiveRows();
-  const spE=getFieldH(['Custom field (Story point estimate)']);
+  const spE=getSpH();
   const total=rows.length;
   const unplanned=rows.filter(r=>isUnplanned(r,rowLastSprint(r))).length;
   // classify each active row
@@ -1338,7 +1353,7 @@ function buildStats(){
 
 // ═══ SPRINT CARDS (Tab 1) ═══
 function buildSprintCards(){
-  const spE=getFieldH(['Custom field (Story point estimate)']);
+  const spE=getSpH();
   const sprints=detectSprints();
   if(!sprints.length){document.getElementById('sprintCards').innerHTML='';return}
   const latest=latestSprintNum();
@@ -1391,7 +1406,7 @@ function buildSprintCards(){
 // ═══ OVERVIEW CHARTS (Tab 1) ═══
 function buildOverviewCharts(){
   const sprints=detectSprints();
-  const sh=getFieldH(['Status']),spH=getSprintH(),spE=getFieldH(['Custom field (Story point estimate)']),cyH=getFieldH(['Custom field (Carried Over)']);
+  const sh=getFieldH(['Status']),spH=getSprintH(),spE=getSpH(),cyH=getFieldH(['Custom field (Carried Over)']);
   if(!sprints.length){document.getElementById('chartsRow').innerHTML='';return}
 
   // SP committed / done / carried-out per sprint
@@ -1509,7 +1524,7 @@ function buildSprintDetail(){
   // Render only the active sprint
   const sp=activeSprintDetail;
   const n=sprintNum(sp);
-  const sh=getFieldH(['Status']),spE=getFieldH(['Custom field (Story point estimate)']);
+  const sh=getFieldH(['Status']),spE=getSpH();
   const sumH=getFieldH(['Summary']),keyH=getFieldH(['Issue key']),ahH=getFieldH(['Assignee']),tyH=getFieldH(['Issue Type']),epicH=getFieldH(['Custom field (Epic Name)']);
   const m=sprintMetrics(sp);
   const rows=m.committed;             // everything committed to this sprint
@@ -1646,7 +1661,7 @@ function buildSprintDetail(){
 // ═══ VELOCITY TAB ═══
 function buildVelocity(){
   const sprints=detectSprints();
-  const sh=getFieldH(['Status']),spH=getSprintH(),spE=getFieldH(['Custom field (Story point estimate)']),cyH=getFieldH(['Custom field (Carried Over)']),ahH=getFieldH(['Assignee']);
+  const sh=getFieldH(['Status']),spH=getSprintH(),spE=getSpH(),cyH=getFieldH(['Custom field (Carried Over)']),ahH=getFieldH(['Assignee']);
   if(!sprints.length)return;
 
   const data=sprints.map(sp=>{
@@ -1860,7 +1875,7 @@ function buildEstActualChart(){
 // ── DUMMY PLACEHOLDER (replaced above) ──
 // ═══ CARRYOVER TAB ═══
 function buildCarryover(){
-  const sh=getFieldH(['Status']),sumH=getFieldH(['Summary']),keyH=getFieldH(['Issue key']),ahH=getFieldH(['Assignee']),tyH=getFieldH(['Issue Type']),spE=getFieldH(['Custom field (Story point estimate)']);
+  const sh=getFieldH(['Status']),sumH=getFieldH(['Summary']),keyH=getFieldH(['Issue key']),ahH=getFieldH(['Assignee']),tyH=getFieldH(['Issue Type']),spE=getSpH();
 
   // Carried issues = those whose sprint-list spans more than one sprint
   const carried=allRows.filter(r=>rowCarryCount(r)>0);
@@ -1932,7 +1947,7 @@ function renderTable(){
   const total=rows.length,pages=Math.ceil(total/PAGE);
   curPage=Math.min(curPage,pages||1);
   const start=(curPage-1)*PAGE,prows=rows.slice(start,start+PAGE);
-  const keyH=getFieldH(['Issue key']),sh=getFieldH(['Status']),ph=getFieldH(['Priority']),spE=getFieldH(['Custom field (Story point estimate)']);
+  const keyH=getFieldH(['Issue key']),sh=getFieldH(['Status']),ph=getFieldH(['Priority']),spE=getSpH();
   const ah=getFieldH(['Assignee']),th=getFieldH(['Issue Type']),ddH=getFieldH(['Due date']),cyH=getFieldH(['Custom field (Carried Over)']);
   const sumH=getFieldH(['Summary']);
 
@@ -1961,7 +1976,7 @@ function renderTable(){
   document.getElementById('tBody').innerHTML=tbody;
 
   // Footer totals
-  const spH2=getFieldH(['Custom field (Story point estimate)']);
+  const spH2=getSpH();
   const keyH2=getFieldH(['Issue key']),sumH2=getFieldH(['Summary']);
   const doneCount=sh?filteredRows.filter(r=>isDoneStatus(r[sh])).length:0;
   const totalSP=spH2?filteredRows.reduce((s,r)=>s+(parseFloat(r[spH2])||0),0):0;
@@ -2082,7 +2097,7 @@ function exportPPTX(){
 
   // Collect data for slides
   const sprints=detectSprints();
-  const sh=getFieldH(['Status']),spH=getSprintH(),spE=getFieldH(['Custom field (Story point estimate)']),cyH=getFieldH(['Custom field (Carried Over)']),ahH=getFieldH(['Assignee']);
+  const sh=getFieldH(['Status']),spH=getSprintH(),spE=getSpH(),cyH=getFieldH(['Custom field (Carried Over)']),ahH=getFieldH(['Assignee']);
 
   const sprintData=sprints.map(sp=>{
     const m=sprintMetrics(sp);
