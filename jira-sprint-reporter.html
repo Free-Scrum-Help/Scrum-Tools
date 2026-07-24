@@ -664,6 +664,50 @@ function getFieldH(names){return headers.find(h=>names.some(n=>h===n||h.toLowerC
 // Story points live under different column names depending on the Jira instance:
 // "Custom field (Story Points)" (classic/DC), "Custom field (Story point estimate)" (Cloud),
 // "Story Points", "Story point estimate", etc. Pick whichever actually has data.
+// ── Issue type classification ──
+// Sub-task-like: standard sub-tasks plus test-management children (Xray "Sub Test Execution",
+// auto-generated "Failed Test Case"). Detected by pattern, not a hardcoded list, so custom
+// sub-task type names still match.
+function isSubTaskType(t){
+  t=(t||'').trim();
+  return /^sub[\s\-_]?task\b|^sub[\s\-_]/i.test(t) || /failed\s+test\s+case/i.test(t);
+}
+// Container types that aren't sprint-planned work
+function isContainerType(t){ return /^(epic|initiative)$/i.test((t||'').trim()); }
+// Rows the report should count: excludes sub-task-like rows and containers
+function isReportableRow(r){
+  const tyH=getFieldH(['Issue Type']);
+  const t=tyH?r[tyH]:'';
+  return !isSubTaskType(t) && !isContainerType(t);
+}
+
+// Effective story points for a row.
+// If the row has its own estimate, use it. If it doesn't, fall back to the sum of its
+// sub-tasks' points (teams often estimate on the children instead of the parent).
+// This avoids double-counting when BOTH parent and children are estimated.
+let subPointsByParent={};
+function buildSubPoints(){
+  const spH=getSpH(), pkH=getFieldH(['Parent key'])||getFieldH(['Parent']);
+  subPointsByParent={};
+  if(!spH||!pkH) return;
+  allRows.forEach(r=>{
+    const tyH=getFieldH(['Issue Type']);
+    if(!isSubTaskType(tyH?r[tyH]:'')) return;
+    const pk=(r[pkH]||'').trim(); if(!pk) return;
+    const v=parseFloat(r[spH]); if(!(v>0)) return;
+    subPointsByParent[pk]=(subPointsByParent[pk]||0)+v;
+  });
+}
+function rowPoints(r){
+  const spH=getSpH(); if(!spH) return 0;
+  const own=parseFloat(r[spH]);
+  if(own>0) return own;                       // parent's own estimate wins
+  const keyH=getFieldH(['Issue key']), idH=getFieldH(['Issue id']);
+  const k=keyH?(r[keyH]||'').trim():'';
+  const id=idH?(r[idH]||'').trim():'';
+  return subPointsByParent[k] || subPointsByParent[id] || 0;  // else roll up children
+}
+
 function getSpH(){
   const candidates=headers.filter(h=>/story\s*points?(\s*estimate)?/i.test((h||'').replace(/^custom field \(|\)$/gi,'').trim()));
   if(!candidates.length) return undefined;
@@ -768,6 +812,7 @@ function buildCarryCounts(){
   const sumH=getFieldH(['Summary']);
   const counts={};
   allRows.forEach(r=>{
+    if(!isReportableRow(r)) return;
     const c=rowCarryCount(r);
     if(c>0){ const k=(sumH&&r[sumH])||(keyH&&r[keyH]); if(k) counts[k]=c; }
   });
@@ -872,6 +917,7 @@ function parseCSV(text,fname){
   // Detect sprint tracks; if more than one, default to the busiest and show a selector
   const tracks=detectTracks();
   activeTrack = tracks.length>1 ? tracks[0] : null;
+  buildSubPoints();               // roll-up map must exist before any metrics run
   carryCounts=buildCarryCounts(); // rebuild now that activeTrack is set
   buildTrackSelector(tracks);
   buildFieldMeta();
@@ -922,7 +968,9 @@ function detectSprints(){
   });
 }
 // rows that were COMMITTED to a given sprint (appear in its list)
-function rowsCommittedTo(sprint){return allRows.filter(r=>rowSprints(r).includes(sprint));}
+// Sub-tasks and containers (Epic/Initiative) are excluded — their work is represented
+// by their parent story, with sub-task points rolled up into it.
+function rowsCommittedTo(sprint){return allRows.filter(r=>isReportableRow(r)&&rowSprints(r).includes(sprint));}
 
 // ── Unified per-sprint metrics (the agreed model) ──
 // committed: every issue whose sprint-list includes this sprint
@@ -933,10 +981,9 @@ function rowsCommittedTo(sprint){return allRows.filter(r=>rowSprints(r).includes
 // carriedIn: committed here AND also committed to an earlier sprint
 // carriedOut:committed here AND also committed to a later sprint
 function sprintMetrics(sprint){
-  const spE=getSpH();
   const n=sprintNum(sprint);
   const committed=rowsCommittedTo(sprint);
-  const sp=r=>spE?(parseFloat(r[spE])||0):0;
+  const sp=r=>rowPoints(r);
   let done=[],removed=[],inflight=[],carriedIn=[],carriedOut=[];
   committed.forEach(r=>{
     const list=rowSprints(r), last=sprintNum(rowLastSprint(r));
@@ -1011,8 +1058,9 @@ function openSprintDetail(sp){
 }
 
 function getActiveRows(){
-  if(activeSprints.has('all'))return allRows;
-  return allRows.filter(r=>{const ls=rowSprints(r);return [...activeSprints].some(s=>ls.includes(s));});
+  const base=allRows.filter(isReportableRow);
+  if(activeSprints.has('all'))return base;
+  return base.filter(r=>{const ls=rowSprints(r);return [...activeSprints].some(s=>ls.includes(s));});
 }
 
 // ═══ FILTER ═══
@@ -1332,10 +1380,10 @@ function buildStats(){
   let done=0,removed=0,inflight=0,spDone=0,spCarry=0,carried=0;
   rows.forEach(r=>{
     const state=issueState(r);
-    if(state==='done'){done++; spDone+=spE?(parseFloat(r[spE])||0):0;}
+    if(state==='done'){done++; spDone+=rowPoints(r);}
     else if(state==='removed') removed++;
     else inflight++;
-    if(rowCarryCount(r)>0){ carried++; spCarry+=spE?(parseFloat(r[spE])||0):0; }
+    if(rowCarryCount(r)>0){ carried++; spCarry+=rowPoints(r); }
   });
   const pct=total>0?Math.round(done/total*100):0;
   document.getElementById('statsBar').innerHTML=`
@@ -1361,7 +1409,7 @@ function buildSprintCards(){
   sprints.forEach(sp=>{
     const m=sprintMetrics(sp);
     const isLast=m.n===latest;
-    const sp_=r=>spE?(parseFloat(r[spE])||0):0;
+    const sp_=r=>rowPoints(r);
     const spTotal=m.spCommitted;
     const spDone=m.spDone;
     const spCarry=m.spCarriedOut;
@@ -1449,7 +1497,7 @@ function buildOverviewCharts(){
     for(let i=1;i<sprints.length;i++){
       const prevSp=sprints[i-1],curSp=sprints[i];
       const prevNum=sprintNum(prevSp),curNum=sprintNum(curSp);
-      const carriedFromPrev=allRows.filter(r=>{const ls=rowSprints(r).map(sprintNum);return ls.includes(prevNum)&&ls.includes(curNum);});
+      const carriedFromPrev=allRows.filter(r=>{if(!isReportableRow(r))return false;const ls=rowSprints(r).map(sprintNum);return ls.includes(prevNum)&&ls.includes(curNum);});
       const resolvedFromPrev=carriedFromPrev.filter(r=>issueState(r)==='done'&&sprintNum(rowLastSprint(r))===curNum);
       const total=carriedFromPrev.length, res=resolvedFromPrev.length;
       const pct=total>0?Math.round(res/total*100):100;
@@ -1580,7 +1628,7 @@ function buildSprintDetail(){
     if(!assigneeMap[r[ahH]])assigneeMap[r[ahH]]={done:0,total:0,sp:0};
     assigneeMap[r[ahH]].total++;
     if(issueState(r)==='done'&&sprintNum(rowLastSprint(r))===n)assigneeMap[r[ahH]].done++;
-    assigneeMap[r[ahH]].sp+=(parseFloat(r[spE])||0);
+    assigneeMap[r[ahH]].sp+=rowPoints(r);
   });
   const assigneeHtml=Object.entries(assigneeMap).map(([name,d])=>{
     const c=avatarCol(name),init=name.split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);
@@ -1731,7 +1779,7 @@ function buildVelocity(){
   allRows.forEach(r=>{
     if(!r[ahH]||!spE)return;
     if(!sh||!/done/i.test(r[sh]||''))return;
-    aMap[r[ahH]]=(aMap[r[ahH]]||0)+(parseFloat(r[spE])||0);
+    aMap[r[ahH]]=(aMap[r[ahH]]||0)+rowPoints(r);
   });
   const aEntries=Object.entries(aMap).sort((a,b)=>b[1]-a[1]);
   const mx2=Math.max(...aEntries.map(e=>e[1]),1);
@@ -1809,8 +1857,8 @@ function buildWorkloadTable(sprints,spH,sh,spE,ahH){
     sprints.forEach(sp=>{
       const rows=allRows.filter(r=>r[spH]===sp&&r[ahH]===a);
       if(!rows.length){html+='<td style="color:var(--muted)">—</td>';return;}
-      const commit=rows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0);
-      const done=sh?rows.filter(r=>/done/i.test(r[sh]||'')).reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+      const commit=rows.reduce((s,r)=>s+rowPoints(r),0);
+      const done=sh?rows.filter(r=>/done/i.test(r[sh]||'')).reduce((s,r)=>s+rowPoints(r),0):0;
       const pct=commit>0?Math.round(done/commit*100):0;
       const col2=pct>=80?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
       html+=`<td>
@@ -1878,11 +1926,11 @@ function buildCarryover(){
   const sh=getFieldH(['Status']),sumH=getFieldH(['Summary']),keyH=getFieldH(['Issue key']),ahH=getFieldH(['Assignee']),tyH=getFieldH(['Issue Type']),spE=getSpH();
 
   // Carried issues = those whose sprint-list spans more than one sprint
-  const carried=allRows.filter(r=>rowCarryCount(r)>0);
+  const carried=allRows.filter(r=>isReportableRow(r)&&rowCarryCount(r)>0);
   const carriedDone=carried.filter(r=>isDoneStatus(r[sh]||''));
   const removed=carried.filter(r=>issueState(r)==='removed');
   const stillOpen=carried.filter(r=>issueState(r)==='inflight');
-  const spCost=spE?carried.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
+  const spCost=carried.reduce((s,r)=>s+rowPoints(r),0);
   const totalCarries=carried.reduce((s,r)=>s+rowCarryCount(r),0); // total times anything was carried
 
   document.getElementById('carryStats').innerHTML=`
@@ -1906,7 +1954,7 @@ function buildCarryover(){
     rows.forEach(r=>{
       const key=r[keyH]||'',sum=r[sumH]||'',stat=r[sh]||'';
       const chain=rowSprints(r); // full chain oldest->newest
-      const spCostR=spE?(parseFloat(r[spE])||0):0;
+      const spCostR=rowPoints(r);
       const state=issueState(r);
       const isDone=state==='done',isRemoved=state==='removed';
       const cls=isDone?'resolved':isRemoved?'blocked':'';
@@ -1979,7 +2027,7 @@ function renderTable(){
   const spH2=getSpH();
   const keyH2=getFieldH(['Issue key']),sumH2=getFieldH(['Summary']);
   const doneCount=sh?filteredRows.filter(r=>isDoneStatus(r[sh])).length:0;
-  const totalSP=spH2?filteredRows.reduce((s,r)=>s+(parseFloat(r[spH2])||0),0):0;
+  const totalSP=filteredRows.reduce((s,r)=>s+rowPoints(r),0);
   const carriedCount=filteredRows.filter(r=>{const k=(sumH2&&r[sumH2])||(keyH2&&r[keyH2]);return (carryCounts[k]||0)>=1;}).length;
   const blockedCount=sh?filteredRows.filter(r=>/blocked/i.test(r[sh])).length:0;
   document.getElementById('tblFooter').innerHTML=`
