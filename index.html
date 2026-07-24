@@ -24,7 +24,7 @@
   --amber: #FFBE45;
   --text: #F0F4FF;
   --text-secondary: rgba(240,244,255,0.58);
-  --text-muted: rgba(240,244,255,0.28);
+  --text-muted: rgba(240,244,255,0.50);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -185,6 +185,7 @@ body {
 .card-estimator { --card-accent: #FF721E; --card-rgb: 255,114,30; }
 .card-rota-est  { --card-accent: #22D17B; --card-rgb: 34,209,123; }
 .card-pbi       { --card-accent: #FF6A1A; --card-rgb: 255,106,26; }
+.card-jira      { --card-accent: #5B9BF5; --card-rgb: 91,155,245; }
 
 .tool-card-top {
   display: flex; align-items: flex-start; justify-content: space-between;
@@ -307,6 +308,7 @@ body {
 .tool-card:nth-child(2) { animation-delay: 0.12s; }
 .tool-card:nth-child(3) { animation-delay: 0.19s; }
 .tool-card:nth-child(4) { animation-delay: 0.26s; }
+.tool-card:nth-child(5) { animation-delay: 0.33s; }
 </style>
 </head>
 <body>
@@ -422,14 +424,34 @@ body {
       </div>
     </a>
 
+    <!-- Jira Sprint Reporter -->
+    <a class="tool-card card-jira" href="jira-sprint-reporter.html">
+      <div class="tool-card-top">
+        <div class="tool-icon" style="background:rgba(91,155,245,0.12);color:#5B9BF5;">📊</div>
+        <span class="tool-status status-live">Live</span>
+      </div>
+      <div class="tool-name">Jira Sprint Reporter</div>
+      <div class="tool-desc">Upload a Jira CSV export and get sprint metrics instantly. Tracks true carryover across sprints, flags stalled work, and exports a ready-made PowerPoint summary.</div>
+      <div class="tool-tags">
+        <span class="tool-tag">CSV upload</span>
+        <span class="tool-tag">Carryover</span>
+        <span class="tool-tag">Multi-team</span>
+        <span class="tool-tag">PowerPoint</span>
+      </div>
+      <div class="tool-cta">
+        <span class="tool-cta-label">Open reporter</span>
+        <div class="tool-cta-arrow">→</div>
+      </div>
+    </a>
+
   </div>
 
   <!-- Info strip -->
   <div class="info-strip">
     <div class="info-icon">💡</div>
     <div class="info-text">
-      <strong>All tools save locally in your browser</strong>
-      <p>Data is stored in localStorage — nothing leaves your device. Most tools let you export your work (JSON, or Copy / PDF / Word) as a backup or to share with the team.</p>
+      <strong>Your data never leaves your device</strong>
+      <p>Everything runs in your browser. Most tools save your work in localStorage so it's there when you come back; the Jira Sprint Reporter processes your CSV in memory only and stores nothing. Export your work (JSON, or Copy / PDF / Word / PowerPoint) as a backup or to share with the team.</p>
     </div>
   </div>
 </div>

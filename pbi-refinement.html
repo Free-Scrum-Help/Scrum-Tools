@@ -9,7 +9,7 @@
 :root {
   --navy-900:#080E1A; --navy-800:#0D1829; --navy-700:#132038; --navy-600:#1A2A48; --navy-500:#243659;
   --orange:#FF6A1A; --orange-dim:rgba(255,106,26,0.15);
-  --text-primary:#F0F4FF; --text-secondary:#8BA0C4; --text-tertiary:#4F6080;
+  --text-primary:#F0F4FF; --text-secondary:#8BA0C4; --text-tertiary:#7A8CA8;
   --border:rgba(255,255,255,0.07); --border-strong:rgba(255,255,255,0.13);
   --green:#22C97A; --amber:#F5A623; --red:#FF5252; --blue:#5B9BF5;
   --r:8px; --r-lg:14px;
@@ -85,9 +85,19 @@ body { font-family:'IBM Plex Sans',sans-serif; background:var(--navy-800); color
 /* Readiness sidebar */
 .sticky-side { position:sticky; top:72px; }
 .score-ring { display:flex; flex-direction:column; align-items:center; padding:8px 0 4px; }
-.ring-num { font-family:'Outfit',sans-serif; font-size:3rem; font-weight:800; line-height:1; }
+.ring-num { font-family:'Outfit',sans-serif; font-size:1.05rem; font-weight:700; line-height:1; opacity:0.75; }
 .ring-label { font-size:0.72rem; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.08em; margin-top:4px; font-weight:700; }
-.ring-verdict { font-size:0.8rem; margin-top:8px; padding:4px 12px; border-radius:14px; font-weight:600; }
+.ring-verdict { font-family:'Outfit',sans-serif; font-size:1.5rem; font-weight:800; margin-top:2px; padding:6px 18px; border-radius:14px; letter-spacing:-0.01em; }
+.dor-note { font-size:0.72rem; color:var(--text-tertiary); line-height:1.55; padding:10px 12px; background:rgba(255,190,69,0.06); border:1px solid rgba(255,190,69,0.18); border-radius:8px; margin-bottom:12px; }
+.split-intro { font-size:0.74rem; color:var(--text-tertiary); line-height:1.55; margin-bottom:10px; }
+.split-intro em { color:var(--text-secondary); font-style:normal; font-weight:600; }
+.split-list { display:flex; flex-direction:column; gap:7px; }
+.split-item { padding:9px 11px; background:rgba(255,255,255,0.025); border:1px solid var(--border); border-radius:8px; }
+.split-name { font-size:0.78rem; font-weight:700; color:var(--text-primary); margin-bottom:2px; }
+.split-desc { font-size:0.72rem; color:var(--text-tertiary); line-height:1.5; }
+.split-eg { font-size:0.71rem; color:var(--text-secondary); line-height:1.5; margin-top:4px; font-style:italic; }
+.split-flag { font-size:0.74rem; line-height:1.5; padding:9px 11px; border-radius:8px; margin-bottom:10px; background:rgba(245,166,35,0.08); border:1px solid rgba(245,166,35,0.25); color:var(--amber); }
+.split-flag.ok { background:rgba(34,201,122,0.07); border-color:rgba(34,201,122,0.22); color:var(--green); }
 .v-ready { color:var(--green); background:rgba(34,201,122,0.1); }
 .v-close { color:var(--amber); background:rgba(245,166,35,0.1); }
 .v-notready { color:var(--red); background:rgba(255,82,82,0.1); }
@@ -197,11 +207,11 @@ body { font-family:'IBM Plex Sans',sans-serif; background:var(--navy-800); color
         <div class="card-head"><h2>📊 Readiness</h2></div>
         <div class="card-body">
           <div class="score-ring">
-            <div class="ring-num" id="scoreNum">—</div>
-            <div class="ring-label">Readiness score</div>
             <div class="ring-verdict" id="verdict">Start writing</div>
+            <div class="ring-num" id="scoreNum">—</div>
+            <div class="ring-label">Structure check</div>
           </div>
-          <div class="disclaimer">A coaching aid, not a gate. It checks structure and common pitfalls — it can't judge whether the story delivers real value. Use it to start conversations, not end them.</div>
+          <div class="disclaimer">A coaching aid, not a gate. It checks structure and common pitfalls — it can't judge whether the story delivers real value, so treat the score as a rough signal, not a verdict. Use it to start conversations, not end them.</div>
         </div>
       </div>
 
@@ -216,15 +226,27 @@ body { font-family:'IBM Plex Sans',sans-serif; background:var(--navy-800); color
       </div>
 
       <div class="card">
+        <div class="card-head"><h2>✂️ Splitting Patterns</h2></div>
+        <div class="card-body">
+          <div id="splitSignal"></div>
+          <div class="split-intro">If it won't fit in a Sprint, split it so <em>each piece still delivers value on its own</em> — never into "design ticket / build ticket / test ticket".</div>
+          <div class="split-list" id="splitList"></div>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="card-head"><h2>📋 Definition of Ready</h2></div>
-        <div class="card-body"><div class="check-list" id="dorList"></div></div>
+        <div class="card-body">
+          <div class="dor-note">Worth knowing: a formal DoR isn't in the Scrum Guide, and Scrum.org calls it "training wheels for a junior team — or an anti-pattern" when it becomes a gate the PO must pass. Treat this as a shared prompt for conversation, never a barrier to starting work.</div>
+          <div class="check-list" id="dorList"></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <div class="mini-toast" id="toast"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.js" async></script>
 <script>
 // ════════════════════════════════════════
 // STATE
@@ -255,6 +277,22 @@ const DOR_ITEMS = [
   {id:'deps', label:'No blocking dependencies', hint:'Or they are identified and tracked', auto:null},
   {id:'understood', label:'Understood by the whole team', hint:'Dev, QA and PO share the same picture', auto:null},
   {id:'estimable', label:'Estimable', hint:'Team has enough info to size it', auto:null},
+];
+const SPLIT_PATTERNS = [
+  {name:'By workflow step', desc:'Deliver the steps of a journey separately, thinnest end-to-end path first.',
+   eg:'Checkout: card payment first → saved cards, then discount codes later.'},
+  {name:'By acceptance criterion', desc:'Each scenario you wrote can often stand alone as its own story.',
+   eg:'"Valid login" ships first; "locked account" and "expired password" follow.'},
+  {name:'Happy path vs edge cases', desc:'Ship the main flow, then handle errors, empty states and validation.',
+   eg:'Upload a file → then oversized files, wrong formats, network failure.'},
+  {name:'By data or variation', desc:'Support one data type, region or format first; add the rest later.',
+   eg:'CSV import first → Excel and JSON in follow-up stories.'},
+  {name:'By user role', desc:'Deliver for one type of user before broadening it.',
+   eg:'Standard user sees the report → admin filters come next.'},
+  {name:'Simple version first', desc:'Manual or basic now, automated or optimised later — value still lands.',
+   eg:'Static list of results → sorting, then search, then pagination.'},
+  {name:'Spike, then build', desc:'If it is unknown rather than big, timebox a spike to learn, then re-estimate.',
+   eg:'Investigate the third-party API for 1 day → write real stories after.'},
 ];
 const INVEST_ITEMS = [
   {k:'I',name:'Independent',desc:'Can be delivered without depending on other stories'},
@@ -419,7 +457,7 @@ function evaluate(){
 
   // verdict
   const v=document.getElementById('verdict'), n=document.getElementById('scoreNum');
-  n.textContent = text? score : '—';
+  n.textContent = text? ('~'+(Math.round(score/5)*5)+'/100 structure') : '—';
   n.className='ring-num '+(score>=80?'sc-green':score>=50?'sc-amber':'sc-red');
   if(!text){ v.textContent='Start writing'; v.className='ring-verdict'; }
   else if(score>=80){ v.textContent='Looks ready'; v.className='ring-verdict v-ready'; }
@@ -434,7 +472,8 @@ function evaluate(){
     if(!ac) flags.push(['warn','⚠️','No acceptance criteria yet. These turn a vague ask into testable, pass/fail conditions.']);
     else if(acCount()<2) flags.push(['info','💡','Only one acceptance scenario — consider edge cases (validation, empty state, errors).']);
     if(vague.length) flags.push(['warn','🔍','Vague wording: '+vague.slice(0,6).map(w=>'"'+w+'"').join(', ')+'. Replace with specific, measurable terms.']);
-    if(wordCount>60) flags.push(['info','✂️','This story is quite long ('+wordCount+' words) — it may be too big. Consider splitting it.']);
+    if(wordCount>60) flags.push(['info','✂️','This story is quite long ('+wordCount+' words) — it may be too big for one Sprint. See Splitting Patterns for ways to break it up so each piece still delivers value.']);
+    if(acCount()>=6) flags.push(['info','✂️',acCount()+' acceptance scenarios is a lot — each one can often become its own story.']);
     if(fmt&&ben&&ac&&!vague.length) flags.push(['good','✅','Solid structure: clear role, action, benefit and testable criteria.']);
   }
   const fb=document.getElementById('flags');
@@ -442,8 +481,28 @@ function evaluate(){
 
   // INVEST (heuristic hints, not auto-ticked except Testable/Valuable signals)
   renderInvest({fmt,ben,ac,vague,wordCount,text});
+  renderSplit({wordCount,text,acCount:acCount()});
   // DoR
   renderDor(autoResults);
+}
+
+// Splitting guidance — always visible as reference, highlights when the story looks large
+function renderSplit(ctx){
+  const sig=document.getElementById('splitSignal');
+  if(!ctx.text){
+    sig.innerHTML='';
+  } else {
+    const big = ctx.wordCount>60 || ctx.acCount>=6;
+    sig.innerHTML = big
+      ? `<div class="split-flag">⚠️ Size signals: ${ctx.wordCount>60?ctx.wordCount+' words':''}${(ctx.wordCount>60&&ctx.acCount>=6)?' and ':''}${ctx.acCount>=6?ctx.acCount+' acceptance scenarios':''}. This may not fit in one Sprint — try a pattern below.</div>`
+      : `<div class="split-flag ok">✅ No size warning signs. Still worth a glance if the team can't confidently size it.</div>`;
+  }
+  document.getElementById('splitList').innerHTML = SPLIT_PATTERNS.map(p=>
+    `<div class="split-item">
+      <div class="split-name">${p.name}</div>
+      <div class="split-desc">${p.desc}</div>
+      <div class="split-eg">e.g. ${p.eg}</div>
+    </div>`).join('');
 }
 
 function renderInvest(ctx){
@@ -603,7 +662,12 @@ function hydrate(){
   document.getElementById('ac-checklist').classList.toggle('on',state.acMode==='checklist');
   renderPatterns(); renderAc();
 }
-load(); hydrate(); evaluate();
+function init(){
+  try { load(); hydrate(); evaluate(); }
+  catch(e){ console.error('Init failed:',e); document.getElementById('flags').innerHTML='<div class="flag flag-warn"><span class="flag-icon">⚠️</span><span>Something went wrong loading the page. Try a hard refresh (Ctrl/Cmd+Shift+R). If it persists, click Clear to reset.</span></div>'; }
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
 </script>
 </body>
 </html>

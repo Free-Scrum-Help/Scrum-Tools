@@ -104,6 +104,12 @@ body{background:var(--navy);color:var(--text);font-family:-apple-system,BlinkMac
 /* charts */
 .charts-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
 .chart-card{background:var(--navy-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px}
+.carry-resolve-tbl{width:100%;border-collapse:collapse;margin-top:6px}
+.carry-resolve-tbl th{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);font-weight:700}
+.carry-resolve-tbl td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle}
+.carry-resolve-tbl tr:last-child td{border-bottom:none}
+.cr-chips{display:flex;flex-wrap:wrap;gap:5px}
+.cr-chip{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:11px;border:1px solid;background:rgba(255,255,255,.02);white-space:nowrap}
 .cc-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:11px}
 .mb-row{display:flex;align-items:center;gap:6px;font-size:11.5px;margin-bottom:5px}
 .mb-lbl{width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;color:var(--muted)}
@@ -123,9 +129,7 @@ body{background:var(--navy);color:var(--text);font-family:-apple-system,BlinkMac
 .sd-close:hover{background:rgba(255,255,255,.07);color:var(--text)}
 .sd-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .sd-chart{background:var(--navy-mid);border-radius:var(--r);padding:12px}
-.ai-summary{background:linear-gradient(135deg,rgba(12,125,224,.08),rgba(0,196,180,.08));border:1px solid rgba(0,196,180,.2);border-radius:var(--r);padding:14px;margin-top:12px}
-.ai-summary h4{font-size:12px;font-weight:700;color:var(--teal);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.ai-summary p{font-size:12px;line-height:1.7;color:var(--text)}
+
 .ai-loading{color:var(--muted);font-size:12px;font-style:italic}
 
 /* carry items in sprint detail */
@@ -387,6 +391,12 @@ td{padding:9px 12px;vertical-align:middle;max-width:250px}
   </div>
 </div>
 
+<div id="trackBar" style="display:none;align-items:center;gap:10px;padding:10px 20px;background:var(--navy-mid);border-bottom:1px solid var(--border);flex-wrap:wrap">
+  <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">👥 Team / Sprint track:</span>
+  <div id="trackBtns" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+  <span style="font-size:11px;color:var(--muted)">Multiple sprint tracks detected — metrics are scoped to the selected track.</span>
+</div>
+
 <div class="tabs">
   <div class="tab active" onclick="switchTab('overview')">📊 All Sprints</div>
   <div class="tab" onclick="switchTab('sprint')">🏃 Sprint Detail</div>
@@ -421,12 +431,6 @@ td{padding:9px 12px;vertical-align:middle;max-width:250px}
   <div class="s-section ctx-sprint" style="display:none">
     <div class="s-label">Sprint</div>
     <div id="sidebarSprintPicker"></div>
-    <div style="margin-top:10px">
-      <input type="password" id="apiKeyInput" placeholder="sk-ant-… API key for AI"
-        style="width:100%;background:var(--navy-card);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-size:11px;outline:none;font-family:monospace;margin-bottom:6px"
-        oninput="this.style.borderColor=this.value?'var(--teal)':'var(--border)'">
-      <button class="btn" style="width:100%;justify-content:center" onclick="generateAISummary()">✨ Generate AI Summary</button>
-    </div>
   </div>
 
   <!-- Table context -->
@@ -661,12 +665,55 @@ function getFieldH(names){return headers.find(h=>names.some(n=>h===n||h.toLowerC
 function isSprintHeader(h){return /^(custom field \()?sprint(\s*\(\d+\)|\))?\s*$/i.test((h||'').trim())}
 function getSprintH(){return headers.find(h=>isSprintHeader(h))}
 let sprintColIdxs=[];
-function sprintNum(s){const m=(s||'').match(/Sprint\s*(\d+)/i);return m?parseInt(m[1]):0}
+function sprintNum(s){
+  s=s||'';
+  // Prefer a number appearing right after the word "Sprint" (space, underscore, dash or nothing)
+  let m=s.match(/Sprint[\s_\-]*(\d+)/i);
+  if(m) return parseInt(m[1]);
+  // Otherwise fall back to the last number anywhere in the label
+  const all=s.match(/(\d+)/g);
+  return all?parseInt(all[all.length-1]):0;
+}
+
+// ── Sprint "track" = the name prefix before the number (dynamic, not hardcoded) ──
+// Normalises separators + case so "GRN Sprint 13" and "GRN_Sprint_31" are ONE track ("grn sprint").
+// "GRN_Sprint_47" -> "grn sprint" ; "SCRUM Sprint 3 (dates)" -> "scrum sprint" ; "Sprint 4" -> "sprint"
+function sprintTrack(name){
+  name=(name||'').trim();
+  if(!name) return '';
+  // strip a trailing date parenthetical first: "... (01/Sep - 14/Sep)"
+  let s=name.replace(/\s*\([^)]*\)\s*$/,'').trim();
+  // cut at the first "Sprint <number>" boundary, keep everything up to & including "Sprint"
+  const m=s.match(/^(.*?sprint)[\s_\-]*\d+/i);
+  s = m ? m[1] : s.replace(/[\s_\-]*\d+.*$/,'');
+  // normalise: underscores/dashes -> space, collapse spaces, lowercase
+  return s.replace(/[_\-]+/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+}
+// A friendly display label for a normalised track key
+function trackLabel(track){
+  if(!track) return '';
+  // Title-case each word, drop a trailing "sprint" for brevity: "grn sprint" -> "GRN"
+  const words=track.replace(/\s*sprint$/i,'').split(' ').filter(Boolean);
+  if(!words.length) return track.replace(/\b\w/g,c=>c.toUpperCase());
+  return words.map(w=>w.length<=3?w.toUpperCase():w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+}
+// All distinct tracks present, ordered by issue-volume (most first)
+function detectTracks(){
+  const counts={};
+  allRows.forEach(r=>{
+    (r.__sprints||[]).forEach(s=>{const t=sprintTrack(s); if(t) counts[t]=(counts[t]||0)+1;});
+  });
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+}
+let activeTrack=null; // null = single-track / all; otherwise a specific prefix
 
 // ── Issue → sprint list (oldest→newest), de-duplicated, numerically sorted ──
+// When a track is active, ONLY that track's sprints are considered for this issue
+// (so chain, committed, done, carryover all scope to the active team).
 function rowSprints(r){
-  const list=(r.__sprints&&r.__sprints.length)?r.__sprints
+  let list=(r.__sprints&&r.__sprints.length)?r.__sprints.slice()
     :(()=>{const sh=getSprintH();return sh&&r[sh]?[r[sh]]:[];})();
+  if(activeTrack) list=list.filter(s=>sprintTrack(s)===activeTrack);
   // de-dup while preserving first-seen order, then sort by sprint number
   const seen=new Set(),out=[];
   list.forEach(v=>{if(!seen.has(v)){seen.add(v);out.push(v);}});
@@ -679,7 +726,7 @@ function rowCarryCount(r){return Math.max(0,rowSprints(r).length-1);}
 // Done statuses (case-insensitive)
 function isDoneStatus(st){return /^(done|closed|resolved)$/i.test((st||'').trim());}
 
-// The latest sprint number present anywhere in the dataset
+// The latest sprint number present in the ACTIVE track (or whole dataset if none)
 function latestSprintNum(){
   let mx=0; allRows.forEach(r=>rowSprints(r).forEach(s=>{const n=sprintNum(s);if(n>mx)mx=n;}));
   return mx;
@@ -716,12 +763,46 @@ let carryCounts={};
 // ═══ LOAD ═══
 function loadSample(){parseCSV(SAMPLE_CSV,'SCRUM_Sprint_Data.csv');showToast('✅ Sample data loaded','ok')}
 
+// ═══ TRACK SELECTOR (multi-team support) ═══
+function buildTrackSelector(tracks){
+  const bar=document.getElementById('trackBar');
+  const btns=document.getElementById('trackBtns');
+  if(!bar||!btns) return;
+  if(!tracks || tracks.length<2){ bar.style.display='none'; btns.innerHTML=''; return; }
+  bar.style.display='flex';
+  const label=t=>trackLabel(t);
+  btns.innerHTML=tracks.map(t=>{
+    const count=allRows.filter(r=>(r.__sprints||[]).some(s=>sprintTrack(s)===t)).length;
+    const on=t===activeTrack;
+    return `<button onclick="setTrack('${t.replace(/'/g,"\\'")}')" class="track-btn${on?' on':''}"
+      style="font-size:12px;font-weight:600;padding:5px 12px;border-radius:16px;cursor:pointer;border:1px solid ${on?'var(--teal)':'var(--border)'};background:${on?'var(--teal-dim)':'var(--navy-card)'};color:${on?'var(--teal)':'var(--text)'}">
+      ${label(t)} <span style="opacity:.6;font-size:11px">${count}</span></button>`;
+  }).join('');
+}
+function setTrack(t){
+  if(t===activeTrack) return;
+  activeTrack=t;
+  carryCounts=buildCarryCounts();     // recompute carry counts for the new track
+  activeSprints=new Set(['all']);      // reset sprint sub-filter
+  activeSprintDetail=null;
+  buildTrackSelector(detectTracks());  // refresh button highlight
+  buildSprintToggles();
+  buildSidebarSprintPicker();
+  filteredRows=[...allRows];
+  applyFilter();
+  refreshAll();
+  switchTab(currentTab);
+  showToast('👥 Switched to '+trackLabel(t),'ok');
+}
+
 // ═══ RESET ═══ clear all loaded data and return to the empty upload state
 function resetData(){
   if(allRows.length && !confirm('Clear all loaded data? This removes the current CSV from the page.')) return;
   allRows=[]; headers=[]; selectedFields=[]; filteredRows=[]; sprintColIdxs=[]; carryCounts={};
-  activeSprints=new Set(['all']); activeSprintDetail=null; curPage=1; sortCol=-1;
+  activeSprints=new Set(['all']); activeSprintDetail=null; curPage=1; sortCol=-1; activeTrack=null;
   Object.keys(msState).forEach(k=>msState[k].clear());
+  const trk=document.getElementById('trackBar'); if(trk) trk.style.display='none';
+  const trkb=document.getElementById('trackBtns'); if(trkb) trkb.innerHTML='';
   // wipe rendered panels
   ['statsBar','sprintCards','chartsRow','sdTabBar','carryStats','carryTimeline','velStats'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
   const sd=document.getElementById('sprintDetailContent'); if(sd) sd.innerHTML='<div class="empty"><div class="ei">📊</div><h3>No data loaded</h3><p style="color:var(--muted);font-size:12px">Upload a Jira CSV to begin.</p></div>';
@@ -773,6 +854,11 @@ function parseCSV(text,fname){
     return o;
   });
   carryCounts=buildCarryCounts();
+  // Detect sprint tracks; if more than one, default to the busiest and show a selector
+  const tracks=detectTracks();
+  activeTrack = tracks.length>1 ? tracks[0] : null;
+  carryCounts=buildCarryCounts(); // rebuild now that activeTrack is set
+  buildTrackSelector(tracks);
   buildFieldMeta();
   // Reset multi-select filter state
   Object.keys(msState).forEach(k=>msState[k].clear());
@@ -814,7 +900,11 @@ function buildFieldMeta(){
 function detectSprints(){
   const set=new Set();
   allRows.forEach(r=>rowSprints(r).forEach(s=>set.add(s)));
-  return [...set].sort((a,b)=>sprintNum(a)-sprintNum(b));
+  return [...set].sort((a,b)=>{
+    const ta=sprintTrack(a),tb=sprintTrack(b);
+    if(ta!==tb) return ta<tb?-1:1;         // group by track name first
+    return sprintNum(a)-sprintNum(b);       // then by sprint number
+  });
 }
 // rows that were COMMITTED to a given sprint (appear in its list)
 function rowsCommittedTo(sprint){return allRows.filter(r=>rowSprints(r).includes(sprint));}
@@ -1002,21 +1092,21 @@ function applyFilter(){
   const sumH=getFieldH(['Summary']),keyH=getFieldH(['Issue key']);
 
   filteredRows=allRows.filter(row=>{
-    if(!activeSprints.has('all')&&spH&&![...activeSprints].some(s=>row[spH]===s))return false;
+    if(!activeSprints.has('all')&&![...activeSprints].some(s=>rowSprints(row).includes(s)))return false;
     if(q&&!Object.values(row).some(v=>v.toLowerCase().includes(q)))return false;
     if(msState.msStatus.size>0&&sh&&!msState.msStatus.has(row[sh]))return false;
     if(msState.msPriority.size>0&&ph&&!msState.msPriority.has(row[ph]))return false;
     if(msState.msAssignee.size>0&&ah&&!msState.msAssignee.has(row[ah]))return false;
     if(msState.msType.size>0&&th&&!msState.msType.has(row[th]))return false;
     const k=row[sumH]||row[keyH];
-    const cc=carryCounts[k]||0;
-    const isCarriedRow=cyH&&!!row[cyH];
-    if(at==='bottle'&&!(isCarriedRow&&cc>=3))return false;
-    if(at==='attn'&&!(isCarriedRow&&cc>=2))return false;
-    if(at==='carried'&&!(isCarriedRow&&cc>=1))return false;
+    const cc=carryCounts[k]||0;                 // carry count from sprint chain
+    const isCarriedRow=cc>=1;                    // carried if it spans >1 sprint
+    if(at==='bottle'&&!(cc>=3))return false;
+    if(at==='attn'&&!(cc>=2))return false;
+    if(at==='carried'&&!(cc>=1))return false;
     if(at==='any_carry'&&!isCarriedRow)return false;
     if(at==='blocked'&&sh&&!/blocked/i.test(row[sh]))return false;
-    if(at==='unplanned'){const sp2=spH?row[spH]:'';if(!isUnplanned(row,sp2))return false;}
+    if(at==='unplanned'){const sp2=rowLastSprint(row);if(!isUnplanned(row,sp2))return false;}
     return true;
   });
   curPage=1;renderTable();buildStats();updateResetBtn();
@@ -1332,36 +1422,41 @@ function buildOverviewCharts(){
     <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(245,166,35,.7);border-radius:2px;display:inline-block"></span>Carried Out SP</span>
   </div></div>`;
 
-  // Previous sprint carryovers resolved in next sprint
+  // Previous sprint carryovers resolved in next sprint — larger detailed table
+  const keyH2=getFieldH(['Issue key']),sumH2=getFieldH(['Summary']);
   let resolveChartHtml=`<div class="chart-card"><div class="cc-title">✅ Previous Sprint Carryovers Resolved in Next Sprint</div>`;
-  for(let i=1;i<sprints.length;i++){
-    const prevSp=sprints[i-1],curSp=sprints[i];
-    const prevNum=sprintNum(prevSp),curNum=sprintNum(curSp);
-    // issues that were in prev AND carried into cur
-    const carriedFromPrev=allRows.filter(r=>{const ls=rowSprints(r).map(sprintNum);return ls.includes(prevNum)&&ls.includes(curNum);});
-    // resolved = Done AND their last sprint is cur (finished in the sprint they carried into)
-    const resolvedFromPrev=carriedFromPrev.filter(r=>issueState(r)==='done'&&sprintNum(rowLastSprint(r))===curNum);
-    const total=carriedFromPrev.length;
-    const res=resolvedFromPrev.length;
-    const pct=total>0?Math.round(res/total*100):100;
-    const col=pct>=70?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
-    resolveChartHtml+=`<div class="mb-row">
-      <span class="mb-lbl" style="width:90px">S${prevNum}→S${curNum}</span>
-      <div class="mb-track"><div class="mb-fill" style="width:${pct}%;background:${col}"></div></div>
-      <span class="mb-cnt" style="width:60px;color:${col}">${res}/${total} (${pct}%)</span>
-    </div>`;
+  if(sprints.length<2){
+    resolveChartHtml+=`<div style="color:var(--muted);font-size:12px;padding:8px 0">Need at least two sprints to show carryover resolution.</div>`;
+  } else {
+    resolveChartHtml+=`<table class="carry-resolve-tbl"><thead><tr>
+      <th>Transition</th><th style="text-align:center">Carried</th><th style="text-align:center">Resolved</th><th style="text-align:center">Rate</th><th>Issues carried</th>
+    </tr></thead><tbody>`;
+    for(let i=1;i<sprints.length;i++){
+      const prevSp=sprints[i-1],curSp=sprints[i];
+      const prevNum=sprintNum(prevSp),curNum=sprintNum(curSp);
+      const carriedFromPrev=allRows.filter(r=>{const ls=rowSprints(r).map(sprintNum);return ls.includes(prevNum)&&ls.includes(curNum);});
+      const resolvedFromPrev=carriedFromPrev.filter(r=>issueState(r)==='done'&&sprintNum(rowLastSprint(r))===curNum);
+      const total=carriedFromPrev.length, res=resolvedFromPrev.length;
+      const pct=total>0?Math.round(res/total*100):100;
+      const col=pct>=70?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
+      const issueChips=total>0?carriedFromPrev.map(r=>{
+        const done=issueState(r)==='done'&&sprintNum(rowLastSprint(r))===curNum;
+        const k=r[keyH2]||'';
+        return `<span class="cr-chip" style="border-color:${done?'rgba(34,201,122,.4)':'rgba(245,166,35,.4)'};color:${done?'var(--green)':'var(--gold)'}" title="${(r[sumH2]||'').replace(/"/g,'&quot;')}">${done?'✅':'⏳'} ${k}</span>`;
+      }).join(''):'<span style="color:var(--muted);font-size:11px">none carried</span>';
+      resolveChartHtml+=`<tr>
+        <td style="font-weight:700;white-space:nowrap">S${prevNum} → S${curNum}</td>
+        <td style="text-align:center">${total}</td>
+        <td style="text-align:center;color:var(--green)">${res}</td>
+        <td style="text-align:center;color:${col};font-weight:700">${pct}%</td>
+        <td><div class="cr-chips">${issueChips}</div></td>
+      </tr>`;
+    }
+    resolveChartHtml+=`</tbody></table>`;
   }
   resolveChartHtml+=`</div>`;
 
-  // Status breakdown
-  const rows=allRows;
-  const countBy=(h)=>{const m={};rows.forEach(r=>{const v=(r[h]||'Other').split(',')[0].trim();m[v]=(m[v]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,6)};
-  const sh2=getFieldH(['Status']);
-  let statusHtml=`<div class="chart-card"><div class="cc-title">🚦 Issue Status Breakdown</div>`;
-  if(sh2){const mx=Math.max(...countBy(sh2).map(e=>e[1]),1);statusHtml+=countBy(sh2).map(([l,c])=>`<div class="mb-row"><span class="mb-lbl">${l}</span><div class="mb-track"><div class="mb-fill" style="width:${Math.round(c/mx*100)}%;background:${statusStyle(l).c}"></div></div><span class="mb-cnt">${c}</span></div>`).join('')}
-  statusHtml+=`</div>`;
-
-  document.getElementById('chartsRow').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px">${spChartHtml}${resolveChartHtml}${statusHtml}</div>`;
+  document.getElementById('chartsRow').innerHTML=`<div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:18px">${spChartHtml}${resolveChartHtml}</div>`;
 }
 
 // ═══ SIDEBAR SPRINT PICKER ═══
@@ -1463,9 +1558,6 @@ function buildSprintDetail(){
     </div>
   </div>`:'';
 
-  // Burndown
-  const burndownSVG=buildBurndown(rows,spTotal,sp);
-
   // Assignee breakdown
   const assigneeMap={};
   rows.forEach(r=>{
@@ -1531,98 +1623,25 @@ function buildSprintDetail(){
     ${spBar}
     <div class="sd-cols">
       <div class="sd-chart">
-        <div class="cc-title">📉 Burndown (simulated)</div>
-        ${burndownSVG}
-      </div>
-      <div class="sd-chart">
         <div class="cc-title">👤 Completion by Assignee</div>
         ${assigneeHtml||'<div style="color:var(--muted);font-size:12px">No data</div>'}
       </div>
-    </div>
-    <div class="sd-cols">
       <div class="sd-chart">
         <div class="cc-title">🔄 Carried-Over Issues (${carriedRows.length})</div>
         ${carryHtml}
       </div>
-      <div class="sd-chart">
+    </div>
+    <div class="sd-cols">
+      <div class="sd-chart" style="grid-column:1 / -1">
         <div class="cc-title">📋 Issues This Sprint</div>
         ${issueGroup(doneRows,'✅ Done','var(--green)')}
         ${issueGroup(inflightRows,'🔵 In flight','var(--blue-lt)')}
         ${issueGroup(removedRows,'⚠️ Removed / needs review','var(--red)')}
       </div>
     </div>
-    <div class="ai-summary" id="ai_${n}">
-      <h4>✨ AI Summary</h4>
-      <div class="ai-loading">Enter your API key in the sidebar and click "Generate AI Summary".</div>
-    </div>
   `;
 }
 
-
-// ═══ BURNDOWN ═══
-function buildBurndown(rows,spTotal,sp){
-  const days=14;
-  const w=260,h=90,pad=28;
-  const sh=getFieldH(['Status']);
-  const spE=getFieldH(['Custom field (Story point estimate)']);
-  const doneRows=rows.filter(r=>isDoneStatus(r[sh]||''));
-  const doneSP=spE?doneRows.reduce((s,r)=>s+(parseFloat(r[spE])||0),0):0;
-  const ideal=[];for(let d=0;d<=days;d++)ideal.push(spTotal*(1-d/days));
-  const actual=[];
-  for(let d=0;d<=days;d++){
-    if(d<4)actual.push(spTotal);
-    else{const prog=Math.min(1,(d-4)/(days-4));actual.push(Math.max(0,spTotal-doneSP*prog*prog))}
-  }
-  const maxVal=Math.max(spTotal,1);
-  const scale=v=>h-pad-(v/maxVal)*(h-pad*1.4);
-  const sx=d=>pad+(d/days)*(w-pad*1.3);
-  const idealPath=ideal.map((v,d)=>`${d===0?'M':'L'}${sx(d).toFixed(1)},${scale(v).toFixed(1)}`).join(' ');
-  const actualPath=actual.map((v,d)=>`${d===0?'M':'L'}${sx(d).toFixed(1)},${scale(v).toFixed(1)}`).join(' ');
-  const remaining=Math.round(actual[actual.length-1]);
-  return`<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:90px">
-    <line x1="${pad}" y1="${h-pad}" x2="${w-pad*.5}" y2="${h-pad}" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
-    <line x1="${pad}" y1="${pad*.4}" x2="${pad}" y2="${h-pad}" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
-    <path d="${idealPath}" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="1.5" stroke-dasharray="4,3"/>
-    <path d="${actualPath}" fill="none" stroke="var(--teal)" stroke-width="2"/>
-    <text x="${pad+2}" y="${h-pad+11}" font-size="9" fill="rgba(255,255,255,.3)">Day 1</text>
-    <text x="${w-pad*.5-22}" y="${h-pad+11}" font-size="9" fill="rgba(255,255,255,.3)">Day ${days}</text>
-    <text x="${pad-2}" y="${pad*.5}" font-size="9" fill="rgba(255,255,255,.3)" text-anchor="end">${spTotal}sp</text>
-    <text x="${w-18}" y="${scale(remaining)+4}" font-size="9" fill="var(--teal)" font-weight="bold">${remaining}sp</text>
-  </svg>
-  <div style="display:flex;gap:12px;font-size:10px;margin-top:3px">
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:1px;border-top:2px dashed rgba(255,255,255,.3);display:inline-block"></span>Ideal</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:2px;background:var(--teal);display:inline-block;border-radius:1px"></span>Actual</span>
-  </div>`;
-}
-
-// ═══ AI SUMMARY ═══
-async function generateAISummary(){
-  const apiKey=(document.getElementById('apiKeyInput')?.value||'').trim();
-  const sp=activeSprintDetail;
-  const n=sp?sprintNum(sp):0;
-  const el=document.getElementById('ai_'+n);
-  if(!el){showToast('Select a sprint first','err');return;}
-  if(!apiKey){
-    el.innerHTML=`<h4>✨ AI Summary</h4><p style="color:var(--muted)">Paste your Anthropic API key in the sidebar, then click Generate AI Summary.<br><a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--teal)">Get a key at console.anthropic.com →</a></p>`;
-    return;
-  }
-  el.innerHTML=`<h4>✨ AI Summary</h4><div class="ai-loading">⏳ Generating summary…</div>`;
-  const sumH=getFieldH(['Summary']),epicH=getFieldH(['Custom field (Epic Name)']),tyH=getFieldH(['Issue Type']),sh=getFieldH(['Status']);
-  const m=sprintMetrics(sp);
-  const rows=m.committed;
-  const done=m.doneCount;
-  const carried=m.carriedInCount;
-  const removed=m.removedCount;
-  const issues=rows.slice(0,20).map(r=>`[${r[tyH]||'Issue'}] ${r[sumH]||''} (Epic: ${r[epicH]||'?'}, Status: ${r[sh]||'?'})`).join('\n');
-  const prompt=`You are a senior engineering project manager summarising a Jira sprint for stakeholders. Sprint: ${sp}. Stats: ${rows.length} issues committed, ${done} done, ${carried} carried in from a previous sprint, ${m.carriedOutCount} carried out to a later sprint, ${removed} removed/stalled (committed but no longer in flight and not done). Sample issues:\n${issues}\n\nWrite a concise 3-4 sentence executive summary covering: what was achieved, any notable blockers or risks, and what the carryover pattern suggests about team capacity. Be specific and constructive. No bullet points.`;
-  try{
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:prompt}]})});
-    const data=await resp.json();
-    if(!resp.ok){el.innerHTML=`<h4>✨ AI Summary</h4><p style="color:var(--red)">⚠️ ${resp.status===401?'Invalid API key.':data?.error?.message||'API error'}</p>`;return;}
-    const txt=data.content?.find(b=>b.type==='text')?.text||'Could not generate summary.';
-    el.innerHTML=`<h4>✨ AI Summary — Sprint ${n}</h4><p>${txt}</p>`;
-  }catch(e){el.innerHTML=`<h4>✨ AI Summary</h4><p style="color:var(--red)">⚠️ ${e.message}</p>`}
-}
 
 // ═══ VELOCITY TAB ═══
 function buildVelocity(){
@@ -1943,9 +1962,10 @@ function renderTable(){
 
   // Footer totals
   const spH2=getFieldH(['Custom field (Story point estimate)']);
-  const doneCount=sh?filteredRows.filter(r=>/done/i.test(r[sh])).length:0;
+  const keyH2=getFieldH(['Issue key']),sumH2=getFieldH(['Summary']);
+  const doneCount=sh?filteredRows.filter(r=>isDoneStatus(r[sh])).length:0;
   const totalSP=spH2?filteredRows.reduce((s,r)=>s+(parseFloat(r[spH2])||0),0):0;
-  const carriedCount=cyH?filteredRows.filter(r=>r[cyH]).length:0;
+  const carriedCount=filteredRows.filter(r=>{const k=(sumH2&&r[sumH2])||(keyH2&&r[keyH2]);return (carryCounts[k]||0)>=1;}).length;
   const blockedCount=sh?filteredRows.filter(r=>/blocked/i.test(r[sh])).length:0;
   document.getElementById('tblFooter').innerHTML=`
     <div class="tbl-footer-stat">Total: <strong>${filteredRows.length}</strong></div>
@@ -1971,7 +1991,15 @@ function sortBy(c){if(sortCol===c)sortDir*=-1;else{sortCol=c;sortDir=1}renderTab
 function renderCell(h,v,hs,row,idx){
   const[keyH,sh,ph,spE,ah,th,ddH,cyH,sumH]=hs;
   if(!v)return'<span style="color:var(--muted);font-size:11px">—</span>';
-  if(h===keyH)return`<span class="key">${v}</span>`;
+  if(h===keyH){
+    const k=row[sumH]||row[keyH];
+    const cc=carryCounts[k]||0;
+    let badge='';
+    if(cc>=3)badge=` <span class="attn-badge attn-danger" title="Carried across ${cc+1} sprints">🚨 ×${cc}</span>`;
+    else if(cc===2)badge=` <span class="attn-badge attn-warn" title="Carried across ${cc+1} sprints">⚠️ ×${cc}</span>`;
+    else if(cc===1)badge=` <span class="carry-flag" title="Carried over once">🔄 ×1</span>`;
+    return`<span class="key">${v}</span>${badge}`;
+  }
   if(h===sh){const s=statusStyle(v);return`<span class="status-pill" style="background:${s.bg};color:${s.c}">${v}</span>`}
   if(h===ph){const p=priStyle(v);return`<span class="pri-badge"><span class="pdot" style="background:${p.c}"></span><span style="color:${p.c}">${v}</span></span>`}
   if(h===spE&&v)return`<span class="sp-badge">${v}</span>`;
@@ -1979,13 +2007,7 @@ function renderCell(h,v,hs,row,idx){
   if(h===th&&v){const c=typeCol(v);return`<span class="type-chip"><span class="dot" style="background:${c}"></span>${v}</span>`}
   if(h===ddH&&v){const d=new Date(v),diff=(d-new Date())/86400000;const cls='date-c'+(isNaN(diff)?'':(diff<0?' ov':diff<3?' soon':''));return`<span class="${cls}">${v}</span>`}
   if(h===cyH&&v){
-    // Also show attention badge based on carry count
-    const k=row[sumH]||row[keyH];
-    const cc=carryCounts[k]||0;
-    let badge='';
-    if(cc>=3)badge=`<span class="attn-badge attn-danger">🚨 Bottleneck ×${cc}</span>`;
-    else if(cc>=2)badge=`<span class="attn-badge attn-warn">⚠️ Attention ×${cc}</span>`;
-    return`<span class="carry-flag">🔄 from ${v}</span> ${badge}`;
+    return`<span class="carry-flag">🔄 from ${v}</span>`;
   }
   if(/date|created|updated|resolved/i.test(h)){
     // Created: show age + unplanned badge
@@ -2020,8 +2042,10 @@ function openModal(idx){
 
   const k=row[sumH]||row[keyH];const cc=carryCounts[k]||0;
   let carryHtml='';
-  if(cyH&&row[cyH]){
-    carryHtml=`<div class="carry-info-box"><h4>🔄 This issue was carried over</h4><p>Originally planned for <strong>${row[osH]||'an earlier sprint'}</strong>. Moved to <strong>Sprint ${sprintNum(row[spH]||'')}</strong>.</p></div>`;
+  const chain=rowSprints(row);
+  if(chain.length>1){
+    const chainStr=chain.map(s=>'Sprint '+sprintNum(s)).join(' → ');
+    carryHtml=`<div class="carry-info-box"><h4>🔄 This issue was carried over</h4><p>Committed in <strong>Sprint ${sprintNum(chain[0])}</strong>, carried through: <strong>${chainStr}</strong>. ${issueState(row)==='done'?'Completed in Sprint '+sprintNum(rowLastSprint(row))+'.':issueState(row)==='removed'?'No longer in the current sprint and not Done — needs review.':'Still in flight in Sprint '+sprintNum(rowLastSprint(row))+'.'}</p></div>`;
   }
   let attnHtml='';
   if(cc>=2){
