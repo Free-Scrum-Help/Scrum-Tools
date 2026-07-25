@@ -1081,11 +1081,13 @@ function parseCSV(text,fname){
   if(cur||cells.length){cells.push(cur.trim());if(cells.some(c=>c!==''))rows.push(cells)}
   if(rows.length<2){showToast('❌ Invalid CSV','err');return}
   const rawHeaders=rows[0];
-  // De-duplicate header NAMES for object keys, but remember which raw columns
-  // share a name (Jira repeats "Sprint"/"Custom field (Sprint)" for carried items).
+  // De-duplicate header NAMES for the UI (Jira repeats "Sprint" once per sprint an issue
+  // touched, and can repeat others too). The repeated columns are still read in full via
+  // sprintColIdxs below — this only stops the same field appearing many times in the
+  // field selector, the column list and the issue detail panel.
   headers=[]; const seen={}; sprintColIdxs=[];
   rawHeaders.forEach((h,i)=>{
-    headers.push(h); // keep original order; lookups use first match
+    if(!seen[h]){ seen[h]=1; headers.push(h); }
     if(isSprintHeader(h)) sprintColIdxs.push(i);
   });
   allRows=rows.slice(1).map(r=>{
@@ -1957,13 +1959,13 @@ function buildVelocity(){
     tbl+=`<tr>
       <td><strong>Sprint ${d.n}</strong></td>
       <td style="color:var(--muted);font-size:11px">${d.dateStr}</td>
-      <td>${d.total}</td>
-      <td style="color:var(--green);font-weight:700">${d.done}</td>
-      <td><span style="color:${fillCol};font-weight:700">${d.pct}%</span></td>
-      <td>${d.spCommit}</td>
-      <td style="color:var(--green);font-weight:700">${d.spDone}</td>
-      <td style="color:var(--gold)">${d.spCarry}</td>
-      <td style="color:var(--gold)">${d.carried}</td>
+      <td class="clickable" title="Click to list" onclick="showListFor(${d.idx},'committed')">${d.total}</td>
+      <td class="clickable" title="Click to list" style="color:var(--green);font-weight:700" onclick="showListFor(${d.idx},'done')">${d.done}</td>
+      <td class="clickable" title="Click to list the completed issues" onclick="showListFor(${d.idx},'done')"><span style="color:${fillCol};font-weight:700">${d.pct}%</span></td>
+      <td class="clickable" title="Click to list" onclick="showListFor(${d.idx},'committed')">${Math.round(d.spCommit)}</td>
+      <td class="clickable" title="Click to list" style="color:var(--green);font-weight:700" onclick="showListFor(${d.idx},'done')">${Math.round(d.spDone)}</td>
+      <td class="${d.spCarry?'clickable':''}" title="Click to list" style="color:var(--gold)" ${d.spCarry?`onclick="showListFor(${d.idx},'carriedOut')"`:''}>${Math.round(d.spCarry)}</td>
+      <td class="${d.carried?'clickable':''}" title="Click to list" style="color:var(--gold)" ${d.carried?`onclick="showListFor(${d.idx},'carriedIn')"`:''}>${d.carried}</td>
       <td class="${d.dropped?'clickable':''}" style="color:${d.dropped?'var(--red)':'var(--muted)'};font-weight:${d.dropped?'700':'400'}" ${d.dropped?`onclick="showListFor(${d.idx},'dropped')" title="Click to list"`:''}>${d.dropped||'—'}</td>
       <td class="${tc}" style="font-size:16px">${trend}</td>
     </tr>`;
@@ -2390,7 +2392,18 @@ function openModal(idx){
   document.getElementById('mCarryInfo').innerHTML=carryHtml;
   document.getElementById('mAttnInfo').innerHTML=attnHtml;
   let html='';
-  headers.forEach(h=>{const v=row[h];if(!v)return;const m=fieldMeta[h];html+=`<div class="df${v.length>100?' full':''}"><div class="df-lbl">${m?.i||''} ${m?.name||h}</div><div class="df-val">${v.replace(/\n/g,'<br>')}</div></div>`});
+  const chainStr=chain.map(s=>'Sprint '+sprintNum(s)).join(' → ');
+  headers.forEach(h=>{
+    // The Sprint column is repeated in the export — show the whole chain once,
+    // not the first value repeated.
+    if(isSprintHeader(h)){
+      if(!chain.length) return;
+      html+=`<div class="df${chain.length>3?' full':''}"><div class="df-lbl">📌 Sprint${chain.length>1?'s ('+chain.length+')':''}</div><div class="df-val">${chainStr}</div></div>`;
+      return;
+    }
+    const v=row[h];if(!v)return;const m=fieldMeta[h];
+    html+=`<div class="df${v.length>100?' full':''}"><div class="df-lbl">${m?.i||''} ${m?.name||h}</div><div class="df-val">${v.replace(/\n/g,'<br>')}</div></div>`;
+  });
   document.getElementById('mBody').innerHTML=html;
   document.getElementById('modalOv').classList.add('open');
 }
