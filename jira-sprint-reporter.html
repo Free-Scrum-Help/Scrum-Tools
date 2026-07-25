@@ -282,6 +282,35 @@ td{padding:9px 12px;vertical-align:middle;max-width:250px}
 @keyframes tIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* ── Issue list popup ── */
+.il-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.il-tbl th{position:sticky;top:0;background:var(--navy-card);padding:8px 12px;text-align:left;font-size:10px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);border-bottom:1px solid var(--border)}
+.il-tbl td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.il-tbl tr:last-child td{border-bottom:none}
+.il-tbl tbody tr{cursor:pointer;transition:background var(--tr)}
+.il-tbl tbody tr:hover{background:rgba(255,255,255,.04)}
+.il-sum{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.il-chain{font-size:10px;color:var(--muted);font-family:monospace;white-space:nowrap}
+.il-empty{padding:34px;text-align:center;color:var(--muted);font-size:13px}
+.il-foot{padding:9px 14px;background:var(--navy-card);border-top:1px solid var(--border);
+  font-size:11px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+
+/* clickable numbers / segments */
+.clickable{cursor:pointer;transition:var(--tr)}
+.clickable:hover{filter:brightness(1.25)}
+.sc-row.clickable:hover{background:rgba(255,255,255,.05);border-radius:4px}
+.sd-stat.clickable:hover{border-color:var(--teal)}
+.sp-seg.clickable:hover{outline:1px solid rgba(255,255,255,.5);outline-offset:-1px}
+.hint-click{font-size:9px;color:var(--muted);opacity:.7}
+
+/* velocity window control */
+.vel-window{display:flex;align-items:center;gap:7px;margin-bottom:14px;flex-wrap:wrap}
+.vw-btn{padding:4px 12px;border-radius:16px;border:1px solid var(--border);background:var(--navy-card);
+  color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:var(--tr)}
+.vw-btn:hover{border-color:var(--teal);color:var(--teal)}
+.vw-btn.on{background:var(--teal-dim);border-color:var(--teal);color:var(--teal)}
+
 /* shared URL bar */
 .url-bar{display:flex;gap:7px;align-items:center;background:var(--navy-card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-top:8px}
 .url-bar input{flex:1;background:transparent;border:none;color:var(--text);font-size:11px;font-family:monospace;outline:none}
@@ -569,6 +598,7 @@ td{padding:9px 12px;vertical-align:middle;max-width:250px}
 <!-- ═══ TAB 4: VELOCITY ═══ -->
 <div class="panel" id="panel-velocity">
   <div class="btn-row"><h2>📈 Velocity & Performance</h2></div>
+  <div class="vel-window" id="velWindowCtrl"></div>
   <div class="stats-bar" id="velStats"></div>
 
   <div class="vel-section">
@@ -587,7 +617,8 @@ td{padding:9px 12px;vertical-align:middle;max-width:250px}
         <div style="display:flex;gap:10px;margin-top:8px;font-size:11px">
           <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(12,125,224,.4);border-radius:2px;display:inline-block"></span>Committed</span>
           <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--green);border-radius:2px;display:inline-block"></span>Done</span>
-          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--gold);border-radius:2px;display:inline-block"></span>Carryover SP</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--gold);border-radius:2px;display:inline-block"></span>Carried out SP</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(232,68,90,.7);border-radius:2px;display:inline-block"></span>Dropped SP</span>
         </div>
       </div>
       <div class="chart-card">
@@ -611,6 +642,9 @@ td{padding:9px 12px;vertical-align:middle;max-width:250px}
       </div>
     </div>
   </div>
+
+  <!-- Extra velocity sections render into this fixed slot (replaced, never appended) -->
+  <div id="velExtras"></div>
 </div>
 
 <!-- ═══ TAB 5: CARRYOVER ═══ -->
@@ -633,6 +667,22 @@ td{padding:9px 12px;vertical-align:middle;max-width:250px}
     <div class="mbody"><div id="mCarryInfo"></div><div id="mAttnInfo"></div><div class="dgrid" id="mBody"></div></div>
   </div>
 </div>
+<!-- Issue list popup (shared by sprint cards, sprint detail and velocity charts) -->
+<div class="modal-ov" id="listOv" onclick="if(event.target===this)closeList()">
+  <div class="modal" style="max-width:900px">
+    <div class="mhdr">
+      <div>
+        <h2 id="listTitle">Issues</h2>
+        <div id="listSub" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
+      </div>
+      <button class="mclose" onclick="closeList()">✕</button>
+    </div>
+    <div class="mbody" style="padding:0">
+      <div id="listBody"></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(13,27,42,.88);backdrop-filter:blur(3px);z-index:9998;align-items:center;justify-content:center">
@@ -844,9 +894,39 @@ function rowCarryCount(r){return Math.max(0,rowSprints(r).length-1);}
 function isDoneStatus(st){return /^(done|closed|resolved)$/i.test((st||'').trim());}
 
 // The latest sprint number present in the ACTIVE track (or whole dataset if none)
+// Remembers the answer AND which batch of issues it was counted from.
+// allRows is replaced wholesale on every load/reset, so a new file automatically
+// makes this stale check fail and the answer is recounted. No manual clearing needed.
+let _lsCache=null,_lsRows=null,_lsTrack;
 function latestSprintNum(){
+  if(_lsRows===allRows&&_lsTrack===activeTrack&&_lsCache!==null) return _lsCache;
   let mx=0; allRows.forEach(r=>rowSprints(r).forEach(s=>{const n=sprintNum(s);if(n>mx)mx=n;}));
-  return mx;
+  _lsCache=mx;_lsRows=allRows;_lsTrack=activeTrack;return mx;
+}
+
+// Ordered list of sprint NUMBERS in the active track. Cached the same self-invalidating
+// way as latestSprintNum — recomputed automatically when the data or track changes.
+let _ordCache=null,_ordRows=null,_ordTrack;
+function sprintNumsOrdered(){
+  if(_ordRows===allRows&&_ordTrack===activeTrack&&_ordCache) return _ordCache;
+  _ordCache=detectSprints().map(sprintNum); _ordRows=allRows; _ordTrack=activeTrack;
+  return _ordCache;
+}
+
+// Did this issue DROP OUT after sprint number n?
+// A drop = it was in sprint n, the next sprint that exists in the data is NOT in its
+// chain, and it wasn't completed in n. One issue can drop more than once: a chain of
+// 1 → 3 → 5 (done in 5) dropped after S1 and again after S3.
+// Sitting in the newest sprint is never a drop — that's just work in progress.
+function droppedAfter(r,n){
+  const chain=rowSprints(r).map(sprintNum);
+  if(!chain.includes(n)) return false;
+  const ord=sprintNumsOrdered(), next=ord[ord.indexOf(n)+1];
+  if(next===undefined) return false;                       // newest sprint -> in flight
+  if(chain.includes(next)) return false;                   // carried forward
+  const stH=getFieldH(['Status']);
+  if(isDoneStatus(stH?r[stH]:'') && n===chain[chain.length-1]) return false; // finished here
+  return true;
 }
 
 // Classify an issue's overall state: 'done' | 'removed' | 'inflight'
@@ -929,7 +1009,7 @@ function resetData(){
   const trk=document.getElementById('trackBar'); if(trk) trk.style.display='none';
   const trkb=document.getElementById('trackBtns'); if(trkb) trkb.innerHTML='';
   // wipe rendered panels
-  ['statsBar','sprintCards','chartsRow','sdTabBar','carryStats','carryTimeline','velStats'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  ['statsBar','sprintCards','chartsRow','sdTabBar','carryStats','carryTimeline','velStats','velExtras'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
   const sd=document.getElementById('sprintDetailContent'); if(sd) sd.innerHTML='<div class="empty"><div class="ei">📊</div><h3>No data loaded</h3><p style="color:var(--muted);font-size:12px">Upload a Jira CSV to begin.</p></div>';
   const tb=document.getElementById('tBody'); if(tb) tb.innerHTML='<tr><td><div class="empty"><div class="ei">🗂</div><h3>No data loaded</h3></div></td></tr>';
   const th=document.getElementById('tHead'); if(th) th.innerHTML='';
@@ -1086,11 +1166,12 @@ function sprintMetrics(sprint){
   const n=sprintNum(sprint);
   const committed=rowsCommittedTo(sprint);
   const sp=r=>rowPoints(r);
-  let done=[],removed=[],inflight=[],carriedIn=[],carriedOut=[];
+  let done=[],removed=[],inflight=[],carriedIn=[],carriedOut=[],dropped=[];
   committed.forEach(r=>{
     const list=rowSprints(r), last=sprintNum(rowLastSprint(r));
     if(list.some(s=>sprintNum(s)<n)) carriedIn.push(r);
     if(list.some(s=>sprintNum(s)>n)) carriedOut.push(r);
+    if(droppedAfter(r,n)) dropped.push(r);      // fell out at the END of this sprint
     const state=issueState(r);
     if(state==='done' && last===n) done.push(r);
     else if(state==='done' && last!==n) {/* done in a later sprint; just committed here */}
@@ -1104,6 +1185,7 @@ function sprintMetrics(sprint){
     committed, total,
     done, doneCount:done.length,
     removed, removedCount:removed.length,
+    dropped, droppedCount:dropped.length,
     inflight, inflightCount:inflight.length,
     carriedIn, carriedInCount:carriedIn.length,
     carriedOut, carriedOutCount:carriedOut.length,
@@ -1111,6 +1193,7 @@ function sprintMetrics(sprint){
     spCommitted:committed.reduce((s,r)=>s+sp(r),0),
     spDone:done.reduce((s,r)=>s+sp(r),0),
     spCarriedOut:carriedOut.reduce((s,r)=>s+sp(r),0),
+    spDropped:dropped.reduce((s,r)=>s+sp(r),0),
   };
 }
 
@@ -1508,50 +1591,55 @@ function buildSprintCards(){
   if(!sprints.length){document.getElementById('sprintCards').innerHTML='';return}
   const latest=latestSprintNum();
   let html='';
-  sprints.forEach(sp=>{
+  sprints.forEach((sp,si)=>{
     const m=sprintMetrics(sp);
     const isLast=m.n===latest;
-    const sp_=r=>rowPoints(r);
     const spTotal=m.spCommitted;
     const spDone=m.spDone;
     const spCarry=m.spCarriedOut;
+    const spDrop=m.spDropped;
     const pct=m.pct;
     const dateMatch=sp.match(/\((.*?)\)/);
     const dateStr=dateMatch?dateMatch[1]:'';
     const fillCol=pct>=70?'var(--green)':pct>=50?'var(--gold)':'var(--red)';
     const carryPct=spTotal>0?Math.round(spCarry/spTotal*100):0;
     const unplanned=m.committed.filter(r=>isUnplanned(r,sp)).length;
-    html+=`<div class="sprint-card ${isLast?'current':''}" style="border-top-color:${fillCol}" onclick="openSprintDetail('${sp.replace(/'/g,"\'")}')">
+    const stop='event.stopPropagation();';
+    html+=`<div class="sprint-card ${isLast?'current':''}" style="border-top-color:${fillCol}" onclick="openSprintDetail_byIdx(${si})">
       <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${fillCol}"></div>
       <div class="sc-name">Sprint ${m.n} ${isLast?'🔴 Active':'✅ Done'}</div>
       ${dateStr?`<div style="font-size:10px;color:var(--muted);margin-bottom:6px">${dateStr}</div>`:''}
       <div class="sc-pct" style="color:${fillCol}">${pct}%</div>
       <div class="sc-sub">Issue completion rate</div>
       <div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${fillCol}"></div></div>
-      <div class="sc-row"><span class="lbl">Committed</span><span class="val">${m.total}</span></div>
-      <div class="sc-row"><span class="lbl">✅ Done</span><span class="val" style="color:var(--green)">${m.doneCount}</span></div>
-      <div class="sc-row"><span class="lbl">🔵 In flight</span><span class="val" style="color:var(--blue-lt)">${m.inflightCount}</span></div>
-      ${m.removedCount?`<div class="sc-row"><span class="lbl">⚠️ Removed</span><span class="val" style="color:var(--gold)">${m.removedCount}</span></div>`:''}
+      <div class="sc-row clickable" title="Click to list these issues" onclick="${stop}showListFor(${si},'committed')"><span class="lbl">Committed</span><span class="val">${m.total}</span></div>
+      <div class="sc-row clickable" title="Click to list these issues" onclick="${stop}showListFor(${si},'done')"><span class="lbl">✅ Done</span><span class="val" style="color:var(--green)">${m.doneCount}</span></div>
+      ${m.inflightCount?`<div class="sc-row clickable" title="Click to list these issues" onclick="${stop}showListFor(${si},'inflight')"><span class="lbl">🔵 In flight</span><span class="val" style="color:var(--blue-lt)">${m.inflightCount}</span></div>`:''}
+      ${m.droppedCount?`<div class="sc-row clickable" title="Issues that did not continue into the next sprint" onclick="${stop}showListFor(${si},'dropped')"><span class="lbl">⚠️ Dropped</span><span class="val" style="color:var(--red)">${m.droppedCount}</span></div>`:''}
       ${spTotal>0?`
       <div class="sp-stack-wrap">
         <div style="font-size:10px;color:var(--muted);margin-bottom:4px">SP: ${Math.round(spDone)} done / ${Math.round(spTotal)} committed (${carryPct}% carried out)</div>
         <div class="sp-stack">
-          <div class="sp-seg" style="width:${spTotal>0?Math.round(spDone/spTotal*100):0}%;background:var(--green)" title="${Math.round(spDone)} SP done"></div>
-          <div class="sp-seg" style="width:${spTotal>0?Math.round(spCarry/spTotal*100):0}%;background:rgba(245,166,35,.6)" title="${Math.round(spCarry)} SP carried out"></div>
+          <div class="sp-seg clickable" style="width:${Math.round(spDone/spTotal*100)}%;background:var(--green)" title="${Math.round(spDone)} SP done — click to list" onclick="${stop}showListFor(${si},'done')"></div>
+          <div class="sp-seg clickable" style="width:${Math.round(spCarry/spTotal*100)}%;background:rgba(245,166,35,.6)" title="${Math.round(spCarry)} SP carried out — click to list" onclick="${stop}showListFor(${si},'carriedOut')"></div>
+          ${spDrop>0?`<div class="sp-seg clickable" style="width:${Math.round(spDrop/spTotal*100)}%;background:rgba(232,68,90,.65)" title="${Math.round(spDrop)} SP dropped — click to list" onclick="${stop}showListFor(${si},'dropped')"></div>`:''}
         </div>
         <div class="sp-legend">
           <div class="sp-leg-item"><div class="sp-leg-dot" style="background:var(--green)"></div>SP done</div>
           <div class="sp-leg-item"><div class="sp-leg-dot" style="background:rgba(245,166,35,.6)"></div>SP carried out</div>
+          ${spDrop>0?`<div class="sp-leg-item"><div class="sp-leg-dot" style="background:rgba(232,68,90,.65)"></div>SP dropped</div>`:''}
         </div>
       </div>`:''}
-      ${m.carriedInCount>0?`<div class="carry-badge">🔄 ${m.carriedInCount} carried in</div>`:''}
-      ${m.carriedOutCount>0?`<div class="carry-badge" style="background:rgba(62,159,245,.12);border-color:rgba(62,159,245,.3);color:var(--blue-lt)">↪ ${m.carriedOutCount} carried out</div>`:''}
+      ${m.carriedInCount>0?`<div class="carry-badge clickable" onclick="${stop}showListFor(${si},'carriedIn')">🔄 ${m.carriedInCount} carried in</div>`:''}
+      ${m.carriedOutCount>0?`<div class="carry-badge clickable" style="background:rgba(62,159,245,.12);border-color:rgba(62,159,245,.3);color:var(--blue-lt)" onclick="${stop}showListFor(${si},'carriedOut')">↪ ${m.carriedOutCount} carried out</div>`:''}
       ${unplanned>0?`<div class="carry-badge" style="background:rgba(155,89,182,.15);border-color:rgba(155,89,182,.3);color:var(--purple)">⚠️ ${unplanned} unplanned added</div>`:''}
-      <div style="margin-top:8px;font-size:10px;color:var(--teal)">Click for detail →</div>
+      <div style="margin-top:8px;font-size:10px;color:var(--teal)">Click card for detail → <span class="hint-click">(or any number above)</span></div>
     </div>`;
   });
   document.getElementById('sprintCards').innerHTML=html;
 }
+// index-based opener so sprint names never need quote-escaping in an onclick
+function openSprintDetail_byIdx(i){const sp=detectSprints()[i];if(sp)openSprintDetail(sp);}
 
 // ═══ OVERVIEW CHARTS (Tab 1) ═══
 function buildOverviewCharts(){
@@ -1693,19 +1781,22 @@ function buildSprintDetail(){
   const dateMatch=sp.match(/\((.*?)\)/);
   const dateStr=dateMatch?dateMatch[1]:'';
 
-  // Stat cards row
+  // Stat cards row (each opens the matching issue list)
+  const si=sprints.indexOf(sp);
+  const droppedRows=m.dropped;
   const statRow=`<div class="sd-stat-row">
-    <div class="sd-stat"><div class="sd-stat-val" style="color:${fillCol}">${pct}%</div><div class="sd-stat-lbl">Completion</div></div>
-    <div class="sd-stat"><div class="sd-stat-val" style="color:var(--green)">${doneRows.length}/${total}</div><div class="sd-stat-lbl">Done / Committed</div></div>
-    <div class="sd-stat"><div class="sd-stat-val" style="color:var(--blue-lt)">${Math.round(spDone)}/${Math.round(spTotal)}</div><div class="sd-stat-lbl">Story Points</div></div>
-    <div class="sd-stat"><div class="sd-stat-val" style="color:${carriedRows.length?'var(--gold)':'var(--green)'}">${carriedRows.length}</div><div class="sd-stat-lbl">Carried In</div></div>
-    <div class="sd-stat"><div class="sd-stat-val" style="color:${carriedOutRows.length?'var(--blue-lt)':'var(--green)'}">${carriedOutRows.length}</div><div class="sd-stat-lbl">Carried Out</div></div>
-    ${inflightRows.length>0?`<div class="sd-stat"><div class="sd-stat-val" style="color:var(--blue-lt)">${inflightRows.length}</div><div class="sd-stat-lbl">In flight</div></div>`:''}
-    ${removedRows.length>0?`<div class="sd-stat"><div class="sd-stat-val" style="color:var(--red)">${removedRows.length}</div><div class="sd-stat-lbl">⚠️ Removed</div></div>`:''}
+    <div class="sd-stat clickable" title="All issues in this sprint" onclick="showListFor(${si},'committed')"><div class="sd-stat-val" style="color:${fillCol}">${pct}%</div><div class="sd-stat-lbl">Completion</div></div>
+    <div class="sd-stat clickable" title="Completed in this sprint" onclick="showListFor(${si},'done')"><div class="sd-stat-val" style="color:var(--green)">${doneRows.length}/${total}</div><div class="sd-stat-lbl">Done / Committed</div></div>
+    <div class="sd-stat clickable" title="All issues in this sprint" onclick="showListFor(${si},'committed')"><div class="sd-stat-val" style="color:var(--blue-lt)">${Math.round(spDone)}/${Math.round(spTotal)}</div><div class="sd-stat-lbl">Story Points</div></div>
+    <div class="sd-stat clickable" title="Also present in an earlier sprint" onclick="showListFor(${si},'carriedIn')"><div class="sd-stat-val" style="color:${carriedRows.length?'var(--gold)':'var(--green)'}">${carriedRows.length}</div><div class="sd-stat-lbl">Carried In</div></div>
+    <div class="sd-stat clickable" title="Also present in a later sprint" onclick="showListFor(${si},'carriedOut')"><div class="sd-stat-val" style="color:${carriedOutRows.length?'var(--blue-lt)':'var(--green)'}">${carriedOutRows.length}</div><div class="sd-stat-lbl">Carried Out</div></div>
+    ${inflightRows.length>0?`<div class="sd-stat clickable" onclick="showListFor(${si},'inflight')"><div class="sd-stat-val" style="color:var(--blue-lt)">${inflightRows.length}</div><div class="sd-stat-lbl">In flight</div></div>`:''}
+    ${droppedRows.length>0?`<div class="sd-stat clickable" title="Did not continue into the next sprint" onclick="showListFor(${si},'dropped')"><div class="sd-stat-val" style="color:var(--red)">${droppedRows.length}</div><div class="sd-stat-lbl">⚠️ Dropped</div></div>`:''}
     ${unplannedRows.length>0?`<div class="sd-stat"><div class="sd-stat-val" style="color:var(--purple)">${unplannedRows.length}</div><div class="sd-stat-lbl">⚠️ Unplanned</div></div>`:''}
   </div>
-  ${removedRows.length>0?`<div style="background:rgba(232,68,90,.08);border:1px solid rgba(232,68,90,.25);border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:12px;color:var(--text)">
-    ⚠️ <strong>${removedRows.length} issue${removedRows.length>1?'s':''} need review:</strong> committed to this sprint but no longer carried forward and not Done — likely removed or stalled. ${removedRows.map(r=>r[keyH]).filter(Boolean).join(', ')}
+  ${droppedRows.length>0?`<div style="background:rgba(232,68,90,.08);border:1px solid rgba(232,68,90,.25);border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:12px;color:var(--text)">
+    ⚠️ <strong>${droppedRows.length} issue${droppedRows.length>1?'s':''} dropped out after this sprint:</strong> they were not completed here and did not continue into the next sprint. ${droppedRows.map(r=>r[keyH]).filter(Boolean).slice(0,12).join(', ')}${droppedRows.length>12?' …':''}
+    <span class="clickable" style="color:var(--teal);font-weight:700" onclick="showListFor(${si},'dropped')"> — view all</span>
   </div>`:''}`;
 
   // SP breakdown bar (committed -> done / carried-out / remaining)
@@ -1714,7 +1805,8 @@ function buildSprintDetail(){
     <div style="font-size:11px;color:var(--muted);margin-bottom:5px">
       Story Points — <span style="color:var(--green)">${Math.round(spDone)} done</span> · 
       <span style="color:var(--gold)">${Math.round(spCarry)} carried out</span> · 
-      <span style="color:var(--red)">${Math.round(spOpen)} open</span>
+      <span style="color:var(--red)">${Math.round(m.spDropped)} dropped</span> · 
+      <span style="color:var(--muted)">${Math.round(spOpen)} open</span>
     </div>
     <div class="sp-stack" style="height:12px">
       <div class="sp-seg" style="width:${Math.round(spDone/spTotal*100)}%;background:var(--green)"></div>
@@ -1801,7 +1893,7 @@ function buildSprintDetail(){
         <div class="cc-title">📋 Issues This Sprint</div>
         ${issueGroup(doneRows,'✅ Done','var(--green)')}
         ${issueGroup(inflightRows,'🔵 In flight','var(--blue-lt)')}
-        ${issueGroup(removedRows,'⚠️ Removed / needs review','var(--red)')}
+        ${issueGroup(droppedRows,'⚠️ Dropped after this sprint','var(--red)')}
       </div>
     </div>
   `;
@@ -1809,17 +1901,36 @@ function buildSprintDetail(){
 
 
 // ═══ VELOCITY TAB ═══
+let velWindow=5;   // how many of the most recent sprints to chart
+function setVelWindow(n){ velWindow=n; buildVelocity(); }
 function buildVelocity(){
-  const sprints=detectSprints();
+  const allSprints=detectSprints();
   const sh=getFieldH(['Status']),spH=getSprintH(),spE=getSpH(),cyH=getFieldH(['Custom field (Carried Over)']),ahH=getFieldH(['Assignee']);
-  if(!sprints.length)return;
+  if(!allSprints.length)return;
 
-  const data=sprints.map(sp=>{
+  // Only chart the most recent N sprints (36 sprints is unreadable). "All" = 0.
+  const total=allSprints.length;
+  const win=(velWindow===0||velWindow>=total)?total:velWindow;
+  const sprints=allSprints.slice(-win);
+  const offset=allSprints.length-sprints.length;   // to map back to real sprint indexes
+
+  const ctrl=document.getElementById('velWindowCtrl');
+  if(ctrl){
+    const opts=[];
+    for(let n=5;n<total;n+=5) opts.push(n);
+    opts.push(0); // All
+    ctrl.innerHTML='<span style="font-size:11px;color:var(--muted);font-weight:700">Showing last</span>'+
+      (total<=5?'<span style="font-size:11px;color:var(--muted)">all '+total+' sprints</span>':
+      opts.map(n=>`<button class="vw-btn${(velWindow===n)?' on':''}" onclick="setVelWindow(${n})">${n===0?'All ('+total+')':n}</button>`).join('')+
+      `<span style="font-size:11px;color:var(--muted)">of ${total} sprints</span>`);
+  }
+
+  const data=sprints.map((sp,i)=>{
     const m=sprintMetrics(sp);
     const dateMatch=sp.match(/\((.*?)\)/);
-    return{sp,n:m.n,total:m.total,done:m.doneCount,pct:m.pct,
-      spCommit:m.spCommitted,spDone:m.spDone,spCarry:m.spCarriedOut,
-      carried:m.carriedInCount,dateStr:dateMatch?dateMatch[1]:''};
+    return{sp,idx:offset+i,n:m.n,total:m.total,done:m.doneCount,pct:m.pct,
+      spCommit:m.spCommitted,spDone:m.spDone,spCarry:m.spCarriedOut,spDrop:m.spDropped,
+      dropped:m.droppedCount,carried:m.carriedInCount,dateStr:dateMatch?dateMatch[1]:''};
   });
 
   const avg3=data.length>=3?Math.round(data.slice(-3).reduce((s,d)=>s+d.spDone,0)/3):null;
@@ -1837,7 +1948,7 @@ function buildVelocity(){
   `;
 
   // Performance table with sprint names
-  let tbl=`<tr><th>Sprint</th><th>Dates</th><th>Issues</th><th>Done</th><th>Completion</th><th>SP Commit</th><th>SP Done</th><th>SP Carryover</th><th>Carried In</th><th>Trend</th></tr>`;
+  let tbl=`<tr><th>Sprint</th><th>Dates</th><th>Issues</th><th>Done</th><th>Completion</th><th>SP Commit</th><th>SP Done</th><th>SP Carryover</th><th>Carried In</th><th>Dropped</th><th>Trend</th></tr>`;
   data.forEach((d,i)=>{
     const prev=i>0?data[i-1]:null;
     const trend=prev?(d.pct>prev.pct?'↑':d.pct<prev.pct?'↓':'→'):'-';
@@ -1853,6 +1964,7 @@ function buildVelocity(){
       <td style="color:var(--green);font-weight:700">${d.spDone}</td>
       <td style="color:var(--gold)">${d.spCarry}</td>
       <td style="color:var(--gold)">${d.carried}</td>
+      <td class="${d.dropped?'clickable':''}" style="color:${d.dropped?'var(--red)':'var(--muted)'};font-weight:${d.dropped?'700':'400'}" ${d.dropped?`onclick="showListFor(${d.idx},'dropped')" title="Click to list"`:''}>${d.dropped||'—'}</td>
       <td class="${tc}" style="font-size:16px">${trend}</td>
     </tr>`;
   });
@@ -1862,13 +1974,14 @@ function buildVelocity(){
   const maxSP=Math.max(...data.map(d=>d.spCommit),1);
   let velH='<div class="vel-bar-chart">';
   data.forEach(d=>{
-    const hC=Math.round(d.spCommit/maxSP*68),hD=Math.round(d.spDone/maxSP*68),hK=Math.round(d.spCarry/maxSP*68);
+    const h=v=>Math.max(v>0?3:0,Math.round(v/maxSP*68));
     velH+=`<div class="vel-col">
-      <div class="vel-sp-label" style="font-size:9px">${d.spDone}</div>
+      <div class="vel-sp-label" style="font-size:9px">${Math.round(d.spDone)}</div>
       <div class="vel-bars">
-        <div class="vel-bar" style="height:${hC}px;background:rgba(12,125,224,.4)" data-tip="S${d.n} Committed: ${d.spCommit} SP"></div>
-        <div class="vel-bar" style="height:${hD}px;background:var(--green)" data-tip="S${d.n} Done: ${d.spDone} SP"></div>
-        <div class="vel-bar" style="height:${hK}px;background:rgba(245,166,35,.7)" data-tip="S${d.n} Carryover: ${d.spCarry} SP"></div>
+        <div class="vel-bar clickable" style="height:${h(d.spCommit)}px;background:rgba(12,125,224,.4)" data-tip="S${d.n} Committed: ${Math.round(d.spCommit)} SP — click to list" onclick="showListFor(${d.idx},'committed')"></div>
+        <div class="vel-bar clickable" style="height:${h(d.spDone)}px;background:var(--green)" data-tip="S${d.n} Done: ${Math.round(d.spDone)} SP — click to list" onclick="showListFor(${d.idx},'done')"></div>
+        <div class="vel-bar clickable" style="height:${h(d.spCarry)}px;background:rgba(245,166,35,.7)" data-tip="S${d.n} Carried out: ${Math.round(d.spCarry)} SP — click to list" onclick="showListFor(${d.idx},'carriedOut')"></div>
+        <div class="vel-bar clickable" style="height:${h(d.spDrop)}px;background:rgba(232,68,90,.7)" data-tip="S${d.n} Dropped: ${Math.round(d.spDrop)} SP — click to list" onclick="showListFor(${d.idx},'dropped')"></div>
       </div>
       <div class="vel-sprint-label">S${d.n}</div>
     </div>`;
@@ -1903,7 +2016,7 @@ function buildVelocity(){
   let cHtml='';
   data.forEach((d,i)=>{
     const col=d.pct>=70?'var(--green)':d.pct>=50?'var(--gold)':'var(--red)';
-    cHtml+=`<div class="mb-row"><span class="mb-lbl">Sprint ${d.n}</span><div class="mb-track"><div class="mb-fill" style="width:${d.pct}%;background:${col}"></div></div><span class="mb-cnt" style="color:${col}">${d.pct}%</span></div>`;
+    cHtml+=`<div class="mb-row clickable" title="Click to list the completed issues" onclick="showListFor(${d.idx},'done')"><span class="mb-lbl">Sprint ${d.n}</span><div class="mb-track"><div class="mb-fill" style="width:${d.pct}%;background:${col}"></div></div><span class="mb-cnt" style="color:${col}">${d.pct}%</span></div>`;
   });
   document.getElementById('compChart').innerHTML=cHtml;
 
@@ -1917,31 +2030,31 @@ function buildVelocity(){
   document.getElementById('carryChart').innerHTML=data.map(d=>{
     const pct=Math.round(d.carried/mx4*100);
     const col=d.carried===0?'var(--green)':d.carried<=2?'var(--gold)':'var(--red)';
-    return`<div class="mb-row"><span class="mb-lbl">Sprint ${d.n}</span><div class="mb-track"><div class="mb-fill" style="width:${pct}%;background:${col}"></div></div><span class="mb-cnt">${d.carried}</span></div>`;
+    return`<div class="mb-row clickable" title="Click to list the carried-in issues" onclick="showListFor(${d.idx},'carriedIn')"><span class="mb-lbl">Sprint ${d.n}</span><div class="mb-track"><div class="mb-fill" style="width:${pct}%;background:${col}"></div></div><span class="mb-cnt">${d.carried}</span></div>`;
   }).join('');
 
-  // ── Per-assignee committed vs done per sprint ──
-  const velSection3 = document.querySelector('#panel-velocity .vel-section:last-of-type');
-  const wlDiv = document.createElement('div');
-  wlDiv.className = 'vel-section';
-  wlDiv.innerHTML = '<h3>👤 Workload Balance — Committed vs Completed per Assignee per Sprint</h3>' +
-    '<div class="chart-card"><div class="cc-title" style="margin-bottom:10px">SP committed vs completed, per person per sprint</div>' +
-    buildWorkloadTable(sprints,spH,sh,spE,ahH) + '</div>';
-  const velPanel = document.getElementById('panel-velocity');
-  if(velPanel) velPanel.appendChild(wlDiv);
-
-  // ── Bug vs Story split in velocity bars ──
-  const splitDiv = document.createElement('div');
-  splitDiv.className = 'vel-section';
-  const tyH2=getFieldH(['Issue Type']);
-  splitDiv.innerHTML = '<h3>🔷 Issue Type Mix per Sprint</h3>' +
-    '<div class="vel-charts">' +
-    '<div class="chart-card"><div class="cc-title">Story / Bug / Task split</div>' +
-    buildTypeSplitChart(sprints,spH,tyH2) + '</div>' +
-    '<div class="chart-card"><div class="cc-title">📐 Est. vs Actual Time (work ratio %)</div>' +
-    buildEstActualChart() + '</div>' +
-    '</div>';
-  if(velPanel) velPanel.appendChild(splitDiv);
+  // ── Extra sections: workload balance + issue type mix ──
+  // Written into a FIXED container that is replaced on each render.
+  // (These used to be appended to the panel, so every refresh stacked another copy.)
+  const extras=document.getElementById('velExtras');
+  if(extras){
+    const tyH2=getFieldH(['Issue Type']);
+    extras.innerHTML=
+      '<div class="vel-section">' +
+        '<h3>👤 Workload Balance — Committed vs Completed per Assignee per Sprint</h3>' +
+        '<div class="chart-card"><div class="cc-title" style="margin-bottom:10px">SP committed vs completed, per person per sprint</div>' +
+        buildWorkloadTable(sprints,spH,sh,spE,ahH) + '</div>' +
+      '</div>' +
+      '<div class="vel-section">' +
+        '<h3>🔷 Issue Type Mix per Sprint</h3>' +
+        '<div class="vel-charts">' +
+          '<div class="chart-card"><div class="cc-title">Story / Bug / Task split</div>' +
+          buildTypeSplitChart(sprints,spH,tyH2) + '</div>' +
+          '<div class="chart-card"><div class="cc-title">📐 Est. vs Actual Time (work ratio %)</div>' +
+          buildEstActualChart(sprints) + '</div>' +
+        '</div>' +
+      '</div>';
+  }
 }
 
 function buildWorkloadTable(sprints,spH,sh,spE,ahH){
@@ -1998,10 +2111,10 @@ function buildTypeSplitChart(sprints,spH,tyH){
   return html;
 }
 
-function buildEstActualChart(){
+function buildEstActualChart(sprintList){
   const oeH=getFieldH(['Original estimate']),tsH=getFieldH(['Time Spent']);
   const spH=getSprintH(),sh=getFieldH(['Status']);
-  const sprints=detectSprints();
+  const sprints=sprintList||detectSprints();
   if(!oeH||!tsH||!sprints.length) return '<div style="color:var(--muted);font-size:12px">No time tracking data in CSV</div>';
   let html='';
   sprints.forEach(sp=>{
@@ -2198,6 +2311,63 @@ function renderCell(h,v,hs,row,idx){
   return`<div class="cw" title="${v.replace(/"/g,'&quot;')}">${s}</div>`;
 }
 
+// ═══ ISSUE LIST POPUP ═══
+// Opened from sprint cards, sprint-detail stat cards and the velocity charts.
+// Keyed on the sprint's INDEX (not its name) so no quote-escaping is involved.
+const LIST_BUCKETS={
+  committed :{label:'Committed',                 desc:'every issue that was in this sprint'},
+  done      :{label:'Done',                      desc:'completed in this sprint'},
+  inflight  :{label:'In flight',                 desc:'not done, still in the newest sprint'},
+  dropped   :{label:'Dropped after this sprint', desc:'did not continue into the next sprint and was not completed here'},
+  carriedIn :{label:'Carried in',                desc:'also present in an earlier sprint'},
+  carriedOut:{label:'Carried out',               desc:'also present in a later sprint'},
+};
+function showListFor(sprintIdx,bucket){
+  const sprints=detectSprints();
+  const sp=sprints[sprintIdx];
+  if(!sp){showToast('Sprint not found','err');return;}
+  const m=sprintMetrics(sp);
+  const rows=m[bucket]||[];
+  const b=LIST_BUCKETS[bucket]||{label:bucket,desc:''};
+  renderIssueList(`Sprint ${m.n} · ${b.label} (${rows.length})`, b.desc, rows, m.n);
+}
+function renderIssueList(title,subtitle,rows,sprintN){
+  document.getElementById('listTitle').textContent=title;
+  document.getElementById('listSub').textContent=subtitle||'';
+  const body=document.getElementById('listBody');
+  if(!rows.length){ body.innerHTML='<div class="il-empty">No issues in this group.</div>'; }
+  else{
+    const keyH=getFieldH(['Issue key']),sumH=getFieldH(['Summary']),stH=getFieldH(['Status']),
+          tyH=getFieldH(['Issue Type']),ahH=getFieldH(['Assignee']);
+    const totalSP=rows.reduce((s,r)=>s+rowPoints(r),0);
+    body.innerHTML=`<div style="max-height:60vh;overflow:auto"><table class="il-tbl">
+      <thead><tr><th>Key</th><th>Type</th><th>Status</th><th>Assignee</th><th style="text-align:right">SP</th><th>Summary</th><th>Sprints</th></tr></thead>
+      <tbody>${rows.map(r=>{
+        const st=r[stH]||'', s=statusStyle(st), ty=r[tyH]||'', asg=r[ahH]||'';
+        const chain=rowSprints(r).map(x=>sprintNum(x));
+        const chainStr=chain.map(x=>x===sprintN?`<strong style="color:var(--teal)">S${x}</strong>`:'S'+x).join(' → ');
+        const pts=rowPoints(r);
+        const init=asg?asg.split(/\s+/).map(x=>x[0]||'').join('').toUpperCase().slice(0,2):'';
+        const ac=avatarCol(asg);
+        return `<tr onclick="closeList();openModalByKey(this.dataset.k)" data-k="${esc(r[keyH]||'')}">
+          <td><span class="key">${esc(r[keyH]||'')}</span></td>
+          <td><span class="type-chip" style="font-size:10px;padding:1px 5px"><span class="dot" style="background:${typeCol(ty)}"></span>${esc(ty)}</span></td>
+          <td><span class="status-pill" style="background:${s.bg};color:${s.c}">${esc(st)}</span></td>
+          <td>${asg?`<span class="asgn"><span class="avatar" style="background:${ac}20;color:${ac}">${esc(init)}</span>${esc(asg)}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
+          <td style="text-align:right">${pts?`<span class="sp-badge">${pts}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
+          <td><div class="il-sum" title="${esc(r[sumH]||'')}">${esc(r[sumH]||'')}</div></td>
+          <td><span class="il-chain">${chainStr}</span></td>
+        </tr>`;}).join('')}
+      </tbody></table></div>
+      <div class="il-foot"><span><strong style="color:var(--text)">${rows.length}</strong> issues</span>
+      <span><strong style="color:var(--text)">${Math.round(totalSP)}</strong> story points</span>
+      <span>Click any row for full detail</span></div>`;
+  }
+  document.getElementById('listOv').classList.add('open');
+}
+function closeList(){document.getElementById('listOv').classList.remove('open');}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
 // ═══ MODAL ═══
 function openModal(idx){
   const row=allRows[idx];if(!row)return;
@@ -2226,7 +2396,7 @@ function openModal(idx){
 }
 function openModalByKey(key){const idx=allRows.findIndex(r=>r[getFieldH(['Issue key'])]===key);if(idx>=0)openModal(idx)}
 function closeModal(){document.getElementById('modalOv').classList.remove('open')}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeList();}});
 
 // ═══ EXPORT CSV ═══
 function exportCSV(){
@@ -2275,7 +2445,7 @@ function buildPPTX(){
     const dateMatch=sp.match(/\((.*?)\)/);
     return{n:m.n,total:m.total,done:m.doneCount,carried:m.carriedInCount,
       spCommit:m.spCommitted,spDone:m.spDone,spCarry:m.spCarriedOut,pct:m.pct,
-      dateStr:dateMatch?dateMatch[1]:'',blockedCount:m.removedCount};
+      spDrop:m.spDropped,dateStr:dateMatch?dateMatch[1]:'',blockedCount:m.droppedCount};
   });
 
   if(!sprintData.length){ showToast('⚠️ No sprint data to export','err'); return; }
@@ -2347,10 +2517,11 @@ function buildPPTX(){
         ['Issues', d.total+''],
         ['Completed', d.done+''],
         ['Carried over', d.carried+''],
-        ['Removed / needs review', d.blockedCount+''],
+        ['Dropped after sprint', d.blockedCount+''],
         ['Story points committed', Math.round(d.spCommit)+''],
         ['Story points done', Math.round(d.spDone)+''],
         ['Story points carried', Math.round(d.spCarry)+''],
+        ['Story points dropped', Math.round(d.spDrop)+''],
       ];
       metrics.forEach((m,i)=>{
         const y=1.3+i*0.5;
